@@ -33,12 +33,14 @@ WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
 RPC_ENDPOINTS = [
     os.environ.get("HELIUS_RPC_URL", ""),
+    "https://rpc.solanatracker.io/public",
+    "https://rpc.nodeflare.app/solana/public",
     "https://solana-rpc.publicnode.com",
     "https://api.mainnet-beta.solana.com",
 ]
-RPC_ENDPOINTS = [u for u in RPC_ENDPOINTS if u]
+RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
 HEADERS = {"User-Agent": "meme-scanner-cycle/11"}
-TIMEOUT = 10
+TIMEOUT = 6
 
 
 def log(msg):
@@ -110,17 +112,32 @@ def fetch_rugcheck(mint):
 
 
 def fetch_whale_balances(mint):
+    payload = {"jsonrpc": "2.0", "id": 1, "method": "getTokenLargestAccounts", "params": [mint, {"commitment": "confirmed"}]}
     for endpoint in RPC_ENDPOINTS:
         try:
-            payload = {"jsonrpc": "2.0", "id": 1, "method": "getTokenLargestAccounts", "params": [mint]}
             r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
             if r.status_code != 200:
                 log(f"  RPC {endpoint} -> HTTP {r.status_code}")
                 continue
-            result = r.json().get("result", {}).get("value", [])
+            body = r.json()
+            if body.get("error"):
+                log(f"  RPC {endpoint} -> error {body['error'].get('code')}")
+                continue
+            result = (body.get("result") or {}).get("value") or []
             if not result:
                 continue
-            return {acc["address"]: float(acc.get("uiAmount") or 0) for acc in result[:WHALE_TOP_N]}
+            balances = {}
+            for acc in result[:WHALE_TOP_N]:
+                address = acc.get("address")
+                if not address:
+                    continue
+                raw = acc.get("uiAmount")
+                if raw is None:
+                    raw = float(acc.get("amount") or 0) / (10 ** int(acc.get("decimals") or 0))
+                balances[address] = float(raw or 0)
+            if balances:
+                log(f"  RPC {endpoint} -> whale data OK ({len(balances)} accounts)")
+                return balances
         except Exception as e:
             log(f"  RPC {endpoint} failed: {e}")
     return None
