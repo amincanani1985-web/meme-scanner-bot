@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-meme_scanner_cycle.py — v11-cycle-fixed
+meme_scanner_cycle.py — v12-cycle-hardened
 
 Single-cycle paper-trading scanner for GitHub Actions.
 """
@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import requests
 
-VERSION = "v11-cycle-fixed"
+VERSION = "v12-cycle-hardened"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
@@ -39,8 +39,10 @@ RPC_ENDPOINTS = [
     "https://api.mainnet-beta.solana.com",
 ]
 RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
-HEADERS = {"User-Agent": "meme-scanner-cycle/11"}
+HEADERS = {"User-Agent": "meme-scanner-cycle/12"}
 TIMEOUT = 6
+HTTP_RETRIES = 3
+RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
 
 def log(msg):
@@ -72,15 +74,24 @@ def append_trade(row):
 
 
 def safe_get_json(url, params=None):
-    try:
-        r = requests.get(url, headers=HEADERS, params=params, timeout=TIMEOUT)
-        if r.status_code != 200:
+    for attempt in range(1, HTTP_RETRIES + 1):
+        try:
+            r = requests.get(url, headers=HEADERS, params=params, timeout=TIMEOUT)
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, (dict, list)):
+                    return data
+                log(f"  GET {url} -> invalid JSON shape")
+                return None
             log(f"  GET {url} -> HTTP {r.status_code}")
-            return None
-        return r.json()
-    except Exception as e:
-        log(f"  GET {url} failed: {e}")
-        return None
+            if r.status_code not in RETRYABLE_STATUS or attempt == HTTP_RETRIES:
+                return None
+        except Exception as e:
+            log(f"  GET {url} failed (attempt {attempt}/{HTTP_RETRIES}): {e}")
+            if attempt == HTTP_RETRIES:
+                return None
+        time.sleep(0.5 * attempt)
+    return None
 
 
 def fetch_dex_pair(mint):
@@ -114,38 +125,48 @@ def fetch_rugcheck(mint):
 def fetch_whale_balances(mint):
     payload = {"jsonrpc": "2.0", "id": 1, "method": "getTokenLargestAccounts", "params": [mint, {"commitment": "confirmed"}]}
     for endpoint in RPC_ENDPOINTS:
-        try:
-            r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
-            if r.status_code != 200:
-                log(f"  RPC {endpoint} -> HTTP {r.status_code}")
-                continue
-            body = r.json()
-            if body.get("error"):
-                log(f"  RPC {endpoint} -> error {body['error'].get('code')}")
-                continue
-            result = (body.get("result") or {}).get("value") or []
-            if not result:
-                continue
-            balances = {}
-            for acc in result[:WHALE_TOP_N]:
-                address = acc.get("address")
-                if not address:
-                    continue
-                raw = acc.get("uiAmount")
-                if raw is None:
-                    raw = float(acc.get("amount") or 0) / (10 ** int(acc.get("decimals") or 0))
-                balances[address] = float(raw or 0)
-            if balances:
-                log(f"  RPC {endpoint} -> whale data OK ({len(balances)} accounts)")
-                return balances
-        except Exception as e:
-            log(f"  RPC {endpoint} failed: {e}")
+        for attempt in range(1, 3):
+            try:
+                r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
+                if r.status_code != 200:
+                    log(f"  RPC {endpoint} -> HTTP {r.status_code}")
+                    if r.status_code in RETRYABLE_STATUS and attempt == 1:
+                        time.sleep(0.5)
+                        continue
+                    break
+                body = r.json()
+                if not isinstance(body, dict) or body.get("error"):
+                    if isinstance(body, dict) and body.get("error"):
+                        log(f"  RPC {endpoint} -> error {body['error'].get('code')}")
+                    break
+                result = (body.get("result") or {}).get("value") or []
+                if not result:
+                    break
+                balances = {}
+                for acc in result[:WHALE_TOP_N]:
+                    address = acc.get("address")
+                    if not address:
+                        continue
+                    raw = acc.get("uiAmount")
+                    if raw is None:
+                        raw = float(acc.get("amount") or 0) / (10 ** int(acc.get("decimals") or 0))
+                    balances[address] = float(raw or 0)
+                if balances:
+                    log(f"  RPC {endpoint} -> whale data OK ({len(balances)} accounts)")
+                    return balances
+                break
+            except Exception as e:
+                log(f"  RPC {endpoint} failed (attempt {attempt}/2): {e}")
+                if attempt == 2:
+                    break
     return None
 
 
 def passes_security_filter(rc_report):
     if not rc_report:
         return False, "no_rugcheck_data"
+    if "mintAuthority" not in rc_report or "freezeAuthority" not in rc_report:
+        return False, "incomplete_authority_data"
     if rc_report.get("mintAuthority") not in (None, "", "11111111111111111111111111111111"):
         return False, "mint_authority_not_renounced"
     if rc_report.get("freezeAuthority") not in (None, "", "11111111111111111111111111111111"):
@@ -231,7 +252,7 @@ def manage_open_positions(state):
         if pair is None:
             age = time.time() - pos["entry_time"]
             if age > 2 * MAX_HOLD_SECONDS:
-                close_position(state, mint, pos["peak_price"], "no_price_data_forced_close")
+                close_position(state, mint, pos["entry_price"], "no_price_data_forced_close")
                 if mint not in state["blacklist"]:
                     state["blacklist"].append(mint)
             else:
@@ -241,10 +262,6 @@ def manage_open_positions(state):
         if price <= 0:
             continue
         liq = float((pair.get("liquidity") or {}).get("usd") or 0)
-
-        # Migrate legacy positions that were created before baselines were persisted.
-        # We deliberately establish the first observed post-fix values as baselines
-        # instead of comparing against fabricated historical data.
         if pos.get("entry_liquidity") is None:
             pos["entry_liquidity"] = liq
             log(f"  {pos['symbol']}: initialized legacy entry liquidity=${liq:.0f}")
@@ -252,7 +269,6 @@ def manage_open_positions(state):
         if entry_liq > 0 and liq < entry_liq * 0.80:
             close_position(state, mint, price, "liquidity_drained")
             continue
-
         baseline = pos.get("whale_baseline") or {}
         if not baseline:
             current = fetch_whale_balances(mint)
