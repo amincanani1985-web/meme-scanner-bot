@@ -2,8 +2,8 @@ name: meme scanner trading cycle
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes
-  workflow_dispatch: {}       # lets you also run it manually from the Actions tab
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -35,11 +35,10 @@ jobs:
         run: |
           git config user.name "trading-bot"
           git config user.email "trading-bot@users.noreply.github.com"
-          git add state.json
-          if [ -f trades_log.csv ]; then git add trades_log.csv; fi
+          git add -A -- state.json trades_log.csv 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
-          else
-            git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git push origin HEAD:main
+            exit 0
           fi
+          git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push origin HEAD:main
