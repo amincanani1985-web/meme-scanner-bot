@@ -20,6 +20,7 @@ concurrency:
 
 env:
   NOTIFY_ISSUE: "1"
+  HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
 
 jobs:
   run-cycle:
