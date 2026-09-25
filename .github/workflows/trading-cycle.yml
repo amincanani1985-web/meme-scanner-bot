@@ -5,16 +5,21 @@ on:
     branches: [main]
     paths:
       - "meme_scanner_cycle.py"
+      - ".github/workflows/trading-cycle.yml"
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: trading-cycle
   cancel-in-progress: false
+
+env:
+  NOTIFY_ISSUE: "1"
 
 jobs:
   run-cycle:
@@ -39,10 +44,27 @@ jobs:
         run: |
           git config user.name "trading-bot"
           git config user.email "trading-bot@users.noreply.github.com"
-          git add -A -- state.json trades_log.csv 2>/dev/null || true
+          git add state.json
+          if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0
           fi
           git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin HEAD:main
+
+      - name: Notify GitHub on success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$NOTIFY_ISSUE" \
+            --body "✅ Trading cycle succeeded. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify GitHub on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$NOTIFY_ISSUE" \
+            --body "❌ Trading cycle FAILED. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
