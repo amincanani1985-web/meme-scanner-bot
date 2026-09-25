@@ -224,13 +224,27 @@ def manage_open_positions(state):
         if price <= 0:
             continue
         liq = float((pair.get("liquidity") or {}).get("usd") or 0)
+
+        # Migrate legacy positions that were created before baselines were persisted.
+        # We deliberately establish the first observed post-fix values as baselines
+        # instead of comparing against fabricated historical data.
+        if pos.get("entry_liquidity") is None:
+            pos["entry_liquidity"] = liq
+            log(f"  {pos['symbol']}: initialized legacy entry liquidity=${liq:.0f}")
         entry_liq = pos.get("entry_liquidity")
-        if entry_liq is None:
-            log(f"  {pos['symbol']}: legacy position missing entry liquidity; skipping liquidity comparison")
-        elif entry_liq > 0 and liq < entry_liq * 0.80:
+        if entry_liq > 0 and liq < entry_liq * 0.80:
             close_position(state, mint, price, "liquidity_drained")
             continue
+
         baseline = pos.get("whale_baseline") or {}
+        if not baseline:
+            current = fetch_whale_balances(mint)
+            if current is None:
+                log(f"  {pos['symbol']}: whale baseline unavailable; whale check deferred")
+            else:
+                pos["whale_baseline"] = current
+                baseline = current
+                log(f"  {pos['symbol']}: initialized legacy whale baseline ({len(current)} accounts)")
         if baseline:
             current = fetch_whale_balances(mint)
             if current is None:
