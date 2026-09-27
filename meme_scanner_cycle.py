@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-meme_scanner_cycle.py — v12-cycle-hardened
+meme_scanner_cycle.py — v13-entry-hardened
 
 Single-cycle paper-trading scanner for GitHub Actions.
 """
@@ -13,21 +13,22 @@ from datetime import datetime, timezone
 
 import requests
 
-VERSION = "v12-cycle-hardened"
+VERSION = "v13-entry-hardened"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
 POSITION_SIZE_USD = 100.0
-MAX_CONCURRENT_POSITIONS = 3
+MAX_CONCURRENT_POSITIONS = 10
 TAKE_PROFIT_ACTIVATE = 0.08
 TRAILING_DROP = 0.05
 STOP_LOSS = 0.10
 MAX_HOLD_SECONDS = 15 * 60
-MIN_LIQUIDITY_USD = 2000
-MIN_VOLUME_H1_USD = 500
-MIN_LIQ_MCAP_RATIO = 0.10
-MIN_BUY_SELL_RATIO = 1.3
-MAX_HOLDER_CONCENTRATION = 0.50
+MIN_LIQUIDITY_USD = 5000
+MIN_VOLUME_H1_USD = 2000
+MIN_LIQ_MCAP_RATIO = 0.15
+MIN_BUY_SELL_RATIO = 1.5
+MIN_PRICE_CHANGE_M5_PCT = 0.5
+MAX_HOLDER_CONCENTRATION = 0.45
 WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
@@ -44,7 +45,7 @@ RPC_ENDPOINTS = [
     "https://api.mainnet-beta.solana.com",
 ]
 RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
-HEADERS = {"User-Agent": "meme-scanner-cycle/12"}
+HEADERS = {"User-Agent": "meme-scanner-cycle/13"}
 TIMEOUT = 6
 HTTP_RETRIES = 3
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
@@ -164,9 +165,6 @@ def fetch_whale_balances(mint):
                 log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/2): {e}")
                 if attempt == 2:
                     break
-    # RPC providers are frequently rate-limited in GitHub Actions. Rugcheck already
-    # supplies the same top-holder snapshot used by the security filter, so use it as
-    # a safe degraded source instead of rejecting every candidate when RPC is down.
     rc_report = fetch_rugcheck(mint)
     holders = (rc_report or {}).get("topHolders") or []
     fallback = {}
@@ -212,6 +210,7 @@ def passes_market_filter(pair):
     mcap = pair.get("marketCap") or pair.get("fdv") or 0
     txns_m5 = (pair.get("txns") or {}).get("m5") or {}
     buys, sells = txns_m5.get("buys", 0), txns_m5.get("sells", 0)
+    price_change_m5 = (pair.get("priceChange") or {}).get("m5") or 0
     if liq < MIN_LIQUIDITY_USD:
         return False, f"low_liquidity:{liq}"
     if vol_h1 < MIN_VOLUME_H1_USD:
@@ -222,6 +221,8 @@ def passes_market_filter(pair):
         return False, f"weak_buy_pressure:{buys}/{sells}"
     if sells == 0 and buys == 0:
         return False, "no_recent_txns"
+    if price_change_m5 < MIN_PRICE_CHANGE_M5_PCT:
+        return False, f"weak_momentum:{price_change_m5:.2f}%"
     return True, "ok"
 
 
@@ -302,12 +303,14 @@ def manage_open_positions(state):
             if current is None:
                 log(f"  {pos['symbol']}: whale data unavailable; skipping whale check")
             else:
+                dumped = False
                 for addr, base_amt in baseline.items():
                     now_amt = current.get(addr, 0)
                     if base_amt > 0 and (base_amt - now_amt) / base_amt >= WHALE_DUMP_THRESHOLD:
-                        close_position(state, mint, price, "whale_dump")
+                        dumped = True
                         break
-                if mint not in state["positions"]:
+                if dumped:
+                    close_position(state, mint, price, "whale_dump")
                     continue
         pnl_pct = (price - pos["entry_price"]) / pos["entry_price"]
         if price > pos["peak_price"]:
@@ -330,7 +333,10 @@ def manage_open_positions(state):
 
 
 def look_for_entries(state):
-    slots = MAX_CONCURRENT_POSITIONS - len(state["positions"])
+    if state.get("trade_count", 0) >= TARGET_TRADES:
+        log(f"  target reached ({TARGET_TRADES}), no new entries")
+        return
+    slots = min(MAX_CONCURRENT_POSITIONS - len(state["positions"]), TARGET_TRADES - state.get("trade_count", 0))
     if slots <= 0:
         log("  max concurrent positions reached, skipping discovery")
         return
@@ -350,10 +356,12 @@ def look_for_entries(state):
             continue
         ok, why = passes_market_filter(pair)
         if not ok:
+            log(f"  skipped {mint[:6]}...: {why}")
             continue
         rc = fetch_rugcheck(mint)
         ok, why = passes_security_filter(rc)
         if not ok:
+            log(f"  skipped {mint[:6]}...: {why}")
             continue
         whale_balances = fetch_whale_balances(mint)
         if whale_balances is None:
