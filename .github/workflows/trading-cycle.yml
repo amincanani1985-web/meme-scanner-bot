@@ -49,7 +49,15 @@ jobs:
         run: |
           git config user.name "trading-bot"
           git config user.email "trading-bot@users.noreply.github.com"
+          python - <<'PY'
+import json
+from pathlib import Path
+state=json.loads(Path("state.json").read_text())
+csv=Path("trades_log.csv").read_text() if Path("trades_log.csv").exists() else ""
+Path("dashboard/live-data.js").write_text("window.LIVE_STATE="+json.dumps(state,separators=(",",":"))+";\\n"+"window.LIVE_CSV="+json.dumps(csv)+";\\n",encoding="utf-8")
+PY
           git add state.json
+          git add dashboard/live-data.js
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if git diff --staged --quiet; then
             echo "No state changes to commit"
