@@ -1,5 +1,5 @@
 name: Deploy dashboard to GitHub Pages
-# deployment trigger 2026-09-27
+# deployment trigger 2026-09-27-live-bundle
 on:
   push:
     branches: ["main"]
@@ -28,10 +28,28 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Copy live bot data
+      - name: Build live data bundle
         run: |
-          cp state.json dashboard/state.json
-          cp trades_log.csv dashboard/trades_log.csv
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          state=json.loads(Path("state.json").read_text())
+          csv=Path("trades_log.csv").read_text()
+          Path("dashboard/live-data.js").write_text(
+              "window.LIVE_STATE="+json.dumps(state,separators=(",",":"))+";\n"
+              "window.LIVE_CSV="+json.dumps(csv)+";\n",
+              encoding="utf-8"
+          )
+          PY
+      - name: Inject live data bundle
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("dashboard/index.html")
+          s=p.read_text()
+          s=s.replace("<script>\nconst LIVE_STATE", "<script src=\"./live-data.js\"></script><script>\nconst LIVE_STATE", 1)
+          p.write_text(s, encoding="utf-8")
+          PY
       - name: Upload dashboard
         uses: actions/upload-pages-artifact@v3
         with:
