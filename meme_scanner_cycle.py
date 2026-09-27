@@ -31,6 +31,7 @@ MAX_HOLDER_CONCENTRATION = 0.50
 WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
+TARGET_TRADES = 100
 HELIUS_RPC_URL = os.environ.get("HELIUS_RPC_URL", "").strip()
 HELIUS_API_KEY = os.environ.get("HELIUS_API_KEY", "").strip()
 HELIUS_API_ENDPOINT = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}" if HELIUS_API_KEY else ""
@@ -369,7 +370,9 @@ def main():
     manage_open_positions(state)
     look_for_entries(state)
     save_state(state)
-    log(f"=== done | equity=${state['equity']:.2f} positions={len(state['positions'])} trades={state['trade_count']} ===")
+    log(f"=== done | equity=${state['equity']:.2f} positions={len(state['positions'])} trades={state['trade_count']}/{TARGET_TRADES} ===")
+    if state["trade_count"] >= TARGET_TRADES:
+        log(f"=== TARGET REACHED: {TARGET_TRADES} paper trades completed ===")
 
 
 if __name__ == "__main__":
