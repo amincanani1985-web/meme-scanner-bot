@@ -1,5 +1,5 @@
 name: Deploy dashboard to GitHub Pages
-# deployment trigger 2026-09-27-static-render-fix
+# deployment trigger 2026-09-27-static-render-fix-2
 on:
   push:
     branches: ["main"]
@@ -37,37 +37,22 @@ jobs:
           python - <<'PY'
           import csv, html, json, re
           from pathlib import Path
-
           state=json.loads(Path("state.json").read_text(encoding="utf-8"))
-          rows=[]
-          with Path("trades_log.csv").open(encoding="utf-8", newline="") as f:
-              rows=list(csv.DictReader(f))
-
+          with Path("trades_log.csv").open(encoding="utf-8", newline="") as f: rows=list(csv.DictReader(f))
           def money(x): return f"${float(x):,.2f}"
           def pct(x): return f"{'+' if float(x)>=0 else ''}{float(x):.2f}%"
           def price(x): return f"{float(x):.4e}"
           def esc(x): return html.escape(str(x or ""))
-
-          equity=float(state.get("equity",1000))
-          pnl=equity-1000
-          wins=[r for r in rows if float(r["pnl_usd"])>0]
-          losses=[r for r in rows if float(r["pnl_usd"])<0]
-          gross_win=sum(float(r["pnl_usd"]) for r in wins)
-          gross_loss=abs(sum(float(r["pnl_usd"]) for r in losses))
+          equity=float(state.get("equity",1000)); pnl=equity-1000
+          wins=[r for r in rows if float(r["pnl_usd"])>0]; losses=[r for r in rows if float(r["pnl_usd"])<0]
+          gross_win=sum(float(r["pnl_usd"]) for r in wins); gross_loss=abs(sum(float(r["pnl_usd"]) for r in losses))
           pf=gross_win/gross_loss if gross_loss else (float("inf") if gross_win else 0)
           avg=sum(float(r["pnl_pct"]) for r in rows)/len(rows) if rows else 0
           avg_win=sum(float(r["pnl_pct"]) for r in wins)/len(wins) if wins else 0
           avg_loss=sum(float(r["pnl_pct"]) for r in losses)/len(losses) if losses else 0
-          curve=[1000]+[float(r["equity_after"]) for r in rows]
-          peak=1000
-          max_dd=0
-          for v in curve:
-              peak=max(peak,v)
-              max_dd=min(max_dd,(v-peak)/peak*100)
-
-          p=Path("dashboard/index.html")
-          s=p.read_text(encoding="utf-8")
-
+          curve=[1000]+[float(r["equity_after"]) for r in rows]; peak=1000; max_dd=0
+          for v in curve: peak=max(peak,v); max_dd=min(max_dd,(v-peak)/peak*100)
+          p=Path("dashboard/index.html"); s=p.read_text(encoding="utf-8")
           replacements={
             '<div class="value" id="equity">—</div>': f'<div class="value">{money(equity)}</div>',
             '<div class="value" id="pnl">—</div>': f'<div class="value {"green" if pnl>=0 else "red"}">{money(pnl)}</div>',
@@ -78,56 +63,29 @@ jobs:
             '<span id="pct">0%</span>': f'<span>{min(100,len(rows))}%</span>',
             '<div class="fill" id="fill" style="width:0"></div>': f'<div class="fill" style="width:{min(100,len(rows))}%"></div>',
             '<b id="pf">—</b>': f'<b>{"∞" if pf==float("inf") else f"{pf:.2f}"}</b>',
-            '<b id="avg">—</b>': f'<b>{avg:.2f}%</b>',
-            '<b id="aw">—</b>': f'<b>{avg_win:.2f}%</b>',
-            '<b id="al">—</b>': f'<b>{avg_loss:.2f}%</b>',
-            '<b id="wl">—</b>': f'<b>{len(wins)} / {len(losses)}</b>',
-            '<b id="scans">—</b>': f'<b>{int(state.get("scan_count",0))}</b>',
-            '<span id="openCount">0 active</span>': f'<span>{len(state.get("positions",{}))} active</span>',
+            '<b id="avg">—</b>': f'<b>{avg:.2f}%</b>', '<b id="aw">—</b>': f'<b>{avg_win:.2f}%</b>', '<b id="al">—</b>': f'<b>{avg_loss:.2f}%</b>',
+            '<b id="wl">—</b>': f'<b>{len(wins)} / {len(losses)}</b>', '<b id="scans">—</b>': f'<b>{int(state.get("scan_count",0))}</b>',
+            '<span class="label" id="openCount">0 active</span>': f'<span class="label">{len(state.get("positions",{}))} active</span>',
             '<div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>': '<div class="status"><span class="dot"></span><span>BOT ONLINE · PAPER</span></div>',
-            '<button onclick="load()">↻ Refresh</button>': '<span class="label">Static build from latest state</span>',
-          }
+            '<button onclick="load()">↻ Refresh</button>': '<span class="label">Static build from latest state</span>'}
           for a,b in replacements.items():
-              if a not in s:
-                  raise SystemExit(f"template marker missing: {a}")
+              if a not in s: raise SystemExit(f"template marker missing: {a}")
               s=s.replace(a,b,1)
-
-          lo=min(curve) if curve else 1000
-          hi=max(curve) if curve else 1000
-          span=max(hi-lo,1)
-          bars=[]
-          for v in curve[1:]:
-              h=max(8,((v-lo)/span)*225)
-              bars.append(f'<div class="bar" title="{money(v)}" style="height:{h:.1f}px"></div>')
-          chart=''.join(bars) if bars else '<div class="empty">No closed trades yet</div>'
-          s=s.replace('<div class="chart" id="chart"><div class="empty">Loading…</div></div>', f'<div class="chart">{chart}</div>',1)
-
+          lo=min(curve); hi=max(curve); span=max(hi-lo,1)
+          chart=''.join(f'<div class="bar" title="{money(v)}" style="height:{max(8,((v-lo)/span)*225):.1f}px"></div>' for v in curve[1:]) or '<div class="empty">No closed trades yet</div>'
+          s=s.replace('<div class="chart" id="chart"><div class="empty">Loading…</div></div>',f'<div class="chart">{chart}</div>',1)
           pos=[]
           for item in state.get("positions",{}).values():
-              pos.append('<div class="pos">'
-                         f'<div class="posname">{esc(item.get("symbol"))}</div>'
-                         f'<div class="posline"><span>Entry</span><b>{price(item.get("entry_price",0))}</b></div>'
-                         f'<div class="posline"><span>Peak</span><b>{price(item.get("peak_price",0))}</b></div>'
-                         f'<div class="posline"><span>Liquidity</span><b>{money(item.get("entry_liquidity",0))}</b></div>'
-                         f'<div class="posline"><span>Trailing</span><b class="{"green" if item.get("trailing_active") else ""}">{"ACTIVE" if item.get("trailing_active") else "—"}</b></div>'
-                         '</div>')
-          s=s.replace('<div class="positions" id="open"></div>', ''.join(pos) or '<div class="empty">No open positions</div>',1)
-
+              pos.append('<div class="pos">'+f'<div class="posname">{esc(item.get("symbol"))}</div>'+f'<div class="posline"><span>Entry</span><b>{price(item.get("entry_price",0))}</b></div>'+f'<div class="posline"><span>Peak</span><b>{price(item.get("peak_price",0))}</b></div>'+f'<div class="posline"><span>Liquidity</span><b>{money(item.get("entry_liquidity",0))}</b></div>'+f'<div class="posline"><span>Trailing</span><b class="{"green" if item.get("trailing_active") else ""}">{"ACTIVE" if item.get("trailing_active") else "—"}</b></div></div>')
+          s=s.replace('<div class="positions" id="open"></div>',''.join(pos) or '<div class="empty">No open positions</div>',1)
           trs=[]
           for r in reversed(rows):
               usd=float(r["pnl_usd"]); pp=float(r["pnl_pct"])
-              trs.append('<tr>'
-                         f'<td>{esc(r["timestamp"])}</td><td><b>{esc(r["symbol"])}</b></td>'
-                         f'<td>{price(r["entry_price"])}</td><td>{price(r["exit_price"])}</td>'
-                         f'<td class="{"green" if pp>=0 else "red"}">{pct(pp)}</td>'
-                         f'<td class="{"green" if usd>=0 else "red"}">{money(usd)}</td><td>{esc(r["reason"])}</td>'
-                         '</tr>')
-          s=s.replace('<tbody id="closed"></tbody>', ''.join(trs) or '<tr><td colspan="7" class="empty">No closed trades</td></tr>',1)
-
-          # Remove all runtime JavaScript; the page is deliberately static so GitHub Pages needs no client-side data loading.
-          s=re.sub(r'\n<script src="\./live-data\.js"></script><script>.*?</script>', '', s, flags=re.S)
-          s=s.replace('Auto-refresh 60s · Source: GitHub · Paper trading only · No wallet or real orders', f'Built from GitHub state · Last bot run: {esc(state.get("last_run","unknown"))} · Paper trading only · No wallet or real orders')
-          p.write_text(s, encoding="utf-8")
+              trs.append('<tr>'+f'<td>{esc(r["timestamp"])}</td><td><b>{esc(r["symbol"])}</b></td><td>{price(r["entry_price"])}</td><td>{price(r["exit_price"])}</td><td class="{"green" if pp>=0 else "red"}">{pct(pp)}</td><td class="{"green" if usd>=0 else "red"}">{money(usd)}</td><td>{esc(r["reason"])}</td></tr>')
+          s=s.replace('<tbody id="closed"></tbody>',''.join(trs) or '<tr><td colspan="7" class="empty">No closed trades</td></tr>',1)
+          s=re.sub(r'\n<script src="\./live-data\.js"></script><script>.*?</script>','',s,flags=re.S)
+          s=s.replace('Auto-refresh 60s · Source: GitHub · Paper trading only · No wallet or real orders',f'Built from GitHub state · Last bot run: {esc(state.get("last_run","unknown"))} · Paper trading only · No wallet or real orders')
+          p.write_text(s,encoding="utf-8")
           PY
       - name: Upload dashboard
         uses: actions/upload-pages-artifact@v3
