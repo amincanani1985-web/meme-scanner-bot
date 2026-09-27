@@ -1,5 +1,5 @@
 name: Deploy dashboard to GitHub Pages
-# deployment trigger 2026-09-27-live-data-fix
+# deployment trigger 2026-09-27-inline-live-data-fix
 on:
   push:
     branches: ["main"]
@@ -32,31 +32,24 @@ jobs:
         uses: actions/checkout@v6
       - name: Setup Pages
         uses: actions/configure-pages@v6
-      - name: Build live data bundle
+      - name: Embed live data directly into dashboard
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           state=json.loads(Path("state.json").read_text())
           csv=Path("trades_log.csv").read_text()
-          Path("dashboard/live-data.js").write_text(
-              "window.LIVE_STATE="+json.dumps(state,separators=(",",":"))+";\n"
-              "window.LIVE_CSV="+json.dumps(csv)+";\n",
-              encoding="utf-8"
-          )
-          PY
-      - name: Inject live data bundle with cache busting
-        run: |
-          python - <<'PY'
-          from pathlib import Path
           p=Path("dashboard/index.html")
-          s=p.read_text()
+          s=p.read_text(encoding="utf-8")
           marker='<script src="./live-data.js"></script>'
-          versioned='<script src="./live-data.js?v=${{ github.sha }}"></script>'
-          if marker in s:
-              s=s.replace(marker, versioned, 1)
-          elif '<script src="./live-data.js?' not in s:
-              s=s.replace('<script>\nconst LIVE_STATE', versioned+'<script>\nconst LIVE_STATE', 1)
+          inline=(
+              '<script>window.LIVE_STATE='+json.dumps(state,separators=(",",":"))+';'
+              'window.LIVE_CSV='+json.dumps(csv)+';</script>'
+          )
+          if marker not in s:
+              raise SystemExit("live-data script marker not found")
+          s=s.replace(marker, inline, 1)
+          s=s.replace('<div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>', '<div class="status"><span class="dot" id="dot"></span><span id="status">Loading data…</span></div>', 1)
           p.write_text(s, encoding="utf-8")
           PY
       - name: Upload dashboard
