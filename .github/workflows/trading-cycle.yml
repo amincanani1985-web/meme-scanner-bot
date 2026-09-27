@@ -1,26 +1,25 @@
 name: meme scanner trading cycle
 
 on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "meme_scanner_cycle.py"
       - "tests/**"
       - ".github/workflows/trading-cycle.yml"
-  schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch: {}
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: trading-cycle
   cancel-in-progress: false
 
 env:
-  NOTIFY_ISSUE: "1"
   HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
   HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
 
@@ -30,15 +29,15 @@ jobs:
     timeout-minutes: 8
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: python -m pip install --upgrade pip requests
 
       - name: Validate Python syntax
         run: python -m py_compile meme_scanner_cycle.py tests/test_scanner_logic.py
@@ -62,10 +61,13 @@ import json
 from pathlib import Path
 state=json.loads(Path("state.json").read_text())
 csv=Path("trades_log.csv").read_text() if Path("trades_log.csv").exists() else ""
-Path("dashboard/live-data.js").write_text("window.LIVE_STATE="+json.dumps(state,separators=(",",":"))+";\\n"+"window.LIVE_CSV="+json.dumps(csv)+";\\n",encoding="utf-8")
+Path("dashboard/live-data.js").write_text(
+    "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\\n" +
+    "window.LIVE_CSV=" + json.dumps(csv) + ";\\n",
+    encoding="utf-8",
+)
 PY
-          git add state.json
-          git add dashboard/live-data.js
+          git add state.json dashboard/live-data.js
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if git diff --staged --quiet; then
             echo "No state changes to commit"
@@ -73,19 +75,3 @@ PY
           fi
           git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin HEAD:main
-
-      - name: Notify GitHub on success
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue comment "$NOTIFY_ISSUE" \
-            --body "✅ Trading cycle succeeded. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Notify GitHub on failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue comment "$NOTIFY_ISSUE" \
-            --body "❌ Trading cycle FAILED. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
