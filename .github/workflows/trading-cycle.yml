@@ -43,8 +43,12 @@ jobs:
       - name: Validate Python syntax
         run: python -m py_compile meme_scanner_cycle.py tests/test_scanner_logic.py
 
-      - name: Run scanner tests
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Run scanner tests 10 times
+        run: |
+          for i in $(seq 1 10); do
+            echo "=== TEST PASS $i/10 ==="
+            python -m unittest discover -s tests -p 'test_*.py' -v
+          done
 
       - name: Run one trading cycle
         run: python meme_scanner_cycle.py
