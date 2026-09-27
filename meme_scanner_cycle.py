@@ -31,8 +31,12 @@ MAX_HOLDER_CONCENTRATION = 0.50
 WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
+HELIUS_RPC_URL = os.environ.get("HELIUS_RPC_URL", "").strip()
+HELIUS_API_KEY = os.environ.get("HELIUS_API_KEY", "").strip()
+HELIUS_API_ENDPOINT = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}" if HELIUS_API_KEY else ""
 RPC_ENDPOINTS = [
-    os.environ.get("HELIUS_RPC_URL", ""),
+    HELIUS_RPC_URL,
+    HELIUS_API_ENDPOINT,
     "https://rpc.solanatracker.io/public",
     "https://rpc.nodeflare.app/solana/public",
     "https://solana-rpc.publicnode.com",
@@ -129,7 +133,7 @@ def fetch_whale_balances(mint):
             try:
                 r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
                 if r.status_code != 200:
-                    log(f"  RPC {endpoint} -> HTTP {r.status_code}")
+                    log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} -> HTTP {r.status_code}")
                     if r.status_code in RETRYABLE_STATUS and attempt == 1:
                         time.sleep(0.5)
                         continue
@@ -137,7 +141,7 @@ def fetch_whale_balances(mint):
                 body = r.json()
                 if not isinstance(body, dict) or body.get("error"):
                     if isinstance(body, dict) and body.get("error"):
-                        log(f"  RPC {endpoint} -> error {body['error'].get('code')}")
+                        log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} -> error {body['error'].get('code')}")
                     break
                 result = (body.get("result") or {}).get("value") or []
                 if not result:
@@ -152,11 +156,11 @@ def fetch_whale_balances(mint):
                         raw = float(acc.get("amount") or 0) / (10 ** int(acc.get("decimals") or 0))
                     balances[address] = float(raw or 0)
                 if balances:
-                    log(f"  RPC {endpoint} -> whale data OK ({len(balances)} accounts)")
+                    log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} -> whale data OK ({len(balances)} accounts)")
                     return balances
                 break
             except Exception as e:
-                log(f"  RPC {endpoint} failed (attempt {attempt}/2): {e}")
+                log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/2): {e}")
                 if attempt == 2:
                     break
     return None
