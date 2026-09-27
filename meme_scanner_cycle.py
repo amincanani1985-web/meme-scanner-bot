@@ -163,6 +163,20 @@ def fetch_whale_balances(mint):
                 log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/2): {e}")
                 if attempt == 2:
                     break
+    # RPC providers are frequently rate-limited in GitHub Actions. Rugcheck already
+    # supplies the same top-holder snapshot used by the security filter, so use it as
+    # a safe degraded source instead of rejecting every candidate when RPC is down.
+    rc_report = fetch_rugcheck(mint)
+    holders = (rc_report or {}).get("topHolders") or []
+    fallback = {}
+    for holder in holders[:WHALE_TOP_N]:
+        address = holder.get("address") or holder.get("owner")
+        pct = holder.get("pct")
+        if address and pct is not None:
+            fallback[address] = float(pct)
+    if fallback:
+        log(f"  Rugcheck holder snapshot -> fallback OK ({len(fallback)} accounts)")
+        return fallback
     return None
 
 
