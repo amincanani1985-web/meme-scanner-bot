@@ -1,5 +1,5 @@
 name: Deploy dashboard to GitHub Pages
-# deployment trigger 2026-09-27-live-bundle-force-2
+# deployment trigger 2026-09-27-node24-migration
 on:
   push:
     branches: ["main"]
@@ -23,11 +23,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Build live data bundle
         run: |
           python - <<'PY'
@@ -56,4 +58,4 @@ jobs:
           path: ./dashboard
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
