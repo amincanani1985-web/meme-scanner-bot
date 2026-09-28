@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import requests
 
-VERSION = "v13-entry-hardened"
+VERSION = "v14-opportunity-scan"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
