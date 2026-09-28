@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import requests
 
-VERSION = "v14-opportunity-scan"
+VERSION = "v15-opportunity-learning"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
@@ -33,6 +33,9 @@ WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
 TARGET_TRADES = 100
+OPPORTUNITY_ENTRY_THRESHOLD = 60.0
+LEARNING_MIN_TRADES = 10
+LEARNING_ALPHA = 0.20
 HELIUS_RPC_URL = os.environ.get("HELIUS_RPC_URL", "").strip()
 HELIUS_API_KEY = os.environ.get("HELIUS_API_KEY", "").strip()
 HELIUS_API_ENDPOINT = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}" if HELIUS_API_KEY else ""
@@ -204,6 +207,39 @@ def passes_security_filter(rc_report):
     return True, "ok"
 
 
+def score_market_opportunity(pair, learning=None):
+    liq = float((pair.get("liquidity") or {}).get("usd") or 0)
+    vol_h1 = float((pair.get("volume") or {}).get("h1") or 0)
+    mcap = float(pair.get("marketCap") or pair.get("fdv") or 0)
+    txns = (pair.get("txns") or {}).get("m5") or {}
+    buys = float(txns.get("buys") or 0)
+    sells = float(txns.get("sells") or 0)
+    total = buys + sells
+    pc = pair.get("priceChange") or {}
+    m5 = float(pc.get("m5") or 0)
+    h1 = float(pc.get("h1") or 0)
+    liq_mcap = liq / mcap if mcap > 0 else 0
+    buy_ratio = buys / sells if sells > 0 else (2.5 if buys > 0 else 0)
+    vol_liq = vol_h1 / liq if liq > 0 else 0
+    components = {
+        "liquidity": min(20.0, 20.0 * min(liq / 20000.0, 1.0)),
+        "volume": min(20.0, 20.0 * min(vol_liq / 2.0, 1.0)),
+        "momentum": min(15.0, max(0.0, 7.5 + m5 * 2.0)) + min(5.0, max(0.0, h1 * 0.5)),
+        "buy_pressure": min(15.0, max(0.0, 7.5 + (buy_ratio - 1.0) * 5.0)),
+        "activity": min(10.0, total / 4.0),
+        "liq_mcap": min(10.0, max(0.0, liq_mcap * 40.0)),
+        "stability": 10.0 if -5.0 <= h1 <= 50.0 else 4.0,
+    }
+    score = sum(components.values())
+    if learning and learning.get("trades", 0) >= LEARNING_MIN_TRADES:
+        bucket = str(min(90, max(0, int(score // 10) * 10)))
+        stats = (learning.get("buckets") or {}).get(bucket) or {}
+        n = stats.get("n", 0)
+        if n >= 3:
+            score += ((stats.get("wins", 0) / n) - 0.5) * 12.0
+    return max(0.0, min(100.0, score)), components
+
+
 def passes_market_filter(pair):
     liq = (pair.get("liquidity") or {}).get("usd") or 0
     vol_h1 = (pair.get("volume") or {}).get("h1") or 0
@@ -215,18 +251,15 @@ def passes_market_filter(pair):
         return False, f"low_liquidity:{liq}"
     if vol_h1 < MIN_VOLUME_H1_USD:
         return False, f"low_volume:{vol_h1}"
-    if mcap and (liq / mcap) < MIN_LIQ_MCAP_RATIO:
-        return False, f"low_liq_mcap_ratio:{liq/mcap:.3f}"
-    if sells > 0 and (buys / sells) < MIN_BUY_SELL_RATIO:
-        return False, f"weak_buy_pressure:{buys}/{sells}"
     if sells == 0 and buys == 0:
         return False, "no_recent_txns"
-    if price_change_m5 < MIN_PRICE_CHANGE_M5_PCT:
-        return False, f"weak_momentum:{price_change_m5:.2f}%"
-    return True, "ok"
+    score, _ = score_market_opportunity(pair)
+    if score < OPPORTUNITY_ENTRY_THRESHOLD:
+        return False, f"opportunity_score:{score:.1f}"
+    return True, f"opportunity_score:{score:.1f}"
 
 
-def open_position(state, mint, pair, whale_balances):
+def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_components=None):
     price = float(pair.get("priceUsd") or 0)
     if price <= 0 or whale_balances is None:
         return False
@@ -241,9 +274,24 @@ def open_position(state, mint, pair, whale_balances):
         "trailing_active": False,
         "entry_liquidity": liq,
         "whale_baseline": whale_balances,
+        "signal_score": round(signal_score, 2),
+        "signal_components": signal_components or {},
     }
     log(f"  OPENED {symbol} ({mint[:6]}...) @ ${price:.8f} liq=${liq:.0f}")
     return True
+
+
+def update_learning(state, pos, pnl_pct):
+    learning = state.setdefault("learning", {"trades": 0, "wins": 0, "buckets": {}})
+    score = float(pos.get("signal_score") or 0)
+    bucket = str(min(90, max(0, int(score // 10) * 10)))
+    stats = learning.setdefault("buckets", {}).setdefault(bucket, {"n": 0, "wins": 0, "avg_pnl": 0.0})
+    stats["n"] += 1
+    if pnl_pct > 0:
+        learning["wins"] += 1
+        stats["wins"] += 1
+    stats["avg_pnl"] = round(stats["avg_pnl"] + LEARNING_ALPHA * (pnl_pct * 100.0 - stats["avg_pnl"]), 4)
+    learning["trades"] += 1
 
 
 def close_position(state, mint, exit_price, reason):
@@ -253,7 +301,8 @@ def close_position(state, mint, exit_price, reason):
     pnl_usd = pos["amount_usd"] * pnl_pct
     state["equity"] += pnl_usd
     state["trade_count"] += 1
-    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason})
+    update_learning(state, pos, pnl_pct)
+    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason, "signal_score": round(float(pos.get("signal_score") or 0), 2)})
     if reason == "liquidity_drained":
         if mint not in state["blacklist"]:
             state["blacklist"].append(mint)
@@ -354,6 +403,10 @@ def look_for_entries(state):
         pair = fetch_dex_pair(mint)
         if pair is None:
             continue
+        score, components = score_market_opportunity(pair, state.get("learning") or {})
+        if score < OPPORTUNITY_ENTRY_THRESHOLD:
+            log(f"  skipped {mint[:6]}...: opportunity_score:{score:.1f}")
+            continue
         ok, why = passes_market_filter(pair)
         if not ok:
             log(f"  skipped {mint[:6]}...: {why}")
@@ -367,7 +420,7 @@ def look_for_entries(state):
         if whale_balances is None:
             log(f"  skipped {mint[:6]}...: whale data unavailable")
             continue
-        if open_position(state, mint, pair, whale_balances):
+        if open_position(state, mint, pair, whale_balances, score, components):
             slots -= 1
 
 
