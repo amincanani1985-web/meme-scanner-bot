@@ -113,7 +113,7 @@ def fetch_dex_pair(mint):
 
 def discover_candidates():
     mints = set()
-    for url in ["https://api.dexscreener.com/token-boosts/latest/v1", "https://api.dexscreener.com/token-profiles/latest/v1"]:
+    for url in ["https://api.dexscreener.com/token-boosts/latest/v1", "https://api.dexscreener.com/token-boosts/top/v1", "https://api.dexscreener.com/token-profiles/latest/v1"]:
         data = safe_get_json(url)
         if not data:
             continue
