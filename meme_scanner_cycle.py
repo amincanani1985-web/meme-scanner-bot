@@ -302,7 +302,7 @@ def close_position(state, mint, exit_price, reason):
     state["equity"] += pnl_usd
     state["trade_count"] += 1
     update_learning(state, pos, pnl_pct)
-    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason, "signal_score": round(float(pos.get("signal_score") or 0), 2)})
+    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason})
     if reason == "liquidity_drained":
         if mint not in state["blacklist"]:
             state["blacklist"].append(mint)
