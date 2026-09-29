@@ -18,12 +18,14 @@ STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
 POSITION_SIZE_USD = 100.0
-MAX_CONCURRENT_POSITIONS = 10
+MAX_POSITION_EQUITY_FRACTION = 0.05
+MIN_ENTRY_EQUITY_USD = 200.0
+MAX_CONCURRENT_POSITIONS = 8
 TAKE_PROFIT_ACTIVATE = 0.08
 TRAILING_DROP = 0.05
 STOP_LOSS = 0.10
 MAX_HOLD_SECONDS = 15 * 60
-MIN_LIQUIDITY_USD = 5000
+MIN_LIQUIDITY_USD = 15000
 MIN_VOLUME_H1_USD = 2000
 MIN_LIQ_MCAP_RATIO = 0.15
 MIN_BUY_SELL_RATIO = 1.5
@@ -240,7 +242,7 @@ def score_market_opportunity(pair, learning=None):
     return max(0.0, min(100.0, score)), components
 
 
-def passes_market_filter(pair):
+def passes_market_filter(pair, learning=None):
     liq = (pair.get("liquidity") or {}).get("usd") or 0
     vol_h1 = (pair.get("volume") or {}).get("h1") or 0
     mcap = pair.get("marketCap") or pair.get("fdv") or 0
@@ -253,7 +255,12 @@ def passes_market_filter(pair):
         return False, f"low_volume:{vol_h1}"
     if sells == 0 and buys == 0:
         return False, "no_recent_txns"
-    score, _ = score_market_opportunity(pair)
+    if mcap > 0 and liq / mcap < 0.20:
+        return False, f"low_liq_mcap_ratio:{liq / mcap:.2f}"
+    total_m5 = buys + sells
+    if total_m5 >= 4 and buys / max(sells, 1) < 1.20:
+        return False, f"weak_buy_pressure:{buys}/{sells}"
+    score, _ = score_market_opportunity(pair, learning or {})
     if score < OPPORTUNITY_ENTRY_THRESHOLD:
         return False, f"opportunity_score:{score:.1f}"
     return True, f"opportunity_score:{score:.1f}"
@@ -263,13 +270,15 @@ def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_co
     price = float(pair.get("priceUsd") or 0)
     if price <= 0 or whale_balances is None:
         return False
+    if state.get("equity", 0) < MIN_ENTRY_EQUITY_USD:
+        return False
     symbol = (pair.get("baseToken") or {}).get("symbol", "?")
     liq = float((pair.get("liquidity") or {}).get("usd") or 0)
     state["positions"][mint] = {
         "symbol": symbol,
         "entry_price": price,
         "entry_time": time.time(),
-        "amount_usd": POSITION_SIZE_USD,
+        "amount_usd": round(min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION), 2),
         "peak_price": price,
         "trailing_active": False,
         "entry_liquidity": liq,
@@ -407,7 +416,7 @@ def look_for_entries(state):
         if score < OPPORTUNITY_ENTRY_THRESHOLD:
             log(f"  skipped {mint[:6]}...: opportunity_score:{score:.1f}")
             continue
-        ok, why = passes_market_filter(pair)
+        ok, why = passes_market_filter(pair, state.get("learning") or {})
         if not ok:
             log(f"  skipped {mint[:6]}...: {why}")
             continue
