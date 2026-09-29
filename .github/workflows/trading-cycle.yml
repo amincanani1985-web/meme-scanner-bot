@@ -44,36 +44,46 @@ jobs:
         run: python -m py_compile meme_scanner_cycle.py tests/test_scanner_logic.py
 
       - name: Run scanner tests 10 times
+        shell: bash
         run: |
+          set -euo pipefail
           for i in $(seq 1 10); do
             echo "=== TEST PASS $i/10 ==="
-            python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee /tmp/test.log\n            grep -q 'Ran 10 tests' /tmp/test.log
+            python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee /tmp/test.log
+            grep -q "Ran 10 tests" /tmp/test.log
           done
 
       - name: Run one trading cycle
         run: python meme_scanner_cycle.py
 
       - name: Commit updated state
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "trading-bot"
           git config user.email "trading-bot@users.noreply.github.com"
+
           python - <<'PY'
           import json
           from pathlib import Path
-          state=json.loads(Path("state.json").read_text())
-          csv=Path("trades_log.csv").read_text() if Path("trades_log.csv").exists() else ""
+
+          state = json.loads(Path("state.json").read_text())
+          csv = Path("trades_log.csv").read_text() if Path("trades_log.csv").exists() else ""
           Path("dashboard/live-data.js").write_text(
-              "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\\n" +
-              "window.LIVE_CSV=" + json.dumps(csv) + ";\\n",
+              "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\n"
+              "window.LIVE_CSV=" + json.dumps(csv) + ";\n",
               encoding="utf-8",
           )
           PY
+
           git add state.json dashboard/live-data.js
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
+
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0
           fi
+
           git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push origin HEAD:main
