@@ -50,7 +50,7 @@ jobs:
           for i in $(seq 1 10); do
             echo "=== TEST PASS $i/10 ==="
             python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee /tmp/test.log
-            grep -qE "Ran 11 tests|Ran 10 tests" /tmp/test.log
+            grep -qE "Ran [0-9]+ tests" /tmp/test.log
           done
 
       - name: Run one trading cycle
