@@ -75,6 +75,7 @@ jobs:
             exit 0
           fi
           git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin main
           git push origin HEAD:main
 
       - name: Notify GitHub on success
