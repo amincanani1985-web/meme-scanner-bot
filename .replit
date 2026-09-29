@@ -1,0 +1,5 @@
+entrypoint = "meme_scanner_cycle.py"
+run = "python meme_scanner_cycle.py"
+
+[deployment]
+run = ["python", "meme_scanner_cycle.py"]
