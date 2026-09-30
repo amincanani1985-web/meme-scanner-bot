@@ -50,7 +50,8 @@ MAX_HOLDER_CONCENTRATION = 0.45
 WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
-TARGET_TRADES = 100
+TARGET_TRADES = 200
+MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.20
 OPPORTUNITY_ENTRY_THRESHOLD = 60.0
 ADAPTIVE_MIN_TRADES = 20
 ADAPTIVE_UPDATE_EVERY_TRADES = 5
@@ -63,8 +64,9 @@ RPC_ENDPOINTS = [
     HELIUS_RPC_URL,
     HELIUS_API_ENDPOINT,
     "https://rpc.solanatracker.io/public",
-    "https://rpc.nodeflare.app/solana/public",
+    "https://rpc.ankr.com/solana",
     "https://solana-rpc.publicnode.com",
+    "https://api.mainnet.solana.com",
     "https://api.mainnet-beta.solana.com",
 ]
 RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
@@ -468,7 +470,9 @@ def look_for_entries(state):
     if state.get("trade_count", 0) >= TARGET_TRADES:
         log(f"  target reached ({TARGET_TRADES}), no new entries")
         return
-    slots = min(MAX_CONCURRENT_POSITIONS - len(state["positions"]), TARGET_TRADES - state.get("trade_count", 0))
+    max_exposure_slots = int((state.get("equity", 0) * MAX_PORTFOLIO_EXPOSURE_FRACTION) / max(POSITION_SIZE_USD, 1.0))
+    max_exposure_slots = max(1, max_exposure_slots)
+    slots = min(MAX_CONCURRENT_POSITIONS - len(state["positions"]), max_exposure_slots - len(state["positions"]), TARGET_TRADES - state.get("trade_count", 0))
     if slots <= 0:
         log("  max concurrent positions reached, skipping discovery")
         return
