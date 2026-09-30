@@ -13,6 +13,12 @@ from datetime import datetime, timezone
 
 import requests
 
+try:
+    from learn_agent import adaptive_update_state, load_observations
+except Exception:
+    adaptive_update_state = None
+    load_observations = lambda path="strategy_observations.csv": []
+
 VERSION = "v16-adaptive-self-correcting"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
@@ -63,7 +69,9 @@ RPC_ENDPOINTS = [
 ]
 RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
 HEADERS = {"User-Agent": "meme-scanner-cycle/13"}
-TIMEOUT = 6
+TIMEOUT = 5
+RPC_TIMEOUT = 4
+RPC_MAX_RETRIES = 1
 HTTP_RETRIES = 3
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
@@ -178,14 +186,11 @@ def fetch_rugcheck(mint):
 def fetch_whale_balances(mint):
     payload = {"jsonrpc": "2.0", "id": 1, "method": "getTokenLargestAccounts", "params": [mint, {"commitment": "confirmed"}]}
     for endpoint in RPC_ENDPOINTS:
-        for attempt in range(1, 3):
+        for attempt in range(1, RPC_MAX_RETRIES + 1):
             try:
-                r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
+                r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=RPC_TIMEOUT)
                 if r.status_code != 200:
                     log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} -> HTTP {r.status_code}")
-                    if r.status_code in RETRYABLE_STATUS and attempt == 1:
-                        time.sleep(0.5)
-                        continue
                     break
                 body = r.json()
                 if not isinstance(body, dict) or body.get("error"):
@@ -508,6 +513,18 @@ def look_for_entries(state):
 
 def main():
     state = load_state()
+    state.setdefault("strategy", {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD})
+    state.setdefault("candidate_observations", {})
+    if adaptive_update_state is not None:
+        try:
+            observations = load_observations(LEARNING_OBSERVATIONS_CSV)
+            strategy = state.get("strategy") or {}
+            last_update = int(strategy.get("last_update_trade", 0) or 0)
+            if state.get("trade_count", 0) >= ADAPTIVE_MIN_TRADES and state.get("trade_count", 0) - last_update >= ADAPTIVE_UPDATE_EVERY_TRADES:
+                adaptive_update_state(state, observations)
+                log(f"  adaptive strategy: threshold={get_entry_threshold(state):.1f} status={state.get('strategy', {}).get('status')}")
+        except Exception as e:
+            log(f"  adaptive learning skipped: {e}")
     state["scan_count"] = state.get("scan_count", 0) + 1
     log(f"=== {VERSION} cycle #{state['scan_count']} ===")
     manage_open_positions(state)
