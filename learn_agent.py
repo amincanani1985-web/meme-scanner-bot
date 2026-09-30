@@ -3,9 +3,9 @@
 import csv, json
 from pathlib import Path
 
-MIN_TRADES=20
+MIN_TRADES=30
 CANDIDATE_THRESHOLDS=(60.0,62.5,65.0,67.5,70.0)
-MIN_CANDIDATE_SAMPLES=5
+MIN_CANDIDATE_SAMPLES=8
 ROLLBACK_WINDOW=10
 ROLLBACK_WIN_RATE=0.30
 ROLLBACK_AVG_PNL=-2.0
@@ -31,7 +31,7 @@ def _metrics(rows,threshold):
 
 def walk_forward(observations,threshold,train_ratio=0.7):
     rows=sorted(observations,key=lambda r:r["timestamp"])
-    if len(rows)<MIN_TRADES: return {"eligible":False,"reason":"insufficient_history","threshold":threshold}
+    if len(rows)<MIN_TRADES: return {"eligible":False,"reason":f"insufficient_history:{len(rows)}/{MIN_TRADES}","threshold":threshold}
     split=max(1,int(len(rows)*train_ratio)); train=rows[:split]; val=rows[split:]
     tm=_metrics(train,threshold); vm=_metrics(val,threshold)
     return {"eligible":vm["n"]>=MIN_CANDIDATE_SAMPLES,"threshold":threshold,"train":tm,"validation":vm}
@@ -56,7 +56,11 @@ def should_rollback(observations,current_threshold):
 def adaptive_update_state(state,observations):
     strategy=state.setdefault("strategy",{"active_threshold":BASELINE_THRESHOLD,"candidate_threshold":None,"status":"baseline","last_update_trade":0,"rollback_threshold":BASELINE_THRESHOLD})
     current=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
-    if len(observations)<MIN_TRADES: return state
+    if len(observations)<MIN_TRADES:
+        state.setdefault("strategy", {})["status"] = "waiting_for_history"
+        state["strategy"]["history_rows"] = len(observations)
+        state["strategy"]["required_rows"] = MIN_TRADES
+        return state
     rollback,reason=should_rollback(observations,current)
     if current!=BASELINE_THRESHOLD and rollback:
         strategy.update({"active_threshold":BASELINE_THRESHOLD,"candidate_threshold":None,"status":"rolled_back","rollback_threshold":BASELINE_THRESHOLD,"rollback_reason":reason})
