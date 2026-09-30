@@ -74,6 +74,21 @@ class ScannerLogicTests(unittest.TestCase):
         pair_data = pair(priceUsd="1.0", baseToken={"symbol": "TEST"})
         self.assertFalse(scanner.open_position(state, "mint", pair_data, {"holder": 100}, 70, {}))
 
+    def test_liquidity_drop_requires_confirmation(self):
+        pos = {"entry_liquidity": 20000, "liquidity_drain_hits": 0}
+        self.assertFalse(scanner.liquidity_drain_detected(pos, 9000))
+        self.assertTrue(scanner.liquidity_drain_detected(pos, 9000))
+
+    def test_liquidity_drop_below_half_requires_two_observations(self):
+        pos = {"entry_liquidity": 30000, "liquidity_drain_hits": 0}
+        self.assertFalse(scanner.liquidity_drain_detected(pos, 14000))
+        self.assertTrue(scanner.liquidity_drain_detected(pos, 14000))
+
+    def test_liquidity_recovery_resets_confirmation(self):
+        pos = {"entry_liquidity": 30000, "liquidity_drain_hits": 1}
+        self.assertFalse(scanner.liquidity_drain_detected(pos, 20000))
+        self.assertEqual(pos["liquidity_drain_hits"], 0)
+
     def test_learning_changes_score_after_history(self):
         learning = {"trades": 10, "wins": 8, "buckets": {"80": {"n": 5, "wins": 4}}}
         score, _ = scanner.score_market_opportunity(pair(), learning)
