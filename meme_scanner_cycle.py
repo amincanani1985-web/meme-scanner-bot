@@ -26,6 +26,9 @@ TRAILING_DROP = 0.05
 STOP_LOSS = 0.10
 MAX_HOLD_SECONDS = 15 * 60
 MIN_LIQUIDITY_USD = 15000
+LIQUIDITY_EMERGENCY_USD = 10000
+LIQUIDITY_DRAIN_RATIO = 0.50
+LIQUIDITY_DRAIN_CONFIRMATIONS = 2
 MIN_VOLUME_H1_USD = 2000
 MIN_LIQ_MCAP_RATIO = 0.15
 MIN_BUY_SELL_RATIO = 1.5
@@ -282,6 +285,7 @@ def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_co
         "peak_price": price,
         "trailing_active": False,
         "entry_liquidity": liq,
+        "liquidity_drain_hits": 0,
         "whale_baseline": whale_balances,
         "signal_score": round(signal_score, 2),
         "signal_components": signal_components or {},
@@ -301,6 +305,21 @@ def update_learning(state, pos, pnl_pct):
         stats["wins"] += 1
     stats["avg_pnl"] = round(stats["avg_pnl"] + LEARNING_ALPHA * (pnl_pct * 100.0 - stats["avg_pnl"]), 4)
     learning["trades"] += 1
+
+
+def liquidity_drain_detected(pos, liquidity):
+    """Require persistent liquidity loss; allow an emergency absolute floor."""
+    entry_liq = float(pos.get("entry_liquidity") or 0)
+    if entry_liq <= 0 or liquidity <= 0:
+        return False
+    if liquidity <= LIQUIDITY_EMERGENCY_USD:
+        return True
+    if liquidity >= entry_liq * LIQUIDITY_DRAIN_RATIO:
+        pos["liquidity_drain_hits"] = 0
+        return False
+    hits = int(pos.get("liquidity_drain_hits") or 0) + 1
+    pos["liquidity_drain_hits"] = hits
+    return hits >= LIQUIDITY_DRAIN_CONFIRMATIONS
 
 
 def close_position(state, mint, exit_price, reason):
@@ -343,8 +362,7 @@ def manage_open_positions(state):
         if pos.get("entry_liquidity") is None:
             pos["entry_liquidity"] = liq
             log(f"  {pos['symbol']}: initialized legacy entry liquidity=${liq:.0f}")
-        entry_liq = pos.get("entry_liquidity")
-        if entry_liq > 0 and liq < entry_liq * 0.80:
+        if liquidity_drain_detected(pos, liq):
             close_position(state, mint, price, "liquidity_drained")
             continue
         baseline = pos.get("whale_baseline") or {}
