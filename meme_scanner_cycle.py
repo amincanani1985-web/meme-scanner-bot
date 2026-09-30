@@ -368,7 +368,7 @@ def liquidity_drain_detected(pos, liquidity):
     entry_liq = float(pos.get("entry_liquidity") or 0)
     if entry_liq <= 0 or liquidity <= 0:
         return False
-    if liquidity <= LIQUIDITY_EMERGENCY_USD:
+    if liquidity <= LIQUIDITY_EMERGENCY_USD or liquidity <= entry_liq * 0.35:
         return True
     if liquidity >= entry_liq * LIQUIDITY_DRAIN_RATIO:
         pos["liquidity_drain_hits"] = 0
