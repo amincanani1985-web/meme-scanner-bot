@@ -74,9 +74,8 @@ class ScannerLogicTests(unittest.TestCase):
         pair_data = pair(priceUsd="1.0", baseToken={"symbol": "TEST"})
         self.assertFalse(scanner.open_position(state, "mint", pair_data, {"holder": 100}, 70, {}))
 
-    def test_liquidity_drop_requires_confirmation(self):
+    def test_emergency_liquidity_floor_closes_immediately(self):
         pos = {"entry_liquidity": 20000, "liquidity_drain_hits": 0}
-        self.assertFalse(scanner.liquidity_drain_detected(pos, 9000))
         self.assertTrue(scanner.liquidity_drain_detected(pos, 9000))
 
     def test_liquidity_drop_below_half_requires_two_observations(self):
