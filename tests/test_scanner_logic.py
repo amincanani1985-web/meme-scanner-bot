@@ -94,7 +94,6 @@ class ScannerLogicTests(unittest.TestCase):
         baseline, _ = scanner.score_market_opportunity(pair())
         self.assertGreater(score, baseline)
 
-
     def test_entry_confirmation_resets_on_score_deterioration(self):
         s = {"candidate_observations": {}}
         self.assertFalse(scanner.candidate_confirmation(s, "mint", 70))
@@ -115,6 +114,7 @@ class ScannerLogicTests(unittest.TestCase):
     def test_severe_liquidity_drop_exits_immediately(self):
         pos = {"entry_liquidity": 40000, "liquidity_drain_hits": 0}
         self.assertTrue(scanner.liquidity_drain_detected(pos, 13999))
+
 
 if __name__ == "__main__":
     unittest.main()
