@@ -13,7 +13,13 @@ from datetime import datetime, timezone
 
 import requests
 
-VERSION = "v15-opportunity-learning"
+try:
+    from learn_agent import adaptive_update_state, load_observations
+except Exception:
+    adaptive_update_state = None
+    load_observations = lambda path="strategy_observations.csv": []
+
+VERSION = "v16-adaptive-self-correcting"
 STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
@@ -24,6 +30,13 @@ MAX_CONCURRENT_POSITIONS = 8
 TAKE_PROFIT_ACTIVATE = 0.08
 TRAILING_DROP = 0.05
 STOP_LOSS = 0.10
+HARD_STOP_LOSS = 0.20
+ENTRY_CONFIRMATIONS = 2
+ENTRY_CONFIRMATION_WINDOW_SECONDS = 15 * 60
+ENTRY_SLIPPAGE_BPS = 50
+EXIT_SLIPPAGE_BPS = 100
+MAX_IMPACT_FRACTION = 0.01
+LEARNING_OBSERVATIONS_CSV = "strategy_observations.csv"
 MAX_HOLD_SECONDS = 15 * 60
 MIN_LIQUIDITY_USD = 15000
 LIQUIDITY_EMERGENCY_USD = 10000
@@ -39,6 +52,8 @@ WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
 TARGET_TRADES = 100
 OPPORTUNITY_ENTRY_THRESHOLD = 60.0
+ADAPTIVE_MIN_TRADES = 20
+ADAPTIVE_UPDATE_EVERY_TRADES = 5
 LEARNING_MIN_TRADES = 10
 LEARNING_ALPHA = 0.20
 HELIUS_RPC_URL = os.environ.get("HELIUS_RPC_URL", "").strip()
@@ -54,7 +69,9 @@ RPC_ENDPOINTS = [
 ]
 RPC_ENDPOINTS = list(dict.fromkeys(u for u in RPC_ENDPOINTS if u))
 HEADERS = {"User-Agent": "meme-scanner-cycle/13"}
-TIMEOUT = 6
+TIMEOUT = 5
+RPC_TIMEOUT = 4
+RPC_MAX_RETRIES = 1
 HTTP_RETRIES = 3
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
@@ -68,7 +85,7 @@ def load_state():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r") as f:
             return json.load(f)
-    return {"equity": STARTING_EQUITY, "positions": {}, "blacklist": [], "cooldowns": {}, "trade_count": 0, "scan_count": 0, "version": VERSION}
+    return {"equity": STARTING_EQUITY, "positions": {}, "blacklist": [], "cooldowns": {}, "trade_count": 0, "scan_count": 0, "version": VERSION, "candidate_observations": {}, "strategy": {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD}}
 
 
 def save_state(state):
@@ -81,10 +98,40 @@ def save_state(state):
 def append_trade(row):
     is_new = not os.path.exists(TRADES_CSV)
     with open(TRADES_CSV, "a", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["timestamp", "mint", "symbol", "entry_price", "exit_price", "pnl_pct", "pnl_usd", "equity_after", "reason"])
+        fields = ["timestamp", "mint", "symbol", "entry_price", "exit_price", "pnl_pct", "pnl_usd", "equity_after", "reason"]
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         if is_new:
             w.writeheader()
         w.writerow(row)
+
+def append_learning_observation(pos, pnl_pct, reason):
+    is_new = not os.path.exists(LEARNING_OBSERVATIONS_CSV)
+    fields = ["timestamp", "score", "pnl_pct", "reason"]
+    with open(LEARNING_OBSERVATIONS_CSV, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        if is_new:
+            w.writeheader()
+        w.writerow({"timestamp": datetime.now(timezone.utc).isoformat(), "score": round(float(pos.get("signal_score") or 0), 4), "pnl_pct": round(pnl_pct * 100, 4), "reason": reason})
+
+def get_entry_threshold(state):
+    strategy = state.get("strategy") or {}
+    try:
+        threshold = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
+    except (TypeError, ValueError):
+        threshold = OPPORTUNITY_ENTRY_THRESHOLD
+    return max(55.0, min(70.0, threshold))
+
+def candidate_confirmation(state, mint, score):
+    now = time.time()
+    observations = state.setdefault("candidate_observations", {})
+    item = observations.get(mint) or {"hits": 0, "last_seen": 0.0, "last_score": 0.0}
+    if now - float(item.get("last_seen") or 0) > ENTRY_CONFIRMATION_WINDOW_SECONDS:
+        item = {"hits": 0, "last_seen": 0.0, "last_score": 0.0}
+    item["hits"] = int(item.get("hits") or 0) + 1
+    item["last_seen"] = now
+    item["last_score"] = round(score, 2)
+    observations[mint] = item
+    return item["hits"] >= ENTRY_CONFIRMATIONS
 
 
 def safe_get_json(url, params=None):
@@ -139,14 +186,11 @@ def fetch_rugcheck(mint):
 def fetch_whale_balances(mint):
     payload = {"jsonrpc": "2.0", "id": 1, "method": "getTokenLargestAccounts", "params": [mint, {"commitment": "confirmed"}]}
     for endpoint in RPC_ENDPOINTS:
-        for attempt in range(1, 3):
+        for attempt in range(1, RPC_MAX_RETRIES + 1):
             try:
-                r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=TIMEOUT)
+                r = requests.post(endpoint, json=payload, headers=HEADERS, timeout=RPC_TIMEOUT)
                 if r.status_code != 200:
                     log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} -> HTTP {r.status_code}")
-                    if r.status_code in RETRYABLE_STATUS and attempt == 1:
-                        time.sleep(0.5)
-                        continue
                     break
                 body = r.json()
                 if not isinstance(body, dict) or body.get("error"):
@@ -245,13 +289,14 @@ def score_market_opportunity(pair, learning=None):
     return max(0.0, min(100.0, score)), components
 
 
-def passes_market_filter(pair, learning=None):
+def passes_market_filter(pair, learning=None, threshold=None):
     liq = (pair.get("liquidity") or {}).get("usd") or 0
     vol_h1 = (pair.get("volume") or {}).get("h1") or 0
     mcap = pair.get("marketCap") or pair.get("fdv") or 0
     txns_m5 = (pair.get("txns") or {}).get("m5") or {}
     buys, sells = txns_m5.get("buys", 0), txns_m5.get("sells", 0)
     price_change_m5 = (pair.get("priceChange") or {}).get("m5") or 0
+    price_change_h1 = (pair.get("priceChange") or {}).get("h1") or 0
     if liq < MIN_LIQUIDITY_USD:
         return False, f"low_liquidity:{liq}"
     if vol_h1 < MIN_VOLUME_H1_USD:
@@ -263,8 +308,11 @@ def passes_market_filter(pair, learning=None):
     total_m5 = buys + sells
     if total_m5 >= 4 and buys / max(sells, 1) < 1.20:
         return False, f"weak_buy_pressure:{buys}/{sells}"
+    if price_change_m5 < MIN_PRICE_CHANGE_M5_PCT or price_change_h1 <= 0:
+        return False, f"weak_momentum:m5={price_change_m5:.2f},h1={price_change_h1:.2f}"
     score, _ = score_market_opportunity(pair, learning or {})
-    if score < OPPORTUNITY_ENTRY_THRESHOLD:
+    active_threshold = float(threshold if threshold is not None else OPPORTUNITY_ENTRY_THRESHOLD)
+    if score < active_threshold:
         return False, f"opportunity_score:{score:.1f}"
     return True, f"opportunity_score:{score:.1f}"
 
@@ -279,9 +327,11 @@ def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_co
     liq = float((pair.get("liquidity") or {}).get("usd") or 0)
     state["positions"][mint] = {
         "symbol": symbol,
-        "entry_price": price,
+        "entry_price": price * (1.0 + ENTRY_SLIPPAGE_BPS / 10000.0),
+        "market_entry_price": price,
         "entry_time": time.time(),
         "amount_usd": round(min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION), 2),
+        "estimated_impact": round(min(MAX_IMPACT_FRACTION, (min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION) / max(liq, 1.0)) * 0.5), 6),
         "peak_price": price,
         "trailing_active": False,
         "entry_liquidity": liq,
@@ -325,11 +375,14 @@ def liquidity_drain_detected(pos, liquidity):
 def close_position(state, mint, exit_price, reason):
     pos = state["positions"].pop(mint)
     entry_price = pos["entry_price"]
-    pnl_pct = (exit_price - entry_price) / entry_price if entry_price else 0
+    impact = float(pos.get("estimated_impact") or 0.0)
+    effective_exit = exit_price * max(0.0, 1.0 - EXIT_SLIPPAGE_BPS / 10000.0 - impact)
+    pnl_pct = (effective_exit - entry_price) / entry_price if entry_price else 0
     pnl_usd = pos["amount_usd"] * pnl_pct
     state["equity"] += pnl_usd
     state["trade_count"] += 1
     update_learning(state, pos, pnl_pct)
+    append_learning_observation(pos, pnl_pct, reason)
     append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason})
     if reason == "liquidity_drained":
         if mint not in state["blacklist"]:
@@ -391,6 +444,9 @@ def manage_open_positions(state):
         pnl_pct = (price - pos["entry_price"]) / pos["entry_price"]
         if price > pos["peak_price"]:
             pos["peak_price"] = price
+        if pnl_pct <= -HARD_STOP_LOSS:
+            close_position(state, mint, price, "hard_stop_loss")
+            continue
         if pnl_pct <= -STOP_LOSS:
             close_position(state, mint, price, "stop_loss")
             continue
@@ -431,12 +487,16 @@ def look_for_entries(state):
         if pair is None:
             continue
         score, components = score_market_opportunity(pair, state.get("learning") or {})
-        if score < OPPORTUNITY_ENTRY_THRESHOLD:
+        active_threshold = get_entry_threshold(state)
+        if score < active_threshold:
             log(f"  skipped {mint[:6]}...: opportunity_score:{score:.1f}")
             continue
-        ok, why = passes_market_filter(pair, state.get("learning") or {})
+        ok, why = passes_market_filter(pair, state.get("learning") or {}, active_threshold)
         if not ok:
             log(f"  skipped {mint[:6]}...: {why}")
+            continue
+        if not candidate_confirmation(state, mint, score):
+            log(f"  skipped {mint[:6]}...: awaiting_entry_confirmation")
             continue
         rc = fetch_rugcheck(mint)
         ok, why = passes_security_filter(rc)
@@ -453,6 +513,18 @@ def look_for_entries(state):
 
 def main():
     state = load_state()
+    state.setdefault("strategy", {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD})
+    state.setdefault("candidate_observations", {})
+    if adaptive_update_state is not None:
+        try:
+            observations = load_observations(LEARNING_OBSERVATIONS_CSV)
+            strategy = state.get("strategy") or {}
+            last_update = int(strategy.get("last_update_trade", 0) or 0)
+            if state.get("trade_count", 0) >= ADAPTIVE_MIN_TRADES and state.get("trade_count", 0) - last_update >= ADAPTIVE_UPDATE_EVERY_TRADES:
+                adaptive_update_state(state, observations)
+                log(f"  adaptive strategy: threshold={get_entry_threshold(state):.1f} status={state.get('strategy', {}).get('status')}")
+        except Exception as e:
+            log(f"  adaptive learning skipped: {e}")
     state["scan_count"] = state.get("scan_count", 0) + 1
     log(f"=== {VERSION} cycle #{state['scan_count']} ===")
     manage_open_positions(state)

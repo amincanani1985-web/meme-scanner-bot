@@ -53,6 +53,12 @@ jobs:
             grep -qE "Ran [0-9]+ tests" /tmp/test.log
           done
 
+      - name: Run walk-forward strategy validation
+        run: python strategy_backtest.py
+
+      - name: Apply bounded adaptive strategy update
+        run: python learn_agent.py --state state.json --observations strategy_observations.csv --apply
+
       - name: Run one trading cycle
         run: python meme_scanner_cycle.py
 
@@ -76,8 +82,9 @@ jobs:
           )
           PY
 
-          git add state.json dashboard/live-data.js
+          git add state.json dashboard/live-data.js learn_agent.py strategy_backtest.py
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
+          if [ -f strategy_observations.csv ]; then git add strategy_observations.csv; fi
 
           if git diff --staged --quiet; then
             echo "No state changes to commit"
