@@ -73,7 +73,7 @@ def run(state_path="state.json",observations_path="strategy_observations.csv",ap
     obs=load_observations(observations_path)
     state=json.loads(Path(state_path).read_text()) if Path(state_path).exists() else {"trade_count":0}
     updated=adaptive_update_state(state,obs)
-    if apply: Path(state_path).write_text(json.dumps(updated,indent=2)+"\\n")
+    if apply: Path(state_path).write_text(json.dumps(updated,indent=2)+"\n")
     return {"observations":len(obs),"strategy":updated.get("strategy",{}),"applied":apply}
 
 if __name__=="__main__":
