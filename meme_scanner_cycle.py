@@ -27,10 +27,10 @@ POSITION_SIZE_USD = 100.0
 MAX_POSITION_EQUITY_FRACTION = 0.05
 MIN_ENTRY_EQUITY_USD = 200.0
 MAX_CONCURRENT_POSITIONS = 8
-TAKE_PROFIT_ACTIVATE = 0.08
-TRAILING_DROP = 0.05
-STOP_LOSS = 0.10
-HARD_STOP_LOSS = 0.20
+TAKE_PROFIT_ACTIVATE = 0.06
+TRAILING_DROP = 0.04
+STOP_LOSS = 0.12
+HARD_STOP_LOSS = 0.15
 ENTRY_CONFIRMATIONS = 2
 ENTRY_CONFIRMATION_WINDOW_SECONDS = 15 * 60
 ENTRY_SLIPPAGE_BPS = 50
@@ -38,21 +38,21 @@ EXIT_SLIPPAGE_BPS = 100
 MAX_IMPACT_FRACTION = 0.01
 LEARNING_OBSERVATIONS_CSV = "strategy_observations.csv"
 MAX_HOLD_SECONDS = 15 * 60
-MIN_LIQUIDITY_USD = 15000
+MIN_LIQUIDITY_USD = 20000
 LIQUIDITY_EMERGENCY_USD = 10000
 LIQUIDITY_DRAIN_RATIO = 0.50
 LIQUIDITY_DRAIN_CONFIRMATIONS = 2
-MIN_VOLUME_H1_USD = 2000
-MIN_LIQ_MCAP_RATIO = 0.15
+MIN_VOLUME_H1_USD = 3000
+MIN_LIQ_MCAP_RATIO = 0.25
 MIN_BUY_SELL_RATIO = 1.5
-MIN_PRICE_CHANGE_M5_PCT = 0.5
+MIN_PRICE_CHANGE_M5_PCT = 1.0
 MAX_HOLDER_CONCENTRATION = 0.45
 WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
 TARGET_TRADES = 200
 MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.20
-OPPORTUNITY_ENTRY_THRESHOLD = 60.0
+OPPORTUNITY_ENTRY_THRESHOLD = 65.0
 ADAPTIVE_MIN_TRADES = 20
 ADAPTIVE_UPDATE_EVERY_TRADES = 5
 LEARNING_MIN_TRADES = 10
@@ -129,6 +129,9 @@ def candidate_confirmation(state, mint, score):
     item = observations.get(mint) or {"hits": 0, "last_seen": 0.0, "last_score": 0.0}
     if now - float(item.get("last_seen") or 0) > ENTRY_CONFIRMATION_WINDOW_SECONDS:
         item = {"hits": 0, "last_seen": 0.0, "last_score": 0.0}
+    previous_score = float(item.get("last_score") or 0.0)
+    if item["hits"] > 0 and score < max(OPPORTUNITY_ENTRY_THRESHOLD, previous_score - 5.0):
+        item = {"hits": 0, "last_seen": now, "last_score": 0.0}
     item["hits"] = int(item.get("hits") or 0) + 1
     item["last_seen"] = now
     item["last_score"] = round(score, 2)
@@ -305,10 +308,10 @@ def passes_market_filter(pair, learning=None, threshold=None):
         return False, f"low_volume:{vol_h1}"
     if sells == 0 and buys == 0:
         return False, "no_recent_txns"
-    if mcap > 0 and liq / mcap < 0.20:
+    if mcap > 0 and liq / mcap < MIN_LIQ_MCAP_RATIO:
         return False, f"low_liq_mcap_ratio:{liq / mcap:.2f}"
     total_m5 = buys + sells
-    if total_m5 >= 4 and buys / max(sells, 1) < 1.20:
+    if total_m5 >= 4 and buys / max(sells, 1) < MIN_BUY_SELL_RATIO:
         return False, f"weak_buy_pressure:{buys}/{sells}"
     if price_change_m5 < MIN_PRICE_CHANGE_M5_PCT or price_change_h1 <= 0:
         return False, f"weak_momentum:m5={price_change_m5:.2f},h1={price_change_h1:.2f}"
@@ -333,7 +336,7 @@ def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_co
         "market_entry_price": price,
         "entry_time": time.time(),
         "amount_usd": round(min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION), 2),
-        "estimated_impact": round(min(MAX_IMPACT_FRACTION, (min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION) / max(liq, 1.0)) * 0.5), 6),
+        "estimated_impact": round(min(MAX_IMPACT_FRACTION, ((min(POSITION_SIZE_USD, state["equity"] * MAX_POSITION_EQUITY_FRACTION) / max(liq, 1.0)) ** 0.5) * 0.005), 6),
         "peak_price": price,
         "trailing_active": False,
         "entry_liquidity": liq,
