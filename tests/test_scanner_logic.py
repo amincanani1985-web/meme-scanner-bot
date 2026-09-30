@@ -114,3 +114,7 @@ if __name__ == "__main__":
         self.assertEqual(scanner.MIN_BUY_SELL_RATIO, 1.5)
         self.assertEqual(scanner.MIN_PRICE_CHANGE_M5_PCT, 1.0)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 65.0)
+
+    def test_severe_liquidity_drop_exits_immediately(self):
+        pos={"entry_liquidity":40000,"liquidity_drain_hits":0}
+        self.assertTrue(scanner.liquidity_drain_detected(pos,13999))
