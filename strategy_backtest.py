@@ -23,8 +23,9 @@ def metrics(rows,t):
     return {"n":len(s),"win_rate":len(wins)/len(s) if s else 0,"avg_pnl":sum(r["pnl_pct"] for r in s)/len(s) if s else 0,"profit_factor":gw/gl if gl else (999 if gw else 0)}
 
 def run(rows):
-    if len(rows)<20: return {"status":"insufficient_history","rows":len(rows),"thresholds":{}}
+    if len(rows)<30: return {"status":"insufficient_history","rows":len(rows),"required_rows":30,"thresholds":{}}
     split=max(1,int(len(rows)*0.7)); train=rows[:split]; val=rows[split:]
+    if len(val)<8: return {"status":"insufficient_validation_history","rows":len(rows),"train_rows":len(train),"validation_rows":len(val),"required_validation_rows":8,"thresholds":{}}
     result={}
     for t in THRESHOLDS:
         result[str(t)]={"train":metrics(train,t),"validation":metrics(val,t)}

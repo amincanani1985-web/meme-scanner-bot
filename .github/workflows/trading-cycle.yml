@@ -43,7 +43,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py tests/test_scanner_logic.py
+        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -57,6 +57,18 @@ jobs:
 
       - name: Run walk-forward strategy validation
         run: python strategy_backtest.py
+
+      - name: Validate paper-trade target integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          state=json.loads(Path("state.json").read_text())
+          trades=int(state.get("trade_count",0))
+          assert 0 <= trades <= 200, f"invalid trade_count: {trades}"
+          print(f"Paper-trade progress: {trades}/200")
+          print("200-trade target remains data-driven; no synthetic trades are generated.")
+          PY
 
       - name: Apply bounded adaptive strategy update
         run: python learn_agent.py --state state.json --observations strategy_observations.csv --apply

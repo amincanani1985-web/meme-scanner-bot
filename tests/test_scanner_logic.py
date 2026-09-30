@@ -47,16 +47,16 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertGreater(good, weak)
 
     def test_low_liquidity_is_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 1999}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
 
     def test_low_liquidity_to_mcap_is_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 12000}, marketCap=100000))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 12000}, marketCap=50000))[0])
 
     def test_weak_buy_sell_is_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 10, "sells": 10}}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 14, "sells": 10}}))[0])
 
     def test_low_volume_is_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 499}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 2999}))[0])
 
     def test_weak_buy_pressure_lowers_score(self):
         weak, _ = scanner.score_market_opportunity(pair(txns={"m5": {"buys": 12, "sells": 10}}))
@@ -97,3 +97,20 @@ class ScannerLogicTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_entry_confirmation_resets_on_score_deterioration(self):
+        s={"candidate_observations":{}}
+        self.assertFalse(scanner.candidate_confirmation(s,"mint",70))
+        self.assertFalse(scanner.candidate_confirmation(s,"mint",60))
+        self.assertEqual(s["candidate_observations"]["mint"]["hits"], 1)
+
+    def test_liquidity_ratio_emergency_exit(self):
+        pos={"entry_liquidity":40000,"liquidity_drain_hits":0}
+        self.assertTrue(scanner.liquidity_drain_detected(pos,13000))
+
+    def test_risk_constants_are_hardened(self):
+        self.assertEqual(scanner.MIN_LIQUIDITY_USD, 20000)
+        self.assertEqual(scanner.MIN_LIQ_MCAP_RATIO, 0.25)
+        self.assertEqual(scanner.MIN_BUY_SELL_RATIO, 1.5)
+        self.assertEqual(scanner.MIN_PRICE_CHANGE_M5_PCT, 1.0)
+        self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 65.0)
