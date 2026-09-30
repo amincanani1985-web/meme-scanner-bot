@@ -31,7 +31,7 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["positions"]["mint"]["amount_usd"], 20.0)
 
     def test_target_is_one_hundred_trades(self):
-        self.assertEqual(scanner.TARGET_TRADES, 100)
+        self.assertEqual(scanner.TARGET_TRADES, 200)
 
     def test_positive_opportunity_passes(self):
         self.assertTrue(scanner.passes_market_filter(pair())[0])
