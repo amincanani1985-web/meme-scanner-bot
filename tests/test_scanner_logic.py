@@ -94,15 +94,16 @@ class ScannerLogicTests(unittest.TestCase):
         baseline, _ = scanner.score_market_opportunity(pair())
         self.assertGreater(score, baseline)
 
-def test_entry_confirmation_resets_on_score_deterioration(self):
-        s={"candidate_observations":{}}
-        self.assertFalse(scanner.candidate_confirmation(s,"mint",70))
-        self.assertFalse(scanner.candidate_confirmation(s,"mint",60))
+
+    def test_entry_confirmation_resets_on_score_deterioration(self):
+        s = {"candidate_observations": {}}
+        self.assertFalse(scanner.candidate_confirmation(s, "mint", 70))
+        self.assertFalse(scanner.candidate_confirmation(s, "mint", 60))
         self.assertEqual(s["candidate_observations"]["mint"]["hits"], 1)
 
     def test_liquidity_ratio_emergency_exit(self):
-        pos={"entry_liquidity":40000,"liquidity_drain_hits":0}
-        self.assertTrue(scanner.liquidity_drain_detected(pos,13000))
+        pos = {"entry_liquidity": 40000, "liquidity_drain_hits": 0}
+        self.assertTrue(scanner.liquidity_drain_detected(pos, 13000))
 
     def test_risk_constants_are_hardened(self):
         self.assertEqual(scanner.MIN_LIQUIDITY_USD, 20000)
@@ -112,8 +113,8 @@ def test_entry_confirmation_resets_on_score_deterioration(self):
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 65.0)
 
     def test_severe_liquidity_drop_exits_immediately(self):
-        pos={"entry_liquidity":40000,"liquidity_drain_hits":0}
-        self.assertTrue(scanner.liquidity_drain_detected(pos,13999))
+        pos = {"entry_liquidity": 40000, "liquidity_drain_hits": 0}
+        self.assertTrue(scanner.liquidity_drain_detected(pos, 13999))
 
 if __name__ == "__main__":
     unittest.main()
