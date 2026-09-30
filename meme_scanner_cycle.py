@@ -219,7 +219,7 @@ def fetch_whale_balances(mint):
                     return balances
                 break
             except Exception as e:
-                log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/2): {e}")
+                log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/{RPC_MAX_RETRIES}): {e}")
                 if attempt == 2:
                     break
     rc_report = fetch_rugcheck(mint)
@@ -342,6 +342,7 @@ def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_co
         "entry_liquidity": liq,
         "liquidity_drain_hits": 0,
         "whale_baseline": whale_balances,
+        "whale_dump_hits": 0,
         "signal_score": round(signal_score, 2),
         "signal_components": signal_components or {},
     }
@@ -444,6 +445,10 @@ def manage_open_positions(state):
                         dumped = True
                         break
                 if dumped:
+                    pos["whale_dump_hits"] = int(pos.get("whale_dump_hits") or 0) + 1
+                else:
+                    pos["whale_dump_hits"] = 0
+                if int(pos.get("whale_dump_hits") or 0) >= 2:
                     close_position(state, mint, price, "whale_dump")
                     continue
         pnl_pct = (price - pos["entry_price"]) / pos["entry_price"]
