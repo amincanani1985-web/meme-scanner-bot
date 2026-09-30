@@ -6,6 +6,8 @@ on:
     paths:
       - "meme_scanner_cycle.py"
       - "tests/**"
+      - "learn_agent.py"
+      - "strategy_backtest.py"
       - ".github/workflows/trading-cycle.yml"
   schedule:
     - cron: "*/5 * * * *"
