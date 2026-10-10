@@ -55,6 +55,19 @@ def should_rollback(observations,current_threshold):
 
 def adaptive_update_state(state,observations):
     strategy=state.setdefault("strategy",{"active_threshold":BASELINE_THRESHOLD,"candidate_threshold":None,"status":"baseline","last_update_trade":0,"rollback_threshold":BASELINE_THRESHOLD})
+    # Migrate old untrained state before any adaptive decisions. This command runs
+    # before the scanner in CI, so the migration must live here as well.
+    try:
+        active=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
+        rollback_threshold=float(strategy.get("rollback_threshold",BASELINE_THRESHOLD))
+    except (TypeError,ValueError):
+        active=rollback_threshold=None
+    if (strategy.get("status")=="waiting_for_history"
+        and strategy.get("candidate_threshold") is None
+        and active==60.0 and rollback_threshold==60.0):
+        strategy["active_threshold"]=BASELINE_THRESHOLD
+        strategy["rollback_threshold"]=BASELINE_THRESHOLD
+        strategy["baseline_migrated_from"]=60.0
     current=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
     if len(observations)<MIN_TRADES:
         state.setdefault("strategy", {})["status"] = "waiting_for_history"
