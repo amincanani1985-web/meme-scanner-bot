@@ -10,7 +10,7 @@ ROLLBACK_WINDOW=10
 ROLLBACK_WIN_RATE=0.30
 ROLLBACK_AVG_PNL=-2.0
 MIN_VALIDATION_EDGE=0.25
-BASELINE_THRESHOLD=60.0
+BASELINE_THRESHOLD=65.0
 
 def load_observations(path="strategy_observations.csv"):
     p=Path(path)
