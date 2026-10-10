@@ -17,6 +17,18 @@ class AdaptiveTests(unittest.TestCase):
         self.assertTrue(r["eligible"])
         self.assertGreater(r["validation"]["avg_pnl"],0)
 
+    def test_adaptive_update_migrates_legacy_baseline_before_history(self):
+        state = {"trade_count": 53, "strategy": {
+            "active_threshold": 60.0,
+            "rollback_threshold": 60.0,
+            "candidate_threshold": None,
+            "status": "waiting_for_history",
+        }}
+        la.adaptive_update_state(state, [])
+        self.assertEqual(state["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
+        self.assertEqual(state["strategy"]["rollback_threshold"], la.BASELINE_THRESHOLD)
+        self.assertEqual(state["strategy"]["baseline_migrated_from"], 60.0)
+
     def test_rollback_triggers_on_degradation(self):
         rows=[{"timestamp":str(i),"score":65,"pnl_pct":-3.0,"reason":"x"} for i in range(10)]
         ok,reason=la.should_rollback(rows,65)
