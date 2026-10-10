@@ -24,7 +24,7 @@ STATE_FILE = "state.json"
 TRADES_CSV = "trades_log.csv"
 STARTING_EQUITY = 1000.0
 POSITION_SIZE_USD = 100.0
-MAX_POSITION_EQUITY_FRACTION = 0.05
+MAX_POSITION_EQUITY_FRACTION = 0.01
 MIN_ENTRY_EQUITY_USD = 200.0
 MAX_CONCURRENT_POSITIONS = 8
 TAKE_PROFIT_ACTIVATE = 0.06
@@ -38,12 +38,13 @@ EXIT_SLIPPAGE_BPS = 100
 MAX_IMPACT_FRACTION = 0.01
 LEARNING_OBSERVATIONS_CSV = "strategy_observations.csv"
 MAX_HOLD_SECONDS = 15 * 60
-MIN_LIQUIDITY_USD = 20000
+MIN_LIQUIDITY_USD = 50000
+MIN_PAIR_AGE_SECONDS = 1800
 LIQUIDITY_EMERGENCY_USD = 10000
 LIQUIDITY_DRAIN_RATIO = 0.50
 LIQUIDITY_DRAIN_CONFIRMATIONS = 2
-MIN_VOLUME_H1_USD = 3000
-MIN_LIQ_MCAP_RATIO = 0.25
+MIN_VOLUME_H1_USD = 10000
+MIN_LIQ_MCAP_RATIO = 0.35
 MIN_BUY_SELL_RATIO = 1.5
 MIN_PRICE_CHANGE_M5_PCT = 1.0
 MAX_HOLDER_CONCENTRATION = 0.45
@@ -51,7 +52,7 @@ WHALE_TOP_N = 20
 WHALE_DUMP_THRESHOLD = 0.15
 STOP_LOSS_COOLDOWN_SECONDS = 30 * 60
 TARGET_TRADES = 200
-MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.20
+MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.05
 OPPORTUNITY_ENTRY_THRESHOLD = 65.0
 ADAPTIVE_MIN_TRADES = 20
 ADAPTIVE_UPDATE_EVERY_TRADES = 5
@@ -322,6 +323,12 @@ def passes_market_filter(pair, learning=None, threshold=None):
     buys, sells = txns_m5.get("buys", 0), txns_m5.get("sells", 0)
     price_change_m5 = (pair.get("priceChange") or {}).get("m5") or 0
     price_change_h1 = (pair.get("priceChange") or {}).get("h1") or 0
+    pair_created_ms = pair.get("pairCreatedAt")
+    if pair_created_ms is None:
+        return False, "missing_pair_age"
+    pair_age_seconds = max(0.0, time.time() - float(pair_created_ms) / 1000.0)
+    if pair_age_seconds < MIN_PAIR_AGE_SECONDS:
+        return False, f"pair_too_new:{pair_age_seconds:.0f}s"
     if liq < MIN_LIQUIDITY_USD:
         return False, f"low_liquidity:{liq}"
     if vol_h1 < MIN_VOLUME_H1_USD:
@@ -441,6 +448,15 @@ def manage_open_positions(state):
         if pos.get("entry_liquidity") is None:
             pos["entry_liquidity"] = liq
             log(f"  {pos['symbol']}: initialized legacy entry liquidity=${liq:.0f}")
+        pnl_pct = (price - pos["entry_price"]) / pos["entry_price"]
+        if price > pos["peak_price"]:
+            pos["peak_price"] = price
+        if pnl_pct <= -HARD_STOP_LOSS:
+            close_position(state, mint, price, "hard_stop_loss")
+            continue
+        if pnl_pct <= -STOP_LOSS:
+            close_position(state, mint, price, "stop_loss")
+            continue
         if liquidity_drain_detected(pos, liq):
             close_position(state, mint, price, "liquidity_drained")
             continue
@@ -471,15 +487,6 @@ def manage_open_positions(state):
                 if int(pos.get("whale_dump_hits") or 0) >= 2:
                     close_position(state, mint, price, "whale_dump")
                     continue
-        pnl_pct = (price - pos["entry_price"]) / pos["entry_price"]
-        if price > pos["peak_price"]:
-            pos["peak_price"] = price
-        if pnl_pct <= -HARD_STOP_LOSS:
-            close_position(state, mint, price, "hard_stop_loss")
-            continue
-        if pnl_pct <= -STOP_LOSS:
-            close_position(state, mint, price, "stop_loss")
-            continue
         if pnl_pct >= TAKE_PROFIT_ACTIVATE:
             pos["trailing_active"] = True
         if pos["trailing_active"]:
@@ -498,7 +505,8 @@ def look_for_entries(state):
     if state.get("trade_count", 0) >= TARGET_TRADES:
         log(f"  target reached ({TARGET_TRADES}), no new entries")
         return
-    max_exposure_slots = int((state.get("equity", 0) * MAX_PORTFOLIO_EXPOSURE_FRACTION) / max(POSITION_SIZE_USD, 1.0))
+    per_position_budget = min(POSITION_SIZE_USD, state.get("equity", 0) * MAX_POSITION_EQUITY_FRACTION)
+    max_exposure_slots = int((state.get("equity", 0) * MAX_PORTFOLIO_EXPOSURE_FRACTION) / max(per_position_budget, 1.0))
     max_exposure_slots = max(1, max_exposure_slots)
     slots = min(MAX_CONCURRENT_POSITIONS - len(state["positions"]), max_exposure_slots - len(state["positions"]), TARGET_TRADES - state.get("trade_count", 0))
     if slots <= 0:
