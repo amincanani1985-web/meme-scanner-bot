@@ -91,7 +91,7 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(pos["liquidity_drain_hits"], 0)
 
     def test_learning_changes_score_after_history(self):
-        learning = {"trades": 10, "wins": 8, "buckets": {"80": {"n": 5, "wins": 4}}}
+        learning = {"trades": 10, "wins": 8, "buckets": {"90": {"n": 5, "wins": 4}}}
         score, _ = scanner.score_market_opportunity(pair(), learning)
         baseline, _ = scanner.score_market_opportunity(pair())
         self.assertGreater(score, baseline)
