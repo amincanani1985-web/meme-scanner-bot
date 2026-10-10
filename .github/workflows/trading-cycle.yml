@@ -19,7 +19,9 @@ permissions:
 
 concurrency:
   group: trading-cycle
-  cancel-in-progress: false
+  # Only one state-writing cycle may run at a time. A newer code push
+  # cancels an older queued/running cycle to prevent state.json rebase conflicts.
+  cancel-in-progress: true
 
 env:
   NOTIFY_ISSUE: "1"
