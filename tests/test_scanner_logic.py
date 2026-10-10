@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 import time
+from unittest.mock import patch
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "meme_scanner_cycle.py"
 spec = importlib.util.spec_from_file_location("scanner", MODULE_PATH)
@@ -132,6 +133,19 @@ class ScannerLogicTests(unittest.TestCase):
     def test_severe_liquidity_drop_exits_immediately(self):
         pos = {"entry_liquidity": 40000, "liquidity_drain_hits": 0}
         self.assertTrue(scanner.liquidity_drain_detected(pos, 13999))
+
+    def test_both_stop_loss_reasons_apply_cooldown(self):
+        for reason in ("stop_loss", "hard_stop_loss"):
+            state = {
+                "equity": 1000.0,
+                "trade_count": 0,
+                "positions": {"mint": {"symbol": "TEST", "entry_price": 1.0, "amount_usd": 10.0, "estimated_impact": 0.0, "signal_score": 70}},
+                "blacklist": [],
+                "cooldowns": {},
+            }
+            with patch.object(scanner, "append_learning_observation"), patch.object(scanner, "append_trade"):
+                scanner.close_position(state, "mint", 0.8, reason)
+            self.assertGreater(state["cooldowns"]["mint"], time.time() + 29 * 60)
 
 
 if __name__ == "__main__":
