@@ -33,6 +33,17 @@ class AdaptiveTests(unittest.TestCase):
         out=la.adaptive_update_state(state,rows)
         self.assertIn(out["strategy"]["active_threshold"],la.CANDIDATE_THRESHOLDS)
 
+    def test_legacy_untrained_baseline_migrates_to_hardened_threshold(self):
+        state = {"strategy": {
+            "active_threshold": 60.0,
+            "rollback_threshold": 60.0,
+            "candidate_threshold": None,
+            "status": "waiting_for_history",
+        }}
+        scanner.normalize_legacy_strategy_baseline(state)
+        self.assertEqual(state["strategy"]["active_threshold"], 65.0)
+        self.assertEqual(state["strategy"]["rollback_threshold"], 65.0)
+
     def test_momentum_guard_rejects_negative_h1(self):
         p={"liquidity":{"usd":20000},"volume":{"h1":10000},"marketCap":50000,
            "txns":{"m5":{"buys":20,"sells":10}},"priceChange":{"m5":2,"h1":-1}}
