@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import time
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "meme_scanner_cycle.py"
 spec = importlib.util.spec_from_file_location("scanner", MODULE_PATH)
@@ -10,11 +11,12 @@ spec.loader.exec_module(scanner)
 
 def pair(**overrides):
     base = {
-        "liquidity": {"usd": 20000},
-        "volume": {"h1": 10000},
-        "marketCap": 50000,
+        "liquidity": {"usd": 60000},
+        "volume": {"h1": 120000},
+        "marketCap": 150000,
         "txns": {"m5": {"buys": 20, "sells": 10}},
         "priceChange": {"m5": 2.0, "h1": 8.0},
+        "pairCreatedAt": int(time.time() * 1000) - 3600 * 1000,
     }
     base.update(overrides)
     return base
@@ -24,11 +26,11 @@ class ScannerLogicTests(unittest.TestCase):
     def test_max_concurrent_positions_is_eight(self):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 8)
 
-    def test_position_size_is_capped_at_five_percent_of_equity(self):
+    def test_position_size_is_capped_at_one_percent_of_equity(self):
         state = {"equity": 400.0, "positions": {}}
         pair_data = pair(priceUsd="1.0", baseToken={"symbol": "TEST"})
         self.assertTrue(scanner.open_position(state, "mint", pair_data, {"holder": 100}, 70, {}))
-        self.assertEqual(state["positions"]["mint"]["amount_usd"], 20.0)
+        self.assertEqual(state["positions"]["mint"]["amount_usd"], 4.0)
 
     def test_target_is_one_hundred_trades(self):
         self.assertEqual(scanner.TARGET_TRADES, 200)
@@ -105,11 +107,27 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertTrue(scanner.liquidity_drain_detected(pos, 13000))
 
     def test_risk_constants_are_hardened(self):
-        self.assertEqual(scanner.MIN_LIQUIDITY_USD, 20000)
-        self.assertEqual(scanner.MIN_LIQ_MCAP_RATIO, 0.25)
+        self.assertEqual(scanner.MIN_LIQUIDITY_USD, 50000)
+        self.assertEqual(scanner.MIN_LIQ_MCAP_RATIO, 0.35)
         self.assertEqual(scanner.MIN_BUY_SELL_RATIO, 1.5)
         self.assertEqual(scanner.MIN_PRICE_CHANGE_M5_PCT, 1.0)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 65.0)
+        self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.01)
+        self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.05)
+        self.assertEqual(scanner.MIN_PAIR_AGE_SECONDS, 1800)
+
+    def test_missing_pair_age_is_rejected(self):
+        data = pair()
+        data.pop("pairCreatedAt")
+        ok, reason = scanner.passes_market_filter(data)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "missing_pair_age")
+
+    def test_new_pair_is_rejected(self):
+        data = pair(pairCreatedAt=int(time.time() * 1000) - 60 * 1000)
+        ok, reason = scanner.passes_market_filter(data)
+        self.assertFalse(ok)
+        self.assertTrue(reason.startswith("pair_too_new:"))
 
     def test_severe_liquidity_drop_exits_immediately(self):
         pos = {"entry_liquidity": 40000, "liquidity_drain_hits": 0}
