@@ -115,6 +115,26 @@ def append_learning_observation(pos, pnl_pct, reason):
             w.writeheader()
         w.writerow({"timestamp": datetime.now(timezone.utc).isoformat(), "score": round(float(pos.get("signal_score") or 0), 4), "pnl_pct": round(pnl_pct * 100, 4), "reason": reason})
 
+def normalize_legacy_strategy_baseline(state):
+    """Migrate an untrained legacy baseline from 60 to the hardened 65 threshold."""
+    strategy = state.setdefault("strategy", {})
+    try:
+        active = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
+        rollback = float(strategy.get("rollback_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
+    except (TypeError, ValueError):
+        return state
+    if (
+        strategy.get("status") == "waiting_for_history"
+        and strategy.get("candidate_threshold") is None
+        and active == 60.0
+        and rollback == 60.0
+    ):
+        strategy["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+        strategy["rollback_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+        strategy["baseline_migrated_from"] = 60.0
+    return state
+
+
 def get_entry_threshold(state):
     strategy = state.get("strategy") or {}
     try:
@@ -220,7 +240,7 @@ def fetch_whale_balances(mint):
                 break
             except Exception as e:
                 log(f"  RPC endpoint #{RPC_ENDPOINTS.index(endpoint)+1} failed (attempt {attempt}/{RPC_MAX_RETRIES}): {e}")
-                if attempt == 2:
+                if attempt >= RPC_MAX_RETRIES:
                     break
     rc_report = fetch_rugcheck(mint)
     holders = (rc_report or {}).get("topHolders") or []
@@ -524,7 +544,7 @@ def look_for_entries(state):
 
 
 def main():
-    state = load_state()
+    state = normalize_legacy_strategy_baseline(load_state())
     state.setdefault("strategy", {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD})
     state.setdefault("candidate_observations", {})
     if adaptive_update_state is not None:
