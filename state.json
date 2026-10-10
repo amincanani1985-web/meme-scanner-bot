@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 130,
+  "scan_count": 131,
   "version": "v16-adaptive-self-correcting",
-  "last_run": "2026-10-10T09:35:09.077493+00:00",
+  "last_run": "2026-10-10T09:37:50.011472+00:00",
   "learning": {
     "trades": 39,
     "wins": 15,
@@ -61,13 +61,14 @@
     }
   },
   "strategy": {
-    "active_threshold": 60.0,
+    "active_threshold": 65.0,
     "candidate_threshold": null,
     "status": "waiting_for_history",
     "last_update_trade": 0,
-    "rollback_threshold": 60.0,
+    "rollback_threshold": 65.0,
     "history_rows": 5,
-    "required_rows": 30
+    "required_rows": 30,
+    "baseline_migrated_from": 60.0
   },
   "candidate_observations": {
     "EbJJKtnawGPhfgthRrwsyDgrCc1smGUUYbK5WNAK5E1N": {
