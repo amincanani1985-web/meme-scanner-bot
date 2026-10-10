@@ -421,7 +421,7 @@ def close_position(state, mint, exit_price, reason):
         if mint not in state["blacklist"]:
             state["blacklist"].append(mint)
         log(f"  CLOSED {pos['symbol']} reason={reason} pnl={pnl_pct*100:.1f}% -> BLACKLISTED")
-    elif reason == "stop_loss":
+    elif reason in ("stop_loss", "hard_stop_loss"):
         state["cooldowns"][mint] = time.time() + STOP_LOSS_COOLDOWN_SECONDS
         log(f"  CLOSED {pos['symbol']} reason={reason} pnl={pnl_pct*100:.1f}% -> 30min cooldown")
     else:
