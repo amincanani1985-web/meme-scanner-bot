@@ -131,7 +131,12 @@ def passes_market_filter(pair_data):
     if "pairCreatedAt" not in pair_data:
         return False, "missing_pair_age"
     
-    created_ms = pair_data.get("pairCreatedAt", 0)
+    try:
+        created_ms = int(pair_data.get("pairCreatedAt", 0))
+    except (TypeError, ValueError):
+        return False, "invalid_pair_age"
+    if created_ms <= 0:
+        return False, "invalid_pair_age"
     now_ms = int(time.time() * 1000)
     age_sec = (now_ms - created_ms) / 1000.0
     
@@ -149,11 +154,16 @@ def passes_market_filter(pair_data):
         return False, f"low_volume_h1:{vol:.0f}"
     
     # Market cap ratio check - avoid traps
-    mcap = pair_data.get("marketCap") or 0
-    if mcap > 0:
-        ratio = liq / mcap
-        if ratio < MIN_LIQUIDITY_TO_MCAP_RATIO:
-            return False, f"liq_mcap_ratio:{ratio:.2f}"
+    mcap = pair_data.get("marketCap") or pair_data.get("fdv") or 0
+    try:
+        mcap = float(mcap)
+    except (TypeError, ValueError):
+        mcap = 0
+    if not math.isfinite(mcap) or mcap <= 0:
+        return False, "missing_market_cap"
+    ratio = liq / mcap
+    if ratio < MIN_LIQUIDITY_TO_MCAP_RATIO:
+        return False, f"liq_mcap_ratio:{ratio:.2f}"
     
     # Buy/sell ratio check - STRONG buyers
     buys = pair_data.get("txns", {}).get("m5", {}).get("buys", 0) or 0
@@ -246,10 +256,10 @@ def candidate_confirmation(state, mint, signal_score):
         return False
     
     entry = obs[mint]
-    
-    # Score dropped below threshold = reset
+
+    # Only uninterrupted above-threshold observations count toward confirmation.
     if signal_score < threshold:
-        entry["hits"] = 1
+        entry["hits"] = 0
         entry["last_score"] = signal_score
         return False
     
@@ -276,8 +286,12 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
     if mint in state.get("blacklist", []):
         return False  # blacklisted
     
-    if state.get("cooldowns", {}).get(mint):
-        cooldown_until = state["cooldowns"][mint]
+    cooldowns = state.get("cooldowns", {})
+    if isinstance(cooldowns, dict) and cooldowns.get(mint):
+        try:
+            cooldown_until = float(cooldowns[mint])
+        except (TypeError, ValueError):
+            cooldown_until = 0
         if cooldown_until > time.time():
             return False  # in cooldown
     
@@ -306,8 +320,8 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
     
     position_size = min(max_pos_size, max_portfolio_size - current_exposure)
     
-    if position_size < 5.0:
-        return False  # position too small
+    if position_size < 1.0:
+        return False  # position too small for a meaningful paper-trade sample
     
     # Validate price and account for conservative estimated entry slippage.
     try:
