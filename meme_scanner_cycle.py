@@ -106,7 +106,7 @@ def normalize_legacy_strategy_baseline(state):
     strategy = state.get("strategy", {})
     if strategy.get("status") == "waiting_for_history":
         old_threshold = float(strategy.get("active_threshold", 60.0))
-        if old_threshold <= 70.0:  # old soft strategy
+        if old_threshold < OPPORTUNITY_ENTRY_THRESHOLD:  # any untrained strategy below hardened baseline
             state["strategy"]["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
             state["strategy"]["rollback_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
             state["strategy"]["baseline_migrated_from"] = old_threshold
@@ -570,7 +570,7 @@ def load_state():
     if not isinstance(loaded, dict):
         log("[WARN] state.json root is not an object; starting from safe defaults")
         return normalize_state({})
-    return normalize_state(loaded)
+    return normalize_legacy_strategy_baseline(normalize_state(loaded))
 
 
 def save_state(state):
@@ -638,6 +638,7 @@ __all__ = [
 def run_cycle(state=None):
     """Run one paper-trading scan cycle using current DexScreener data."""
     state = normalize_state(state if state is not None else load_state())
+    state = normalize_legacy_strategy_baseline(state)
     manage_open_positions(state)
     opened = []
     if int(state.get("trade_count", 0)) >= TARGET_TRADES:
