@@ -306,7 +306,7 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
     
     position_size = min(max_pos_size, max_portfolio_size - current_exposure)
     
-    if position_size <= 5.0:
+    if position_size < 5.0:
         return False  # position too small
     
     # Validate price and account for conservative estimated entry slippage.
@@ -486,7 +486,8 @@ def manage_open_positions(state):
             except (TypeError, ValueError):
                 pos["price_missing_since"] = time.time()
                 missing_for = 0
-            if missing_for >= MAX_MISSING_PRICE_SECONDS:
+            held_for = time.time() - float(pos.get("entry_time", time.time()))
+            if missing_for >= MAX_MISSING_PRICE_SECONDS or held_for >= MAX_HOLD_SECONDS:
                 close_position(state, mint, 0.0, "force_close_no_data")
             continue
         try:
