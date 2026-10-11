@@ -163,6 +163,15 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(third["open_positions"], 1)
         self.assertIn("mint", state["positions"])
 
+    def test_malformed_persisted_position_does_not_abort_scan(self):
+        state = {
+            "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
+            "positions": {"broken": {"entry_price": "bad", "amount_usd": 10.0, "entry_time": "bad"}},
+        }
+        with patch.object(scanner, "fetch_dex_pair", return_value=None), patch.object(scanner, "log"):
+            scanner.manage_open_positions(state)
+        self.assertNotIn("broken", state["positions"])
+
     def test_missing_price_for_old_position_forces_conservative_close(self):
         state = {
             "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
