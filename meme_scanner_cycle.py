@@ -491,29 +491,46 @@ def manage_open_positions(state):
         if not isinstance(pos, dict):
             state["positions"].pop(mint, None)
             continue
+        # Validate persisted position fields before arithmetic; malformed legacy state
+        # must not abort the entire scheduled scan.
+        try:
+            entry_price = float(pos.get("entry_price", 0) or 0)
+            amount_usd = float(pos.get("amount_usd", 0) or 0)
+            entry_time = float(pos.get("entry_time", 0) or 0)
+            peak_price = float(pos.get("peak_price", entry_price) or entry_price)
+        except (TypeError, ValueError, OverflowError):
+            state["positions"].pop(mint, None)
+            log(f"[WARN] discarded malformed position state for {mint}")
+            continue
+        if (not all(math.isfinite(v) for v in (entry_price, amount_usd, entry_time, peak_price))
+                or entry_price <= 0 or amount_usd <= 0 or entry_time < 0 or peak_price <= 0):
+            state["positions"].pop(mint, None)
+            log(f"[WARN] discarded invalid position values for {mint}")
+            continue
+        pos["entry_time"] = entry_time
         pair = fetch_dex_pair(mint)
         if not pair:
             first_missing = pos.setdefault("price_missing_since", time.time())
             try:
                 missing_for = time.time() - float(first_missing)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError):
                 pos["price_missing_since"] = time.time()
                 missing_for = 0
-            held_for = time.time() - float(pos.get("entry_time", time.time()))
+            held_for = max(0.0, time.time() - entry_time)
             if missing_for >= MAX_MISSING_PRICE_SECONDS or held_for >= MAX_HOLD_SECONDS:
                 close_position(state, mint, 0.0, "force_close_no_data")
             continue
         try:
             current_price = float(pair.get("priceUsd") or 0)
             current_liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError, OverflowError):
             continue
         if not math.isfinite(current_price) or current_price <= 0:
             continue
+        if not math.isfinite(current_liquidity) or current_liquidity < 0:
+            current_liquidity = 0.0
         pos.pop("price_missing_since", None)
-        peak_price = float(pos.get("peak_price", pos.get("entry_price", current_price)) or current_price)
         pos["peak_price"] = max(peak_price, current_price)
-        entry_price = float(pos.get("entry_price", 0) or 0)
         pnl_pct = (current_price - entry_price) / entry_price if entry_price > 0 else 0.0
         if pnl_pct >= 0.08:
             pos["trailing_armed"] = True
