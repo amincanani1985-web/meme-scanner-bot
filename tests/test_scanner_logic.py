@@ -150,6 +150,19 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertNotIn("mint", state["positions"])
         self.assertEqual(state["trade_count"], 1)
 
+    def test_run_cycle_opens_only_after_three_confirmations(self):
+        state = scanner.normalize_state({})
+        with patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+            first = scanner.run_cycle(state)
+            second = scanner.run_cycle(state)
+            third = scanner.run_cycle(state)
+        self.assertEqual(first["open_positions"], 0)
+        self.assertEqual(second["open_positions"], 0)
+        self.assertEqual(third["open_positions"], 1)
+        self.assertIn("mint", state["positions"])
+
     def test_missing_price_for_old_position_forces_conservative_close(self):
         state = {
             "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
