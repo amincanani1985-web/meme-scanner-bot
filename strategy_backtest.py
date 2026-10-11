@@ -3,7 +3,7 @@
 import argparse, csv, json
 from pathlib import Path
 
-THRESHOLDS=(60.0,62.5,65.0,67.5,70.0)
+THRESHOLDS=(80.0,82.5,85.0,87.5,90.0)
 
 def load(path):
     p=Path(path)
