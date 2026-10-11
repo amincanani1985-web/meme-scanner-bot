@@ -19,9 +19,9 @@ permissions:
 
 concurrency:
   group: trading-cycle
-  # Only one state-writing cycle may run at a time. A newer code push
-  # cancels an older queued/running cycle to prevent state.json rebase conflicts.
-  cancel-in-progress: true
+  # Serialize state-writing cycles. Never cancel an active cycle; GitHub keeps
+  # at most one pending run for this group, preventing concurrent state commits.
+  cancel-in-progress: false
 
 env:
   NOTIFY_ISSUE: "1"
