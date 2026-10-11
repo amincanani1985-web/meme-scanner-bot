@@ -435,7 +435,7 @@ def manage_open_positions(state):
         if pair is None:
             age = time.time() - pos["entry_time"]
             if age > 2 * MAX_HOLD_SECONDS:
-                close_position(state, mint, pos["entry_price"], "no_price_data_forced_close")
+                close_position(state, mint, 0.0, "no_price_data_forced_close")
                 if mint not in state["blacklist"]:
                     state["blacklist"].append(mint)
             else:
