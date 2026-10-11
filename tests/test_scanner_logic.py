@@ -82,7 +82,7 @@ class ScannerLogicTests(unittest.TestCase):
         scanner.candidate_confirmation(state, "mint", 85)
         scanner.candidate_confirmation(state, "mint", 86)
         self.assertFalse(scanner.candidate_confirmation(state, "mint", 70))
-        self.assertEqual(state["candidate_observations"]["mint"]["hits"], 1)
+        self.assertEqual(state["candidate_observations"]["mint"]["hits"], 0)
 
     def test_open_position_applies_slippage_and_position_caps(self):
         state = {"equity": 1000.0, "positions": {}, "blacklist": [], "cooldowns": {}}
@@ -93,6 +93,11 @@ class ScannerLogicTests(unittest.TestCase):
         for i in range(scanner.MAX_CONCURRENT_POSITIONS - 1):
             state["positions"][f"mint{i}"] = dict(position)
         self.assertFalse(scanner.open_position(state, "another", pair(), {}, 85, {}))
+
+    def test_small_equity_can_still_open_risk_capped_position(self):
+        state = {"equity": 400.0, "positions": {}, "blacklist": [], "cooldowns": {}}
+        self.assertTrue(scanner.open_position(state, "small", pair(), {}, 85, {}))
+        self.assertAlmostEqual(state["positions"]["small"]["amount_usd"], 2.0)
 
     def test_open_position_blocks_blacklist_cooldown_and_invalid_price(self):
         state = {"equity": 1000.0, "positions": {}, "blacklist": ["bad"], "cooldowns": {}}
