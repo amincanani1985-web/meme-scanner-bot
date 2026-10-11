@@ -1,0 +1,45 @@
+name: scanner CI
+
+on:
+  pull_request:
+    paths:
+      - "meme_scanner_cycle.py"
+      - "learn_agent.py"
+      - "strategy_backtest.py"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+  push:
+    branches-ignore: [main]
+    paths:
+      - "meme_scanner_cycle.py"
+      - "learn_agent.py"
+      - "strategy_backtest.py"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Validate Python syntax
+        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_v17_improvements.py
+      - name: Run unit tests 10 times
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 10); do
+            echo "=== TEST PASS $i/10 ==="
+            python -m unittest discover -s tests -p 'test_*.py' -v
+          done
+      - name: Run walk-forward strategy validation
+        run: python strategy_backtest.py
