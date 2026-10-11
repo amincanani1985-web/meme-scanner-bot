@@ -11,7 +11,7 @@ class AdaptiveTests(unittest.TestCase):
         rows=[]
         for i in range(30):
             score=85 if i>=15 else 80
-            pnl=2.0 if score==65 else -1.0
+            pnl=2.0 if score==85 else -1.0
             rows.append({"timestamp":f"2026-01-{i+1:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
         r=la.walk_forward(rows,65)
         self.assertTrue(r["eligible"])
