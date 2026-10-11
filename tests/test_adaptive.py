@@ -13,21 +13,23 @@ class AdaptiveTests(unittest.TestCase):
             score=85 if i>=15 else 80
             pnl=2.0 if score==85 else -1.0
             rows.append({"timestamp":f"2026-01-{i+1:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
-        r=la.walk_forward(rows,65)
+        r=la.walk_forward(rows,85)
         self.assertTrue(r["eligible"])
         self.assertGreater(r["validation"]["avg_pnl"],0)
 
-    def test_adaptive_update_migrates_legacy_baseline_before_history(self):
-        state = {"trade_count": 53, "strategy": {
-            "active_threshold": 60.0,
-            "rollback_threshold": 60.0,
-            "candidate_threshold": None,
-            "status": "waiting_for_history",
-        }}
-        la.adaptive_update_state(state, [])
-        self.assertEqual(state["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
-        self.assertEqual(state["strategy"]["rollback_threshold"], la.BASELINE_THRESHOLD)
-        self.assertEqual(state["strategy"]["baseline_migrated_from"], 60.0)
+    def test_adaptive_update_migrates_any_untrained_threshold_below_baseline(self):
+        for old_threshold in (60.0, 65.0, 75.0):
+            with self.subTest(old_threshold=old_threshold):
+                state = {"trade_count": 53, "strategy": {
+                    "active_threshold": old_threshold,
+                    "rollback_threshold": old_threshold,
+                    "candidate_threshold": None,
+                    "status": "waiting_for_history",
+                }}
+                la.adaptive_update_state(state, [])
+                self.assertEqual(state["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
+                self.assertEqual(state["strategy"]["rollback_threshold"], la.BASELINE_THRESHOLD)
+                self.assertEqual(state["strategy"]["baseline_migrated_from"], old_threshold)
 
     def test_rollback_triggers_on_degradation(self):
         rows=[{"timestamp":str(i),"score":65,"pnl_pct":-3.0,"reason":"x"} for i in range(10)]
@@ -35,15 +37,20 @@ class AdaptiveTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIn("active_strategy",reason)
 
-    def test_adaptive_activation_is_bounded(self):
+    def test_adaptive_activation_uses_chronological_validation(self):
         rows=[]
-        for i in range(30):
-            score=85 if i>=15 else 80
-            pnl=2.0 if score==65 else -1.0
-            rows.append({"timestamp":f"{i:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
-        state={"trade_count":30}
+        for i in range(51):
+            score = (80.0, 83.0, 87.0)[i % 3]
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            rows.append({"timestamp":f"{i:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
+        validation_scores = [80.0] * 7 + [83.0] * 7 + [87.0] * 9
+        for offset, score in enumerate(validation_scores, start=51):
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            rows.append({"timestamp":f"{offset:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
+        state={"trade_count":len(rows)}
         out=la.adaptive_update_state(state,rows)
-        self.assertIn(out["strategy"]["active_threshold"],la.CANDIDATE_THRESHOLDS)
+        self.assertEqual(out["strategy"]["active_threshold"],85.0)
+        self.assertEqual(out["strategy"]["status"],"candidate_activated")
 
     def test_legacy_untrained_baseline_migrates_to_hardened_threshold(self):
         state = {"strategy": {
