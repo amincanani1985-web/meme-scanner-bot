@@ -54,25 +54,48 @@ def should_rollback(observations,current_threshold):
     return (m["win_rate"]<ROLLBACK_WIN_RATE or m["avg_pnl"]<=ROLLBACK_AVG_PNL),f"active_strategy:win_rate={m['win_rate']:.2f},avg_pnl={m['avg_pnl']:.2f}"
 
 def adaptive_update_state(state,observations):
-    strategy=state.setdefault("strategy",{"active_threshold":BASELINE_THRESHOLD,"candidate_threshold":None,"status":"baseline","last_update_trade":0,"rollback_threshold":BASELINE_THRESHOLD})
-    # Migrate old untrained state before any adaptive decisions. This command runs
-    # before the scanner in CI, so the migration must live here as well.
+    if not isinstance(state, dict):
+        state = {}
+    strategy = state.get("strategy")
+    if not isinstance(strategy, dict):
+        strategy = {}
+        state["strategy"] = strategy
+    strategy.setdefault("active_threshold", BASELINE_THRESHOLD)
+    strategy.setdefault("candidate_threshold", None)
+    strategy.setdefault("status", "baseline")
+    strategy.setdefault("last_update_trade", 0)
+    strategy.setdefault("rollback_threshold", BASELINE_THRESHOLD)
+
+    # Normalize malformed thresholds before any arithmetic. Invalid persisted
+    # values fall back to the safe baseline instead of crashing the scheduled job.
     try:
-        active=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
-        rollback_threshold=float(strategy.get("rollback_threshold",BASELINE_THRESHOLD))
-    except (TypeError,ValueError):
-        active=rollback_threshold=None
-    if (strategy.get("status")=="waiting_for_history"
+        active = float(strategy.get("active_threshold", BASELINE_THRESHOLD))
+        if not __import__("math").isfinite(active):
+            raise ValueError("non-finite active threshold")
+    except (TypeError, ValueError, OverflowError):
+        active = BASELINE_THRESHOLD
+        strategy["active_threshold"] = BASELINE_THRESHOLD
+    try:
+        rollback_threshold = float(strategy.get("rollback_threshold", BASELINE_THRESHOLD))
+        if not __import__("math").isfinite(rollback_threshold):
+            raise ValueError("non-finite rollback threshold")
+    except (TypeError, ValueError, OverflowError):
+        rollback_threshold = BASELINE_THRESHOLD
+        strategy["rollback_threshold"] = BASELINE_THRESHOLD
+
+    if (strategy.get("status") == "waiting_for_history"
         and strategy.get("candidate_threshold") is None
-        and active is not None and active < BASELINE_THRESHOLD):
-        strategy["active_threshold"]=BASELINE_THRESHOLD
-        strategy["rollback_threshold"]=BASELINE_THRESHOLD
-        strategy["baseline_migrated_from"]=active
-    current=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
-    if len(observations)<MIN_TRADES:
-        state.setdefault("strategy", {})["status"] = "waiting_for_history"
-        state["strategy"]["history_rows"] = len(observations)
-        state["strategy"]["required_rows"] = MIN_TRADES
+        and active < BASELINE_THRESHOLD):
+        strategy["active_threshold"] = BASELINE_THRESHOLD
+        strategy["rollback_threshold"] = BASELINE_THRESHOLD
+        strategy["baseline_migrated_from"] = active
+        active = BASELINE_THRESHOLD
+
+    current = active
+    if len(observations) < MIN_TRADES:
+        strategy["status"] = "waiting_for_history"
+        strategy["history_rows"] = len(observations)
+        strategy["required_rows"] = MIN_TRADES
         return state
     rollback,reason=should_rollback(observations,current)
     if current!=BASELINE_THRESHOLD and rollback:
