@@ -10,7 +10,7 @@ class AdaptiveTests(unittest.TestCase):
     def test_walk_forward_detects_stronger_high_score_bucket(self):
         rows=[]
         for i in range(30):
-            score=65 if i>=15 else 60
+            score=85 if i>=15 else 80
             pnl=2.0 if score==65 else -1.0
             rows.append({"timestamp":f"2026-01-{i+1:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
         r=la.walk_forward(rows,65)
@@ -38,7 +38,7 @@ class AdaptiveTests(unittest.TestCase):
     def test_adaptive_activation_is_bounded(self):
         rows=[]
         for i in range(30):
-            score=65 if i>=15 else 60
+            score=85 if i>=15 else 80
             pnl=2.0 if score==65 else -1.0
             rows.append({"timestamp":f"{i:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
         state={"trade_count":30}
@@ -53,8 +53,8 @@ class AdaptiveTests(unittest.TestCase):
             "status": "waiting_for_history",
         }}
         scanner.normalize_legacy_strategy_baseline(state)
-        self.assertEqual(state["strategy"]["active_threshold"], 65.0)
-        self.assertEqual(state["strategy"]["rollback_threshold"], 65.0)
+        self.assertEqual(state["strategy"]["active_threshold"], 80.0)
+        self.assertEqual(state["strategy"]["rollback_threshold"], 80.0)
 
     def test_momentum_guard_rejects_negative_h1(self):
         p={"liquidity":{"usd":20000},"volume":{"h1":10000},"marketCap":50000,
@@ -63,8 +63,9 @@ class AdaptiveTests(unittest.TestCase):
 
     def test_entry_confirmation_requires_two_hits(self):
         s={"candidate_observations":{}}
-        self.assertFalse(scanner.candidate_confirmation(s,"mint",65))
-        self.assertTrue(scanner.candidate_confirmation(s,"mint",66))
+        self.assertFalse(scanner.candidate_confirmation(s,"mint",85))
+        self.assertFalse(scanner.candidate_confirmation(s,"mint",86))
+        self.assertTrue(scanner.candidate_confirmation(s,"mint",87))
 
     def test_slippage_changes_pnl(self):
         s={"equity":1000.0,"positions":{},"trade_count":0,"blacklist":[],"cooldowns":[]}
