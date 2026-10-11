@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Hardened meme-coin scanner with proven edge.
-Entry: ultra-high conviction score (80+) with 3x confirmation.
-Exit: aggressive profit-taking + whale dump detection.
-Risk: 0.5% per trade, max 4 concurrent positions.
+Hardened meme-coin paper scanner.
+Entry: high-conviction score (80+) with three consecutive confirmations.
+Risk controls are modeled estimates and require validation against real market data.
 """
 import time
 import math
@@ -224,9 +223,9 @@ def score_market_opportunity(pair_data, learning=None):
     components["buy_pressure"] = buy_pressure_bonus
     
     # 3. Learning adjustment (if available)
-    if learning and learning.get("wins", 0) > 0 and learning.get("trades", 0) > 0:
+    if learning and learning.get("trades", 0) >= 10 and learning.get("wins", 0) >= 0:
         win_rate = learning["wins"] / learning["trades"]
-        if win_rate > 0.40:  # strong winning rate
+        if win_rate > 0.40:  # only reward learning after a minimum sample
             learning_bonus = 10.0
             score += learning_bonus
             components["learning_bonus"] = learning_bonus
@@ -558,20 +557,29 @@ def append_learning_observation(score, pnl_pct, reason):
 
 
 def load_state():
-    """Load state from disk or create new."""
-    p = Path("state.json")
-    if p.exists():
-        import json
-        state = json.loads(p.read_text())
-        return normalize_state(state)
-    return normalize_state({})
+    """Load and normalize state; recover safely if the JSON file is corrupted."""
+    import json
+    path = Path("state.json")
+    if not path.exists():
+        return normalize_state({})
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        log(f"[WARN] state.json unreadable; starting from safe defaults ({type(exc).__name__})")
+        return normalize_state({})
+    if not isinstance(loaded, dict):
+        log("[WARN] state.json root is not an object; starting from safe defaults")
+        return normalize_state({})
+    return normalize_state(loaded)
 
 
 def save_state(state):
-    """Save state to disk."""
+    """Atomically save state to disk to avoid partial JSON writes."""
     import json
-    p = Path("state.json")
-    p.write_text(json.dumps(state, indent=2) + "\n")
+    path = Path("state.json")
+    temp_path = path.with_suffix(".json.tmp")
+    temp_path.write_text(json.dumps(normalize_state(state), indent=2) + "\n", encoding="utf-8")
+    temp_path.replace(path)
 
 
 # ============================================================================
@@ -631,8 +639,12 @@ def run_cycle(state=None):
     """Run one paper-trading scan cycle using current DexScreener data."""
     state = normalize_state(state if state is not None else load_state())
     manage_open_positions(state)
-    candidates = fetch_candidate_mints()
     opened = []
+    if int(state.get("trade_count", 0)) >= TARGET_TRADES:
+        save_state(state)
+        log(f"[CYCLE] paper-trade target reached ({TARGET_TRADES}); new entries disabled")
+        return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "target_reached": True}
+    candidates = fetch_candidate_mints()
     for mint in candidates:
         if mint in state["positions"] or mint in state["blacklist"]:
             continue
