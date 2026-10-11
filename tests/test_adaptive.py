@@ -31,6 +31,21 @@ class AdaptiveTests(unittest.TestCase):
                 self.assertEqual(state["strategy"]["rollback_threshold"], la.BASELINE_THRESHOLD)
                 self.assertEqual(state["strategy"]["baseline_migrated_from"], old_threshold)
 
+    def test_adaptive_state_repairs_non_dict_strategy(self):
+        state = {"trade_count": 0, "strategy": "corrupted"}
+        updated = la.adaptive_update_state(state, [])
+        self.assertIsInstance(updated["strategy"], dict)
+        self.assertEqual(updated["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
+        self.assertEqual(updated["strategy"]["status"], "waiting_for_history")
+
+    def test_adaptive_state_repairs_invalid_and_nonfinite_thresholds(self):
+        for invalid in ("not-a-number", float("nan"), float("inf")):
+            with self.subTest(invalid=invalid):
+                state = {"strategy": {"active_threshold": invalid, "rollback_threshold": invalid}}
+                updated = la.adaptive_update_state(state, [])
+                self.assertEqual(updated["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
+                self.assertEqual(updated["strategy"]["rollback_threshold"], la.BASELINE_THRESHOLD)
+
     def test_rollback_triggers_on_degradation(self):
         rows=[{"timestamp":str(i),"score":65,"pnl_pct":-3.0,"reason":"x"} for i in range(10)]
         ok,reason=la.should_rollback(rows,65)
