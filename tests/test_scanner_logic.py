@@ -148,5 +148,33 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertGreater(state["cooldowns"]["mint"], time.time() + 29 * 60)
 
 
+    def test_missing_price_forced_close_is_conservatively_marked_to_zero(self):
+        state = {
+            "equity": 1000.0,
+            "trade_count": 0,
+            "positions": {
+                "mint": {
+                    "symbol": "TEST",
+                    "entry_price": 1.0,
+                    "amount_usd": 10.0,
+                    "estimated_impact": 0.0,
+                    "signal_score": 70,
+                    "entry_time": 0.0,
+                }
+            },
+            "blacklist": [],
+            "cooldowns": {},
+        }
+        with patch.object(scanner, "fetch_dex_pair", return_value=None), \
+             patch.object(scanner, "append_learning_observation"), \
+             patch.object(scanner, "append_trade"), \
+             patch.object(scanner.time, "time", return_value=2 * scanner.MAX_HOLD_SECONDS + 1):
+            scanner.manage_open_positions(state)
+        self.assertEqual(state["equity"], 990.0)
+        self.assertEqual(state["trade_count"], 1)
+        self.assertNotIn("mint", state["positions"])
+        self.assertIn("mint", state["blacklist"])
+
+
 if __name__ == "__main__":
     unittest.main()
