@@ -7,6 +7,9 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "tests/**"
+      - "run_all_tests.py"
+      - "run_tests.py"
+      - "requirements.txt"
       - ".github/workflows/ci.yml"
   push:
     branches-ignore: [main]
@@ -15,6 +18,9 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "tests/**"
+      - "run_all_tests.py"
+      - "run_tests.py"
+      - "requirements.txt"
       - ".github/workflows/ci.yml"
 
 permissions:
