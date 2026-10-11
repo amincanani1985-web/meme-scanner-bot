@@ -39,11 +39,15 @@ class AdaptiveTests(unittest.TestCase):
 
     def test_adaptive_activation_uses_chronological_validation(self):
         rows=[]
-        for i in range(60):
-            score=85 if i % 2 else 80
-            pnl=2.0 if score==85 else -1.0
-            rows.append({"timestamp":f"{i:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
-        state={"trade_count":60}
+        for i in range(51):
+            score = (80.0, 83.0, 87.0)[i % 3]
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            rows.append({"timestamp":f"{i:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
+        validation_scores = [80.0] * 7 + [83.0] * 7 + [87.0] * 9
+        for offset, score in enumerate(validation_scores, start=51):
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            rows.append({"timestamp":f"{offset:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
+        state={"trade_count":len(rows)}
         out=la.adaptive_update_state(state,rows)
         self.assertEqual(out["strategy"]["active_threshold"],85.0)
         self.assertEqual(out["strategy"]["status"],"candidate_activated")
