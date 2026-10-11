@@ -177,6 +177,20 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertIn("mint", state["blacklist"])
         self.assertEqual(state["equity"], 990.0)
 
+    def test_trade_target_disables_new_entries(self):
+        state = scanner.normalize_state({"trade_count": scanner.TARGET_TRADES})
+        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
+            result = scanner.run_cycle(state)
+        self.assertTrue(result["target_reached"])
+        fetch_candidates.assert_not_called()
+
+    def test_learning_bonus_requires_minimum_sample(self):
+        baseline, _ = scanner.score_market_opportunity(pair())
+        tiny_sample, components = scanner.score_market_opportunity(pair(), {"trades": 1, "wins": 1})
+        self.assertEqual(tiny_sample, baseline)
+        self.assertNotIn("learning_bonus", components)
+
     def test_normalize_state_repairs_invalid_types(self):
         fixed = scanner.normalize_state({
             "equity": "bad", "positions": [], "blacklist": "oops", "cooldowns": "nope",
