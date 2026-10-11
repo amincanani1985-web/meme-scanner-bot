@@ -61,14 +61,14 @@ class AdaptiveTests(unittest.TestCase):
            "txns":{"m5":{"buys":20,"sells":10}},"priceChange":{"m5":2,"h1":-1}}
         self.assertFalse(scanner.passes_market_filter(p)[0])
 
-    def test_entry_confirmation_requires_two_hits(self):
+    def test_entry_confirmation_requires_three_hits(self):
         s={"candidate_observations":{}}
         self.assertFalse(scanner.candidate_confirmation(s,"mint",85))
         self.assertFalse(scanner.candidate_confirmation(s,"mint",86))
         self.assertTrue(scanner.candidate_confirmation(s,"mint",87))
 
     def test_slippage_changes_pnl(self):
-        s={"equity":1000.0,"positions":{},"trade_count":0,"blacklist":[],"cooldowns":[]}
+        s={"equity":1000.0,"positions":{},"trade_count":0,"blacklist":[],"cooldowns":{}}
         p={"liquidity":{"usd":20000},"volume":{"h1":10000},"marketCap":50000,
            "txns":{"m5":{"buys":20,"sells":10}},"priceChange":{"m5":2,"h1":8},
            "priceUsd":"1.0","baseToken":{"symbol":"TEST"}}
