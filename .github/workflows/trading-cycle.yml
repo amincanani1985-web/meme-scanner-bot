@@ -35,6 +35,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v5
+        with:
+          # Pending runs must start from the latest main, not a stale push SHA.
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v6
