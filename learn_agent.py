@@ -64,10 +64,10 @@ def adaptive_update_state(state,observations):
         active=rollback_threshold=None
     if (strategy.get("status")=="waiting_for_history"
         and strategy.get("candidate_threshold") is None
-        and active==60.0 and rollback_threshold==60.0):
+        and active is not None and active < BASELINE_THRESHOLD):
         strategy["active_threshold"]=BASELINE_THRESHOLD
         strategy["rollback_threshold"]=BASELINE_THRESHOLD
-        strategy["baseline_migrated_from"]=60.0
+        strategy["baseline_migrated_from"]=active
     current=float(strategy.get("active_threshold",BASELINE_THRESHOLD))
     if len(observations)<MIN_TRADES:
         state.setdefault("strategy", {})["status"] = "waiting_for_history"
