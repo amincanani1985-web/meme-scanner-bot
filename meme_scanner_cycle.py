@@ -84,14 +84,45 @@ def log(msg):
     print(f"[{ts}] {msg}", flush=True)
 
 
+def normalize_state(state):
+    """Ensure state remains dict-shaped across restarts and legacy data imports."""
+    if not isinstance(state, dict):
+        state = {}
+    state.setdefault("equity", STARTING_EQUITY)
+    state.setdefault("positions", {})
+    state.setdefault("blacklist", [])
+    state.setdefault("cooldowns", {})
+    state.setdefault("trade_count", 0)
+    state.setdefault("scan_count", 0)
+    state.setdefault("candidate_observations", {})
+    state.setdefault("strategy", {})
+
+    if not isinstance(state["positions"], dict):
+        state["positions"] = {}
+    if not isinstance(state["blacklist"], list):
+        state["blacklist"] = []
+    if not isinstance(state["cooldowns"], dict):
+        state["cooldowns"] = {}
+    if not isinstance(state["candidate_observations"], dict):
+        state["candidate_observations"] = {}
+    if not isinstance(state["strategy"], dict):
+        state["strategy"] = {}
+    return state
+
+
 def load_state():
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r") as f:
-            return json.load(f)
-    return {"equity": STARTING_EQUITY, "positions": {}, "blacklist": [], "cooldowns": {}, "trade_count": 0, "scan_count": 0, "version": VERSION, "candidate_observations": {}, "strategy": {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD}}
+        try:
+            with open(STATE_FILE, "r") as f:
+                state = json.load(f)
+            return normalize_state(state)
+        except Exception:
+            pass
+    return normalize_state({})
 
 
 def save_state(state):
+    state = normalize_state(state)
     state["version"] = VERSION
     state["last_run"] = datetime.now(timezone.utc).isoformat()
     with open(STATE_FILE, "w") as f:
@@ -107,6 +138,7 @@ def append_trade(row):
             w.writeheader()
         w.writerow(row)
 
+
 def append_learning_observation(pos, pnl_pct, reason):
     is_new = not os.path.exists(LEARNING_OBSERVATIONS_CSV)
     fields = ["timestamp", "score", "pnl_pct", "reason"]
@@ -116,8 +148,10 @@ def append_learning_observation(pos, pnl_pct, reason):
             w.writeheader()
         w.writerow({"timestamp": datetime.now(timezone.utc).isoformat(), "score": round(float(pos.get("signal_score") or 0), 4), "pnl_pct": round(pnl_pct * 100, 4), "reason": reason})
 
+
 def normalize_legacy_strategy_baseline(state):
     """Migrate an untrained legacy baseline from 60 to the hardened 65 threshold."""
+    state = normalize_state(state)
     strategy = state.setdefault("strategy", {})
     try:
         active = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
@@ -137,12 +171,14 @@ def normalize_legacy_strategy_baseline(state):
 
 
 def get_entry_threshold(state):
+    state = normalize_state(state)
     strategy = state.get("strategy") or {}
     try:
         threshold = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
     except (TypeError, ValueError):
         threshold = OPPORTUNITY_ENTRY_THRESHOLD
     return max(55.0, min(70.0, threshold))
+
 
 def candidate_confirmation(state, mint, score):
     now = time.time()
@@ -350,6 +386,7 @@ def passes_market_filter(pair, learning=None, threshold=None):
 
 
 def open_position(state, mint, pair, whale_balances, signal_score=0.0, signal_components=None):
+    state = normalize_state(state)
     price = float(pair.get("priceUsd") or 0)
     if price <= 0 or whale_balances is None:
         return False
@@ -406,6 +443,9 @@ def liquidity_drain_detected(pos, liquidity):
 
 
 def close_position(state, mint, exit_price, reason):
+    state = normalize_state(state)
+    if mint not in state.get("positions", {}):
+        return
     pos = state["positions"].pop(mint)
     entry_price = pos["entry_price"]
     impact = float(pos.get("estimated_impact") or 0.0)
@@ -416,19 +456,24 @@ def close_position(state, mint, exit_price, reason):
     state["trade_count"] += 1
     update_learning(state, pos, pnl_pct)
     append_learning_observation(pos, pnl_pct, reason)
-    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 2), "pnl_usd": round(pnl_usd, 2), "equity_after": round(state["equity"], 2), "reason": reason})
+    append_trade({"timestamp": datetime.now(timezone.utc).isoformat(), "mint": mint, "symbol": pos["symbol"], "entry_price": entry_price, "exit_price": exit_price, "pnl_pct": round(pnl_pct * 100, 4), "pnl_usd": round(pnl_usd, 4), "equity_after": round(state["equity"], 4), "reason": reason})
     if reason == "liquidity_drained":
         if mint not in state["blacklist"]:
             state["blacklist"].append(mint)
         log(f"  CLOSED {pos['symbol']} reason={reason} pnl={pnl_pct*100:.1f}% -> BLACKLISTED")
     elif reason in ("stop_loss", "hard_stop_loss"):
-        state["cooldowns"][mint] = time.time() + STOP_LOSS_COOLDOWN_SECONDS
+        cooldowns = state.setdefault("cooldowns", {})
+        if not isinstance(cooldowns, dict):
+            cooldowns = {}
+            state["cooldowns"] = cooldowns
+        cooldowns[mint] = time.time() + STOP_LOSS_COOLDOWN_SECONDS
         log(f"  CLOSED {pos['symbol']} reason={reason} pnl={pnl_pct*100:.1f}% -> 30min cooldown")
     else:
         log(f"  CLOSED {pos['symbol']} reason={reason} pnl={pnl_pct*100:.1f}%")
 
 
 def manage_open_positions(state):
+    state = normalize_state(state)
     for mint in list(state["positions"].keys()):
         pos = state["positions"][mint]
         pair = fetch_dex_pair(mint)
@@ -502,6 +547,7 @@ def manage_open_positions(state):
 
 
 def look_for_entries(state):
+    state = normalize_state(state)
     if state.get("trade_count", 0) >= TARGET_TRADES:
         log(f"  target reached ({TARGET_TRADES}), no new entries")
         return
@@ -513,9 +559,13 @@ def look_for_entries(state):
         log("  max concurrent positions reached, skipping discovery")
         return
     now = time.time()
-    for mint, until in list(state["cooldowns"].items()):
+    cooldowns = state.setdefault("cooldowns", {})
+    if not isinstance(cooldowns, dict):
+        cooldowns = {}
+        state["cooldowns"] = cooldowns
+    for mint, until in list(cooldowns.items()):
         if now >= until:
-            del state["cooldowns"][mint]
+            del cooldowns[mint]
     candidates = discover_candidates()
     log(f"  discovered {len(candidates)} candidate mint(s)")
     for mint in candidates:
@@ -552,7 +602,8 @@ def look_for_entries(state):
 
 
 def main():
-    state = normalize_legacy_strategy_baseline(load_state())
+    state = normalize_state(load_state())
+    state = normalize_legacy_strategy_baseline(state)
     state.setdefault("strategy", {"active_threshold": OPPORTUNITY_ENTRY_THRESHOLD, "candidate_threshold": None, "status": "baseline", "last_update_trade": 0, "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD})
     state.setdefault("candidate_observations", {})
     if adaptive_update_state is not None:
