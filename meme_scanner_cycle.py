@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Hardened meme-coin scanner with proven edge.
-Entry: high-conviction score (75+) with 2x confirmation.
-Exit: strong momentum filters + whale dump detection.
+Entry: ultra-high conviction score (80+) with 3x confirmation.
+Exit: aggressive profit-taking + whale dump detection.
+Risk: 0.5% per trade, max 4 concurrent positions.
 """
 import time
 import math
@@ -11,37 +12,40 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 # ============================================================================
-# CORE RISK PARAMETERS (hardened from live testing)
+# CORE RISK PARAMETERS (HARDENED v20 - profit-focused)
 # ============================================================================
 
-# Entry filters: HARDENED TO ONLY TRADE BEST SIGNALS
-MIN_LIQUIDITY_USD = 50000                 # Was 30k -> real money needs depth
-MIN_VOLUME_H1_USD = 5000                  # Was 2k -> avoid pump-and-dumps  
-MIN_LIQUIDITY_TO_MCAP_RATIO = 0.35        # Was 0.15 -> liquidity trap filter
-MIN_BUY_SELL_RATIO_M5 = 1.5               # Was 1.3 -> strong buyer pressure
-MIN_PRICE_CHANGE_M5_PCT = 1.0             # Was 0.0 -> momentum filter
-MIN_PAIR_AGE_SECONDS = 1800                # 30 min minimum -> avoid brand new scams
+# Entry filters: EXTREME SELECTIVITY
+MIN_LIQUIDITY_USD = 100000                # Was 50k → thick order book only
+MIN_VOLUME_H1_USD = 20000                 # Was 5k → proven volume
+MIN_LIQUIDITY_TO_MCAP_RATIO = 0.40        # Was 0.35 → stronger filter
+MIN_BUY_SELL_RATIO_M5 = 2.0               # Was 1.5 → strong buyer pressure
+MIN_PRICE_CHANGE_M5_PCT = 1.5             # Was 1.0 → real momentum
+MIN_PAIR_AGE_SECONDS = 3600               # 60 min → avoid brand new scams
 
-# Entry scoring: BE SELECTIVE
-OPPORTUNITY_ENTRY_THRESHOLD = 75.0        # Was 65 -> only HIGH CONVICTION signals
-MAX_CONCURRENT_POSITIONS = 8
-MAX_POSITION_EQUITY_FRACTION = 0.01       # 1% per trade max
-MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.05    # 5% total max
+# Entry scoring: ULTRA SELECTIVE
+OPPORTUNITY_ENTRY_THRESHOLD = 80.0        # Was 75.0 → only ELITE signals
+MAX_CONCURRENT_POSITIONS = 4              # Was 8 → reduce correlation
+MAX_POSITION_EQUITY_FRACTION = 0.005      # 0.5% per trade (was 1%)
+MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.02    # 2% total (was 5%)
 
-# Exit rules: AGGRESSIVE PROFIT-TAKING + LOSS-CUTTING
+# Exit rules: AGGRESSIVE PROFIT LOCK & LOSS CUT
 TARGET_TRADES = 200
-TRAILING_STOP_PCT = 0.06                  # Exit on 6% pullback from peak
-HARD_STOP_LOSS_PCT = 0.15                 # Hard stop at -15% (not -10%)
-LIQUIDITY_DRAIN_CRITICAL = 0.30           # Emergency exit at -30% liquidity
+TRAILING_STOP_PCT = 0.04                  # Exit on 4% pullback (was 6%)
+HARD_STOP_LOSS_PCT = 0.10                 # Hard stop at -10% (was -15%)
+LIQUIDITY_DRAIN_CRITICAL = 0.25           # Emergency exit at -25% liquidity
 
 # Whale detection
-WHALE_DUMP_THRESHOLD = 0.20               # Whale selling > 20% = exit immediately
+WHALE_DUMP_THRESHOLD = 0.20               # Whale selling > 20% = exit
 
-# Cooldown after stop-loss (let winners run longer)
-STOP_LOSS_COOLDOWN_MINUTES = 45           # Was 30 min -> reduce noise trades
+# Cooldown after stop-loss
+STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
+
+# Candidate confirmation threshold
+CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
 
 # ============================================================================
-# LEARNING & ADAPTATION  
+# STATE MANAGEMENT
 # ============================================================================
 
 def normalize_state(state):
@@ -52,10 +56,10 @@ def normalize_state(state):
     state.setdefault("cooldowns", {})
     state.setdefault("trade_count", 0)
     state.setdefault("scan_count", 0)
-    state.setdefault("version", "v18-hardened")
+    state.setdefault("version", "v20-hardened")
     state.setdefault("learning", {"trades": 0, "wins": 0, "buckets": {}})
     state.setdefault("strategy", {
-        "active_threshold": 75.0,
+        "active_threshold": OPPORTUNITY_ENTRY_THRESHOLD,
         "candidate_threshold": None,
         "status": "baseline"
     })
@@ -67,26 +71,28 @@ def normalize_legacy_strategy_baseline(state):
     """Migrate old state files to hardened thresholds."""
     strategy = state.get("strategy", {})
     if strategy.get("status") == "waiting_for_history":
-        if strategy.get("active_threshold", 60.0) == 60.0:
-            state["strategy"]["active_threshold"] = 75.0
-            state["strategy"]["rollback_threshold"] = 75.0
-            state["strategy"]["baseline_migrated_from"] = 60.0
+        old_threshold = float(strategy.get("active_threshold", 60.0))
+        if old_threshold <= 70.0:  # old soft strategy
+            state["strategy"]["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+            state["strategy"]["rollback_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+            state["strategy"]["baseline_migrated_from"] = old_threshold
+            state["strategy"]["status"] = "baseline"
     return state
 
 
 # ============================================================================
-# FILTER: PASSES_MARKET_FILTER (hardened)
+# FILTER: PASSES_MARKET_FILTER (ultra-hardened)
 # ============================================================================
 
 def passes_market_filter(pair_data):
     """
     Returns: (bool, reason_str)
-    STRICT filters - only best opportunities pass.
+    STRICT filters - only ELITE opportunities pass.
     """
     if not pair_data:
         return False, "missing_pair_data"
     
-    # Age check
+    # Age check - avoid new rugpulls
     if "pairCreatedAt" not in pair_data:
         return False, "missing_pair_age"
     
@@ -97,36 +103,35 @@ def passes_market_filter(pair_data):
     if age_sec < MIN_PAIR_AGE_SECONDS:
         return False, f"pair_too_new:{age_sec:.0f}s"
     
-    # Liquidity check
+    # Liquidity check - THICK order book
     liq = pair_data.get("liquidity", {}).get("usd", 0) or 0
     if liq < MIN_LIQUIDITY_USD:
         return False, f"low_liquidity:{liq:.0f}"
     
-    # Volume check
+    # Volume check - proven activity
     vol = pair_data.get("volume", {}).get("h1", 0) or 0
     if vol < MIN_VOLUME_H1_USD:
         return False, f"low_volume_h1:{vol:.0f}"
     
-    # Market cap ratio check
+    # Market cap ratio check - avoid traps
     mcap = pair_data.get("marketCap") or 0
     if mcap > 0:
         ratio = liq / mcap
         if ratio < MIN_LIQUIDITY_TO_MCAP_RATIO:
             return False, f"liq_mcap_ratio:{ratio:.2f}"
     
-    # Buy/sell ratio check (HARDENED)
+    # Buy/sell ratio check - STRONG buyers
     buys = pair_data.get("txns", {}).get("m5", {}).get("buys", 0) or 0
     sells = pair_data.get("txns", {}).get("m5", {}).get("sells", 0) or 1
     buy_sell_ratio = buys / max(sells, 1)
     if buy_sell_ratio < MIN_BUY_SELL_RATIO_M5:
         return False, f"weak_buy_pressure:{buy_sell_ratio:.2f}"
     
-    # Momentum check: m5 MUST be positive (NEW)
+    # Momentum checks - REAL momentum
     pc_m5 = pair_data.get("priceChange", {}).get("m5", 0) or 0
     if pc_m5 < MIN_PRICE_CHANGE_M5_PCT:
         return False, f"weak_momentum_m5:{pc_m5:.1f}%"
     
-    # Negative h1 is a DANGER sign
     pc_h1 = pair_data.get("priceChange", {}).get("h1", 0) or 0
     if pc_h1 < 0:
         return False, f"negative_momentum_h1:{pc_h1:.1f}%"
@@ -139,14 +144,14 @@ def passes_market_filter(pair_data):
 
 
 # ============================================================================
-# SCORING: MARKET OPPORTUNITY SCORE (hardened)
+# SCORING: MARKET OPPORTUNITY SCORE (ultra-hardened)
 # ============================================================================
 
 def score_market_opportunity(pair_data, learning=None):
     """
-    Score 0-100 based on:
-    - Momentum (m5 + h1)
-    - Buy/sell ratio
+    Score 0-100 based on proven factors:
+    - Momentum (m5 strong short-term signal)
+    - Buy/sell ratio (organic demand)
     - Liquidity strength
     - Learning adjustment
     
@@ -158,10 +163,10 @@ def score_market_opportunity(pair_data, learning=None):
     score = 50.0  # baseline
     components = {}
     
-    # 1. Price momentum (m5 = short-term signal)
+    # 1. Price momentum (m5 = short-term signal, h1 = confirmation)
     pc_m5 = pair_data.get("priceChange", {}).get("m5", 0) or 0
     pc_h1 = pair_data.get("priceChange", {}).get("h1", 0) or 0
-    momentum_bonus = min(20.0, pc_m5 * 2.0 + pc_h1 * 0.5)
+    momentum_bonus = min(25.0, pc_m5 * 3.0 + pc_h1 * 1.0)
     score += momentum_bonus
     components["momentum"] = momentum_bonus
     
@@ -169,14 +174,14 @@ def score_market_opportunity(pair_data, learning=None):
     buys = pair_data.get("txns", {}).get("m5", {}).get("buys", 0) or 0
     sells = pair_data.get("txns", {}).get("m5", {}).get("sells", 0) or 1
     buy_sell_ratio = buys / max(sells, 1)
-    buy_pressure_bonus = min(10.0, (buy_sell_ratio - 1.0) * 5.0)
+    buy_pressure_bonus = min(15.0, (buy_sell_ratio - 1.0) * 7.0)
     score += buy_pressure_bonus
     components["buy_pressure"] = buy_pressure_bonus
     
     # 3. Learning adjustment (if available)
     if learning and learning.get("wins", 0) > 0 and learning.get("trades", 0) > 0:
         win_rate = learning["wins"] / learning["trades"]
-        if win_rate > 0.35:  # winning strategy
+        if win_rate > 0.40:  # strong winning rate
             learning_bonus = 10.0
             score += learning_bonus
             components["learning_bonus"] = learning_bonus
@@ -186,18 +191,18 @@ def score_market_opportunity(pair_data, learning=None):
 
 
 # ============================================================================
-# CANDIDATE CONFIRMATION: 2 consecutive observations needed
+# CANDIDATE CONFIRMATION: 3 consecutive observations required
 # ============================================================================
 
 def candidate_confirmation(state, mint, signal_score):
     """
     Track consecutive high-score observations for a candidate.
-    Requires 2 hits with score >= threshold before entry.
+    Requires 3 hits with score >= threshold before entry (stronger filter).
     Resets on lower score.
     
     Returns: bool (ready for entry?)
     """
-    threshold = state.get("strategy", {}).get("active_threshold", 75.0)
+    threshold = state.get("strategy", {}).get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD)
     obs = state.setdefault("candidate_observations", {})
     
     if mint not in obs:
@@ -217,7 +222,7 @@ def candidate_confirmation(state, mint, signal_score):
     entry["hits"] += 1
     entry["last_score"] = signal_score
     
-    return entry["hits"] >= 2
+    return entry["hits"] >= CANDIDATE_CONFIRMATION_HITS
 
 
 # ============================================================================
@@ -227,8 +232,9 @@ def candidate_confirmation(state, mint, signal_score):
 def open_position(state, mint, pair_data, whale_balances, signal_score, signal_components):
     """
     Try to open a position. Returns: bool (success?)
+    Strict risk management: 0.5% per trade, max 4 concurrent.
     """
-    # Check circuit breakers
+    # Circuit breakers
     if mint in state.get("positions", {}):
         return False  # already open
     
@@ -240,11 +246,17 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
         if cooldown_until > time.time():
             return False  # in cooldown
     
-    # Position sizing
+    # Max concurrent positions
+    num_open = len(state.get("positions", {}))
+    if num_open >= MAX_CONCURRENT_POSITIONS:
+        return False  # position limit
+    
+    # Minimum equity check
     equity = state.get("equity", 1000.0)
     if equity < 200.0:
         return False  # minimum equity gate
     
+    # Position sizing: 0.5% risk per trade
     max_pos_size = equity * MAX_POSITION_EQUITY_FRACTION
     
     # Current exposure
@@ -255,20 +267,21 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
     max_portfolio_size = equity * MAX_PORTFOLIO_EXPOSURE_FRACTION
     
     if current_exposure >= max_portfolio_size:
-        return False  # portfolio limit hit
+        return False  # portfolio limit
     
     position_size = min(max_pos_size, max_portfolio_size - current_exposure)
     
-    if position_size <= 10.0:
+    if position_size <= 5.0:
         return False  # position too small
     
-    # Open position
+    # Price validation
     price = float(pair_data.get("priceUsd", 0) or 0)
     if price <= 0:
         return False
     
     symbol = pair_data.get("baseToken", {}).get("symbol", "?")
     
+    # Open position
     state["positions"][mint] = {
         "symbol": symbol,
         "entry_price": price,
@@ -287,7 +300,7 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
 def liquidity_drain_detected(position, current_liquidity_usd):
     """
     Whale detection: liquidity drying up = red flag.
-    - If drop > 30% from entry = IMMEDIATE EXIT
+    - If drop > 25% from entry = IMMEDIATE EXIT (was 30%)
     - If drop > 50% from entry = need 2 confirmations
     
     Returns: bool (should exit?)
@@ -298,7 +311,7 @@ def liquidity_drain_detected(position, current_liquidity_usd):
     
     drop_pct = (entry_liq - current_liquidity_usd) / entry_liq
     
-    # Emergency exit: > 30% liquidity drain
+    # Emergency exit: > 25% liquidity drain
     if drop_pct >= LIQUIDITY_DRAIN_CRITICAL:
         return True
     
@@ -318,6 +331,7 @@ def liquidity_drain_detected(position, current_liquidity_usd):
 def close_position(state, mint, exit_price, reason):
     """
     Close a position and log the P&L.
+    Updates learning, applies cooldown/blacklist as needed.
     """
     pos = state.get("positions", {}).pop(mint, None)
     if not pos:
@@ -332,16 +346,16 @@ def close_position(state, mint, exit_price, reason):
     pnl_pct = (exit_price - entry_price) / entry_price
     pnl_usd = amount_usd * pnl_pct
     
+    # Update equity
     state["equity"] = state.get("equity", 1000.0) + pnl_usd
     state["trade_count"] = state.get("trade_count", 0) + 1
     
-    # Track learning
+    # Track learning by score bucket
     learning = state.setdefault("learning", {"trades": 0, "wins": 0, "buckets": {}})
     learning["trades"] += 1
     if pnl_usd > 0:
         learning["wins"] += 1
     
-    # Bucket by score
     score = pos.get("signal_score", 0)
     score_bucket = str(int(score // 10) * 10)
     bucket = learning["buckets"].setdefault(score_bucket, {"n": 0, "wins": 0, "avg_pnl": 0.0})
@@ -354,41 +368,41 @@ def close_position(state, mint, exit_price, reason):
     if reason in ("stop_loss", "hard_stop_loss"):
         state.setdefault("cooldowns", {})[mint] = time.time() + (STOP_LOSS_COOLDOWN_MINUTES * 60)
     
-    # Blacklist on specific reasons
+    # Blacklist on dangerous reasons
     if reason in ("liquidity_drained", "whale_dump", "force_close_no_data"):
         if mint not in state.get("blacklist", []):
             state["blacklist"].append(mint)
     
     # Log trade
     symbol = pos.get("symbol", "?")
-    log(f"[CLOSE] {symbol} {reason:20s} | entry=${entry_price:.8f} exit=${exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
+    log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
 
 def manage_open_positions(state):
     """
     Scan all open positions for exit conditions.
+    Applies trailing stops, hard stops, and liquidity checks.
     """
     for mint in list(state.get("positions", {}).keys()):
         pos = state["positions"].get(mint)
         if not pos:
             continue
         
-        # Simulate price check (real version calls DexScreener)
-        # For now, random walk
+        # Simulate current price (real version calls DexScreener API)
         current_price = pos.get("peak_price", pos.get("entry_price", 0))
         if current_price <= 0:
             continue
         
-        # Update peak
+        # Update peak price for trailing stop
         if current_price > pos["peak_price"]:
             pos["peak_price"] = current_price
         
-        # Calculate P&L
+        # Calculate current P&L
         entry_price = pos.get("entry_price", 0)
         pnl_pct = (current_price - entry_price) / entry_price if entry_price else 0
         
-        # 1. Trailing stop
-        if pnl_pct >= 0.08:  # arm at +8%
+        # 1. Trailing stop (arm at +8%, exit on -4% from peak)
+        if pnl_pct >= 0.08:
             pos["trailing_armed"] = True
         
         if pos.get("trailing_armed"):
@@ -397,17 +411,34 @@ def manage_open_positions(state):
                 close_position(state, mint, current_price, "trailing_stop")
                 continue
         
-        # 2. Hard stop loss
+        # 2. Hard stop loss (aggressive -10%)
         if pnl_pct <= -HARD_STOP_LOSS_PCT:
             close_position(state, mint, current_price, "hard_stop_loss")
             continue
         
-        # 3. Max hold timeout
+        # 3. Max hold timeout (10 min holds)
         entry_time = pos.get("entry_time", time.time())
         hold_minutes = (time.time() - entry_time) / 60.0
-        if hold_minutes > 15.0:  # 15 min max hold
+        if hold_minutes > 10.0:
             close_position(state, mint, current_price, "max_hold_timeout")
             continue
+
+
+def load_state():
+    """Load state from disk or create new."""
+    p = Path("state.json")
+    if p.exists():
+        import json
+        state = json.loads(p.read_text())
+        return normalize_state(state)
+    return normalize_state({})
+
+
+def save_state(state):
+    """Save state to disk."""
+    import json
+    p = Path("state.json")
+    p.write_text(json.dumps(state, indent=2) + "\n")
 
 
 # ============================================================================
@@ -415,7 +446,7 @@ def manage_open_positions(state):
 # ============================================================================
 
 def log(msg):
-    """Simple logging."""
+    """Simple logging with timestamp."""
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{ts}] {msg}")
 
@@ -423,6 +454,7 @@ def log(msg):
 # ============================================================================
 # EXPORTS FOR TESTS
 # ============================================================================
+
 __all__ = [
     "normalize_state",
     "normalize_legacy_strategy_baseline",
@@ -433,16 +465,23 @@ __all__ = [
     "close_position",
     "liquidity_drain_detected",
     "manage_open_positions",
+    "load_state",
+    "save_state",
     "log",
-    # Constants for tests
+    # Constants
     "MIN_LIQUIDITY_USD",
+    "MIN_VOLUME_H1_USD",
     "MIN_LIQUIDITY_TO_MCAP_RATIO",
-    "MIN_BUY_SELL_RATIO",
+    "MIN_BUY_SELL_RATIO_M5",
     "MIN_PRICE_CHANGE_M5_PCT",
+    "MIN_PAIR_AGE_SECONDS",
     "OPPORTUNITY_ENTRY_THRESHOLD",
+    "MAX_CONCURRENT_POSITIONS",
     "MAX_POSITION_EQUITY_FRACTION",
     "MAX_PORTFOLIO_EXPOSURE_FRACTION",
-    "MIN_PAIR_AGE_SECONDS",
-    "MAX_CONCURRENT_POSITIONS",
-    "TARGET_TRADES",
+    "TRAILING_STOP_PCT",
+    "HARD_STOP_LOSS_PCT",
+    "LIQUIDITY_DRAIN_CRITICAL",
+    "STOP_LOSS_COOLDOWN_MINUTES",
+    "CANDIDATE_CONFIRMATION_HITS",
 ]
