@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Adaptive bounded strategy-learning engine with walk-forward validation and rollback."""
-import csv, json
+import csv, json, math
 from pathlib import Path
 
 MIN_TRADES=30
@@ -70,14 +70,14 @@ def adaptive_update_state(state,observations):
     # values fall back to the safe baseline instead of crashing the scheduled job.
     try:
         active = float(strategy.get("active_threshold", BASELINE_THRESHOLD))
-        if not __import__("math").isfinite(active):
+        if not math.isfinite(active):
             raise ValueError("non-finite active threshold")
     except (TypeError, ValueError, OverflowError):
         active = BASELINE_THRESHOLD
         strategy["active_threshold"] = BASELINE_THRESHOLD
     try:
         rollback_threshold = float(strategy.get("rollback_threshold", BASELINE_THRESHOLD))
-        if not __import__("math").isfinite(rollback_threshold):
+        if not math.isfinite(rollback_threshold):
             raise ValueError("non-finite rollback threshold")
     except (TypeError, ValueError, OverflowError):
         rollback_threshold = BASELINE_THRESHOLD
