@@ -417,7 +417,7 @@ def close_position(state, mint, exit_price, reason):
     append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct)
     append_learning_observation(pos.get("signal_score", 0), pnl_pct * 100.0, reason)
     symbol = pos.get("symbol", "?")
-    log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=\${entry_price:.8f} exit=\${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=\${state['equity']:.2f}")
+    log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
 
 def fetch_dex_pair(mint):
@@ -636,7 +636,7 @@ def run_cycle(state=None):
             opened.append(mint)
     state["scan_count"] += 1
     save_state(state)
-    log(f"[CYCLE] scanned={len(candidates)} opened={len(opened)} positions={len(state['positions'])} equity=\${state['equity']:.2f}")
+    log(f"[CYCLE] scanned={len(candidates)} opened={len(opened)} positions={len(state['positions'])} equity=${state['equity']:.2f}")
     return {"scanned": len(candidates), "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"]}
 
 
