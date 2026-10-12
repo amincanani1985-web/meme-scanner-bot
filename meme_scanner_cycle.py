@@ -8,6 +8,7 @@ import time
 import math
 import csv
 import requests
+from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -69,7 +70,7 @@ def normalize_state(state):
     except (TypeError, ValueError):
         equity = 1000.0
     state["equity"] = equity
-    for key in ("positions", "cooldowns", "candidate_observations", "strategy", "learning"):
+    for key in ("positions", "cooldowns", "candidate_observations", "strategy", "learning", "whale_snapshots"):
         if not isinstance(state.get(key), dict):
             state[key] = {}
     if not isinstance(state.get("blacklist"), list):
@@ -343,6 +344,7 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
         "trailing_armed": False,
         "signal_score": signal_score,
         "entry_components": signal_components,
+        "whale_balances": dict(whale_balances) if isinstance(whale_balances, dict) else {},
     }
     
     return True
@@ -530,6 +532,19 @@ def manage_open_positions(state):
         if not math.isfinite(current_liquidity) or current_liquidity < 0:
             current_liquidity = 0.0
         pos.pop("price_missing_since", None)
+        if helius_configured():
+            current_whales = fetch_whale_balances(mint)
+            if current_whales:
+                previous_whales = pos.get("whale_balances") or state["whale_snapshots"].get(mint, {})
+                if previous_whales and confirmed_whale_dump(previous_whales, current_whales, pair):
+                    state["whale_snapshots"][mint] = current_whales
+                    close_position(state, mint, current_price, "whale_dump")
+                    log(f"[WHALE] confirmed holder-balance drop with sell pressure for {mint}")
+                    continue
+                pos["whale_balances"] = current_whales
+                state["whale_snapshots"][mint] = current_whales
+            else:
+                log(f"[WARN] whale snapshot unavailable for open position {mint}; price/risk exits remain active")
         pos["peak_price"] = max(peak_price, current_price)
         pnl_pct = (current_price - entry_price) / entry_price if entry_price > 0 else 0.0
         if pnl_pct >= 0.08:
@@ -659,6 +674,7 @@ def run_cycle(state=None):
     manage_open_positions(state)
     opened = []
     if int(state.get("trade_count", 0)) >= TARGET_TRADES:
+        state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         save_state(state)
         log(f"[CYCLE] paper-trade target reached ({TARGET_TRADES}); new entries disabled")
         return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "target_reached": True}
@@ -674,11 +690,28 @@ def run_cycle(state=None):
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
             continue
+        whale_balances = {}
+        if helius_configured():
+            snapshot = fetch_whale_balances(mint)
+            if not snapshot:
+                log(f"[WARN] skipping entry for {mint}: whale data unavailable")
+                continue
+            previous_snapshot = state["whale_snapshots"].get(mint, {})
+            if previous_snapshot and confirmed_whale_dump(previous_snapshot, snapshot, pair):
+                state["whale_snapshots"][mint] = snapshot
+                state["candidate_observations"].pop(mint, None)
+                log(f"[WHALE] entry blocked for {mint}: holder-balance drop plus market sell pressure")
+                continue
+            whale_balances = snapshot
+            state["whale_snapshots"][mint] = snapshot
+            while len(state["whale_snapshots"]) > 100:
+                state["whale_snapshots"].pop(next(iter(state["whale_snapshots"])))
         if not candidate_confirmation(state, mint, score):
             continue
-        if open_position(state, mint, pair, {}, score, components):
+        if open_position(state, mint, pair, whale_balances, score, components):
             opened.append(mint)
     state["scan_count"] += 1
+    state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     save_state(state)
     log(f"[CYCLE] scanned={len(candidates)} opened={len(opened)} positions={len(state['positions'])} equity=${state['equity']:.2f}")
     return {"scanned": len(candidates), "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"]}
