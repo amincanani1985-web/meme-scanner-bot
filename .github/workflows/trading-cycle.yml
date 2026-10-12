@@ -192,6 +192,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # The cycle writes live-data.js with GITHUB_TOKEN, which does not trigger a downstream push workflow.
+    # Deploy the artifact from this same run so the public dashboard cannot lag behind the paper ledger.
     concurrency:
       group: github-pages
       cancel-in-progress: true
