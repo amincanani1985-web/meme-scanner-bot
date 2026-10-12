@@ -28,10 +28,10 @@
   "trade_count": 53,
   "scan_count": 158,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-12T13:11:35Z",
+  "last_run": "2026-10-12T13:27:19Z",
   "learning": {
-    "trades": 39,
-    "wins": 15,
+    "trades": 53,
+    "wins": 21,
     "buckets": {
       "0": {
         "n": 2,
@@ -58,7 +58,10 @@
         "wins": 4,
         "avg_pnl": -10.7314
       }
-    }
+    },
+    "bucketed_trades": 39,
+    "unbucketed_trades": 14,
+    "totals_source": "trades_log.csv"
   },
   "strategy": {
     "active_threshold": 80.0,
@@ -68,7 +71,8 @@
     "rollback_threshold": 80.0,
     "history_rows": 5,
     "required_rows": 30,
-    "baseline_migrated_from": 65.0
+    "baseline_migrated_from": 65.0,
+    "validation_status": "insufficient_history"
   },
   "candidate_observations": {
     "EbJJKtnawGPhfgthRrwsyDgrCc1smGUUYbK5WNAK5E1N": {
@@ -205,9 +209,12 @@
   "whale_snapshots": {},
   "initial_equity": 1000.0,
   "risk_control": {
-    "drawdown_pct": 70.66,
+    "drawdown_pct": 72.22,
     "max_drawdown_pct": 20.0,
     "status": "halted",
-    "reason": "max_drawdown_exceeded"
-  }
+    "reason": "max_drawdown_exceeded",
+    "loss_from_initial_pct": 70.66,
+    "peak_equity": 1055.98
+  },
+  "peak_equity": 1055.98
 }
