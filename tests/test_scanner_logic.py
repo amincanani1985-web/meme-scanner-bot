@@ -152,7 +152,8 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_run_cycle_opens_only_after_three_confirmations(self):
         state = scanner.normalize_state({})
-        with patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+        with patch.object(scanner, "helius_configured", return_value=False), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
              patch.object(scanner, "save_state"), patch.object(scanner, "log"):
             first = scanner.run_cycle(state)
