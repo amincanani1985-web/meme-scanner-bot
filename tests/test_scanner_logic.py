@@ -196,7 +196,7 @@ class ScannerLogicTests(unittest.TestCase):
             scanner.manage_open_positions(state)
         self.assertNotIn("broken", state["positions"])
 
-    def test_missing_price_for_old_position_forces_conservative_close(self):
+    def test_missing_price_does_not_fabricate_total_loss(self):
         state = {
             "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
             "positions": {"mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
@@ -204,11 +204,13 @@ class ScannerLogicTests(unittest.TestCase):
                 "signal_score": 85, "trailing_armed": False}},
         }
         with patch.object(scanner, "fetch_dex_pair", return_value=None), \
-             patch.object(scanner, "append_trade"), patch.object(scanner, "append_learning_observation"):
+             patch.object(scanner, "append_trade"), patch.object(scanner, "append_learning_observation"), \
+             patch.object(scanner, "log"):
             scanner.manage_open_positions(state)
-        self.assertNotIn("mint", state["positions"])
-        self.assertIn("mint", state["blacklist"])
-        self.assertEqual(state["equity"], 990.0)
+        self.assertIn("mint", state["positions"])
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["trade_count"], 0)
+        self.assertIn("price_missing_since", state["positions"]["mint"])
 
     def test_trade_target_disables_new_entries(self):
         state = scanner.normalize_state({"trade_count": scanner.TARGET_TRADES})
