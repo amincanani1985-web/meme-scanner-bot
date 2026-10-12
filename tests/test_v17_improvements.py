@@ -42,16 +42,19 @@ class HardenedImprovementTests(unittest.TestCase):
             scanner.close_position(state, "mint", 0.9, "liquidity_drained")
         self.assertIn("mint", state["blacklist"])
 
-    def test_missing_price_data_does_not_reuse_stale_peak(self):
+    def test_missing_price_data_does_not_reuse_stale_peak_or_fabricate_exit(self):
         state = {"equity": 1000.0, "trade_count": 0, "positions": {
             "mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.2, "amount_usd": 10.0,
                      "signal_score": 85, "entry_time": 0.0}
         }, "blacklist": [], "cooldowns": {}}
         with patch.object(scanner, "fetch_dex_pair", return_value=None), \
-             patch.object(scanner, "append_learning_observation"), patch.object(scanner, "append_trade"):
+             patch.object(scanner, "append_learning_observation"), patch.object(scanner, "append_trade"), \
+             patch.object(scanner, "log"):
             scanner.manage_open_positions(state)
-        self.assertNotIn("mint", state["positions"])
-        self.assertEqual(state["equity"], 990.0)
+        self.assertIn("mint", state["positions"])
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["trade_count"], 0)
+        self.assertEqual(state["positions"]["mint"]["data_status"], "stale")
 
     def test_legacy_strategy_migrates_to_hardened_threshold(self):
         state = {"strategy": {"active_threshold": 60.0, "rollback_threshold": 60.0,
