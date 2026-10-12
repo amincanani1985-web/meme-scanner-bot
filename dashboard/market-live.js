@@ -15,8 +15,8 @@
   const usd = (value) => {
     const n = num(value);
     if (!n) return "—";
-    if (n >= 1000000) return "$" + (n / 1000000).toFixed(2) + "m";
-    if (n >= 1000) return "$" + (n / 1000).toFixed(1) + "k";
+    if (n >= 1000000) return "$" + (n / 1000000).toFixed(2) + "د";
+    if (n >= 1000) return "$" + (n / 1000).toFixed(1) + "هزار";
     return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   };
   const price = (value) => {
@@ -32,13 +32,13 @@
   };
   const age = (seconds) => {
     const ms = Date.now() - Number(seconds || 0) * 1000;
-    if (!Number.isFinite(ms) || ms < 0) return "unknown";
+    if (!Number.isFinite(ms) || ms < 0) return "نامشخص";
     const minutes = Math.floor(ms / 60000);
-    if (minutes < 1) return "just now";
-    if (minutes < 60) return minutes + "m ago";
+    if (minutes < 1) return "همین الان";
+    if (minutes < 60) return minutes + " دقیقه پیش";
     const hours = Math.floor(minutes / 60);
-    if (hours < 48) return hours + "h ago";
-    return Math.floor(hours / 24) + "d ago";
+    if (hours < 48) return hours + " ساعت پیش";
+    return Math.floor(hours / 24) + " روز پیش";
   };
   async function getJson(url) {
     const controller = new AbortController();
@@ -77,8 +77,8 @@
         const cls = num(ch) > 0 ? "up" : num(ch) < 0 ? "down" : "";
         const candidate = r.observation;
         const sub = candidate
-          ? "Bot candidate · " + Number(candidate.hits || 1) + " hit(s) · seen " + age(candidate.last_seen)
-          : "Live market discovery";
+          ? "نامزد بات · " + Number(candidate.hits || 1) + " بار دیده شده · آخرین مشاهده " + age(candidate.last_seen)
+          : "کشف زنده بازار";
         const tokenUrl = p.pairAddress
           ? "https://dexscreener.com/solana/" + encodeURIComponent(p.pairAddress)
           : "https://dexscreener.com/solana/" + encodeURIComponent(r.mint);
@@ -97,12 +97,12 @@
   async function refreshMarketData() {
     if (busy) return;
     if (!window.LIVE_STATE) {
-      setStatus("Waiting for bot snapshot", "warn");
-      $("marketNote").textContent = "Market prices are fetched directly, but the bot's tracked-candidate list is not loaded yet.";
+      setStatus("در انتظار داده‌های ثبت‌شده بات", "warn");
+      $("marketNote").textContent = "قیمت‌های بازار مستقیماً دریافت می‌شوند، اما فهرست نامزدهای رصدشده بات هنوز بارگذاری نشده است.";
       return;
     }
     busy = true;
-    setStatus("Updating live quotes…", "warn");
+    setStatus("در حال به‌روزرسانی قیمت‌های زنده…", "warn");
     try {
       const [profilesResult, boostsResult] = await Promise.allSettled([
         getJson(API + "/token-profiles/latest/v1"),
@@ -141,23 +141,23 @@
         return num(b.pair?.liquidity?.usd) - num(a.pair?.liquidity?.usd);
       });
       if (!rows.length && profilesResult.status === "rejected" && boostsResult.status === "rejected") {
-        throw new Error("DexScreener endpoints unavailable");
+        throw new Error("سرویس‌های DexScreener در دسترس نیستند");
       }
       lastSuccess = Date.now();
-      paint(rows, "Live market data from DexScreener · refreshes every 30 seconds. " +
-        tracked.length + " recent bot candidates checked; " + discoveries.length +
-        " latest profile/boost entries considered. The bot itself scans on its scheduled workflow, not continuously.");
-      setStatus("LIVE MARKET · 30s refresh", "ok");
+      paint(rows,  "داده زنده بازار از DexScreener · تازه‌سازی هر ۳۰ ثانیه. " +
+        tracked.length +  " نامزد اخیر بات بررسی شد؛ " + discoveries.length +
+        " مورد از پروفایل‌ها/توکن‌های تقویت‌شده اخیر بررسی شد. خود بات طبق زمان‌بندی اجرا می‌شود و به‌طور پیوسته اسکن نمی‌کند.");
+      setStatus("بازار زنده · تازه‌سازی هر ۳۰ ثانیه", "ok");
     } catch (error) {
       if (lastRows.length) {
-        paint(lastRows, "Market refresh failed; showing the last successful quotes. " + String(error.message || error));
-        setStatus("Quotes stale · retrying", "warn");
+        paint(lastRows,  "تازه‌سازی بازار ناموفق بود؛ آخرین قیمت‌های موفق نمایش داده می‌شوند. " + String(error.message || error));
+        setStatus("قیمت‌ها قدیمی‌اند · تلاش دوباره", "warn");
       } else {
         $("marketRows").innerHTML = '<tr><td colspan="7" class="live-empty live-error">Could not reach the live market API from this browser. Check connection or CORS/network restrictions; no live quote is being shown.</td></tr>';
-        $("marketUpdated").textContent = "Unavailable";
-        setStatus("Live feed unavailable", "error");
-        $("marketNote").textContent = "Live API request failed: " + String(error.message || error) +
-          ". The bot's saved paper-trading data remains available above; it is not a live market quote.";
+        $("marketUpdated").textContent = "در دسترس نیست";
+        setStatus("خوراک زنده در دسترس نیست", "error");
+        $("marketNote").textContent = "درخواست رابط زنده ناموفق بود: " + String(error.message || error) +
+          ". داده‌های ذخیره‌شده معاملات آزمایشی بات در بالا موجود است؛ این داده‌ها قیمت زنده بازار نیستند.";
       }
     } finally {
       busy = false;
