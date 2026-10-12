@@ -1,6 +1,9 @@
+import csv
 import time
 import unittest
-from unittest.mock import patch
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import meme_scanner_cycle as scanner
 
@@ -27,6 +30,83 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 80.0)
         self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.005)
         self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.02)
+
+    def test_drawdown_circuit_breaker_halts_new_entries(self):
+        state = scanner.normalize_state({
+            "equity": 700.0, "initial_equity": 1000.0, "positions": {},
+            "blacklist": [], "cooldowns": {},
+        })
+        self.assertEqual(state["risk_control"]["status"], "halted")
+        self.assertAlmostEqual(state["risk_control"]["drawdown_pct"], 30.0)
+        self.assertFalse(scanner.open_position(state, "mint", pair(), {}, 95, {}))
+
+    def test_risk_halt_skips_discovery_but_still_records_cycle(self):
+        state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
+        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \\
+             patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
+            result = scanner.run_cycle(state)
+        self.assertTrue(result["risk_halted"])
+        self.assertEqual(result["risk_control"]["status"], "halted")
+        fetch_candidates.assert_not_called()
+        self.assertTrue(state["last_run"])
+
+    def test_stale_candidate_confirmation_restarts_at_one_hit(self):
+        now = 10000.0
+        state = {"strategy": {"active_threshold": 80.0}, "candidate_observations": {
+            "mint": {"hits": 2, "last_score": 95.0,
+                     "last_seen": now - scanner.CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS - 1}
+        }}
+        with patch.object(scanner.time, "time", return_value=now):
+            self.assertFalse(scanner.candidate_confirmation(state, "mint", 96.0))
+        self.assertEqual(state["candidate_observations"]["mint"]["hits"], 1)
+        self.assertEqual(state["candidate_observations"]["mint"]["last_seen"], now)
+
+    def test_candidate_discovery_ignores_non_solana_tokens(self):
+        boosts = Mock()
+        boosts.raise_for_status.return_value = None
+        boosts.json.return_value = [
+            {"chainId": "ethereum", "tokenAddress": "wrong-chain"},
+            {"chainId": "solana", "tokenAddress": "sol-mint"},
+        ]
+        profiles = Mock()
+        profiles.raise_for_status.return_value = None
+        profiles.json.return_value = [{"chainId": "base", "tokenAddress": "other-chain"}]
+        with patch.object(scanner.requests, "get", side_effect=[boosts, profiles]):
+            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint"])
+
+    def test_pair_lookup_never_selects_a_non_solana_pair(self):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"pairs": [
+            {**pair(), "chainId": "ethereum", "liquidity": {"usd": 999999}},
+            {**pair(), "chainId": "solana", "liquidity": {"usd": 100000}},
+        ]}
+        with patch.object(scanner.requests, "get", return_value=response):
+            found = scanner.fetch_dex_pair("mint")
+        self.assertEqual(found["chainId"], "solana")
+        self.assertEqual(found["liquidity"]["usd"], 100000)
+
+    def test_trade_log_schema_matches_dashboard_and_migrates_legacy_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "trades_log.csv"
+            path.write_text(
+                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,reason,amount_usd\\n"
+                "2026-01-01T00:00:00Z,old-mint,OLD,1,0.9,-10,hard_stop_loss,5\\n",
+                encoding="utf-8",
+            )
+            with patch.object(scanner, "Path", return_value=path):
+                scanner.append_trade("new-mint", {"symbol": "NEW", "amount_usd": 5.0},
+                                     1.0, 1.1, "trailing_stop", 0.1, 0.5, 1000.5)
+            with path.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(list(rows[0].keys()), [
+                "timestamp", "mint", "symbol", "entry_price", "exit_price",
+                "pnl_pct", "pnl_usd", "equity_after", "reason",
+            ])
+            self.assertEqual(len(rows), 2)
+            self.assertAlmostEqual(float(rows[0]["pnl_usd"]), -0.5)
+            self.assertEqual(rows[1]["reason"], "trailing_stop")
+            self.assertAlmostEqual(float(rows[1]["equity_after"]), 1000.5)
 
     def test_good_pair_passes_current_market_filters(self):
         self.assertEqual(scanner.passes_market_filter(pair()), (True, "ok"))
@@ -95,7 +175,7 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertFalse(scanner.open_position(state, "another", pair(), {}, 85, {}))
 
     def test_small_equity_can_still_open_risk_capped_position(self):
-        state = {"equity": 400.0, "positions": {}, "blacklist": [], "cooldowns": {}}
+        state = {"equity": 400.0, "initial_equity": 400.0, "positions": {}, "blacklist": [], "cooldowns": {}}
         self.assertTrue(scanner.open_position(state, "small", pair(), {}, 85, {}))
         self.assertAlmostEqual(state["positions"]["small"]["amount_usd"], 2.0)
 
