@@ -25,6 +25,43 @@ def pair(**overrides):
 
 
 class ScannerLogicTests(unittest.TestCase):
+    def test_drawdown_uses_account_peak_not_only_initial_balance(self):
+        state = {"equity": 800.0, "initial_equity": 1000.0, "peak_equity": 1100.0}
+        risk = scanner.update_risk_control(state)
+        self.assertAlmostEqual(risk["drawdown_pct"], 27.27, places=2)
+        self.assertEqual(risk["status"], "halted")
+        self.assertAlmostEqual(risk["loss_from_initial_pct"], 20.0, places=2)
+
+    def test_trade_ledger_reconciles_learning_totals_without_fabricating_scores(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "trades_log.csv"
+            path.write_text(
+                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,pnl_usd,equity_after,reason\n"
+                "2026-01-01T00:00:00Z,a,A,1,1.1,10,10,1010,max_hold\n"
+                "2026-01-02T00:00:00Z,b,B,1,0.9,-10,-10,1000,stop_loss\n"
+                "2026-01-03T00:00:00Z,c,C,1,1.2,20,20,1020,max_hold\n",
+                encoding="utf-8",
+            )
+            state = {"initial_equity": 1000.0, "equity": 1020.0, "trade_count": 1,
+                     "learning": {"trades": 1, "wins": 0, "buckets": {"80": {"n": 2}}}}
+            scanner.reconcile_learning_from_trade_log(state, path)
+        self.assertEqual(state["trade_count"], 3)
+        self.assertEqual(state["learning"]["trades"], 3)
+        self.assertEqual(state["learning"]["wins"], 2)
+        self.assertEqual(state["learning"]["bucketed_trades"], 2)
+        self.assertEqual(state["learning"]["unbucketed_trades"], 1)
+        self.assertEqual(state["peak_equity"], 1020.0)
+
+    def test_missing_legacy_signal_score_is_not_written_as_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "strategy_observations.csv"
+            with patch.object(scanner, "Path", return_value=path):
+                scanner.append_learning_observation(None, -5.0, "legacy_position")
+            with path.open(newline="", encoding="utf-8") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["score"], "")
+            self.assertEqual(row["pnl_pct"], "-5.0")
+
     def test_hardened_risk_constants(self):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 80.0)
@@ -42,7 +79,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_risk_halt_skips_discovery_but_still_records_cycle(self):
         state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
-        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
         self.assertTrue(result["risk_halted"])
@@ -294,7 +331,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_trade_target_disables_new_entries(self):
         state = scanner.normalize_state({"trade_count": scanner.TARGET_TRADES})
-        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
         self.assertTrue(result["target_reached"])

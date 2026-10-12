@@ -1,36 +1,109 @@
 #!/usr/bin/env python3
 """Offline entry-strategy backtest and chronological walk-forward validator."""
-import argparse, csv, json
+import argparse
+import csv
+import json
+import math
 from pathlib import Path
 
-THRESHOLDS=(80.0,82.5,85.0,87.5,90.0)
+THRESHOLDS = (80.0, 82.5, 85.0, 87.5, 90.0)
+MIN_HISTORY_ROWS = 30
+MIN_VALIDATION_ROWS = 8
+MIN_THRESHOLD_VALIDATION_SAMPLES = 8
+
 
 def load(path):
-    p=Path(path)
-    if not p.exists(): return []
-    out=[]
-    with p.open(newline="") as f:
-        for r in csv.DictReader(f):
-            try: out.append({"timestamp":r["timestamp"],"score":float(r["score"]),"pnl_pct":float(r["pnl_pct"])})
-            except (KeyError,TypeError,ValueError): pass
-    return sorted(out,key=lambda x:x["timestamp"])
+    """Load only complete, finite observations with plausible strategy scores."""
+    p = Path(path)
+    if not p.exists():
+        return []
+    out = []
+    with p.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            try:
+                timestamp = str(row.get("timestamp", "")).strip()
+                score = float(row["score"])
+                pnl_pct = float(row["pnl_pct"])
+            except (KeyError, TypeError, ValueError, OverflowError):
+                continue
+            if not timestamp or not math.isfinite(score) or not math.isfinite(pnl_pct):
+                continue
+            if not 0.0 <= score <= 100.0:
+                continue
+            out.append({"timestamp": timestamp, "score": score, "pnl_pct": pnl_pct})
+    return sorted(out, key=lambda item: item["timestamp"])
 
-def metrics(rows,t):
-    s=[r for r in rows if r["score"]>=t]
-    wins=[r for r in s if r["pnl_pct"]>0]
-    losses=[r for r in s if r["pnl_pct"]<0]
-    gw=sum(r["pnl_pct"] for r in wins); gl=abs(sum(r["pnl_pct"] for r in losses))
-    return {"n":len(s),"win_rate":len(wins)/len(s) if s else 0,"avg_pnl":sum(r["pnl_pct"] for r in s)/len(s) if s else 0,"profit_factor":gw/gl if gl else (999 if gw else 0)}
+
+def metrics(rows, threshold):
+    selected = [row for row in rows if row["score"] >= threshold]
+    wins = [row for row in selected if row["pnl_pct"] > 0]
+    losses = [row for row in selected if row["pnl_pct"] < 0]
+    gross_wins = sum(row["pnl_pct"] for row in wins)
+    gross_losses = abs(sum(row["pnl_pct"] for row in losses))
+    count = len(selected)
+    return {
+        "n": count,
+        "wins": len(wins),
+        "losses": len(losses),
+        "win_rate": len(wins) / count if count else 0.0,
+        "avg_pnl": sum(row["pnl_pct"] for row in selected) / count if count else 0.0,
+        "profit_factor": gross_wins / gross_losses if gross_losses else (999.0 if gross_wins else 0.0),
+        "eligible": count >= MIN_THRESHOLD_VALIDATION_SAMPLES,
+    }
+
 
 def run(rows):
-    if len(rows)<30: return {"status":"insufficient_history","rows":len(rows),"required_rows":30,"thresholds":{}}
-    split=max(1,int(len(rows)*0.7)); train=rows[:split]; val=rows[split:]
-    if len(val)<8: return {"status":"insufficient_validation_history","rows":len(rows),"train_rows":len(train),"validation_rows":len(val),"required_validation_rows":8,"thresholds":{}}
-    result={}
-    for t in THRESHOLDS:
-        result[str(t)]={"train":metrics(train,t),"validation":metrics(val,t)}
-    return {"status":"ok","rows":len(rows),"train_rows":len(train),"validation_rows":len(val),"thresholds":result}
+    rows = sorted(rows, key=lambda item: item["timestamp"])
+    if len(rows) < MIN_HISTORY_ROWS:
+        return {
+            "status": "insufficient_history",
+            "rows": len(rows),
+            "required_rows": MIN_HISTORY_ROWS,
+            "validation_rows": 0,
+            "eligible_thresholds": [],
+            "thresholds": {},
+        }
 
-if __name__=="__main__":
-    ap=argparse.ArgumentParser(); ap.add_argument("--observations",default="strategy_observations.csv")
-    args=ap.parse_args(); print(json.dumps(run(load(args.observations)),indent=2))
+    split = max(1, int(len(rows) * 0.7))
+    train, validation = rows[:split], rows[split:]
+    if len(validation) < MIN_VALIDATION_ROWS:
+        return {
+            "status": "insufficient_validation_history",
+            "rows": len(rows),
+            "train_rows": len(train),
+            "validation_rows": len(validation),
+            "required_validation_rows": MIN_VALIDATION_ROWS,
+            "eligible_thresholds": [],
+            "thresholds": {},
+        }
+
+    result = {}
+    eligible = []
+    for threshold in THRESHOLDS:
+        train_metrics = metrics(train, threshold)
+        validation_metrics = metrics(validation, threshold)
+        result[str(threshold)] = {
+            "train": train_metrics,
+            "validation": validation_metrics,
+            "eligible": validation_metrics["eligible"],
+        }
+        if validation_metrics["eligible"]:
+            eligible.append(threshold)
+
+    return {
+        "status": "ok" if eligible else "insufficient_threshold_samples",
+        "rows": len(rows),
+        "train_rows": len(train),
+        "validation_rows": len(validation),
+        "required_validation_samples_per_threshold": MIN_THRESHOLD_VALIDATION_SAMPLES,
+        "eligible_thresholds": eligible,
+        "thresholds": result,
+    }
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--observations", default="strategy_observations.csv")
+    args = parser.parse_args()
+    report = run(load(args.observations))
+    print(json.dumps(report, indent=2))

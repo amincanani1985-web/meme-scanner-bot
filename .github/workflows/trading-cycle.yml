@@ -67,8 +67,25 @@ jobs:
             grep -qE "Ran [0-9]+ tests" /tmp/test.log
           done
 
-      - name: Run walk-forward strategy validation
-        run: python strategy_backtest.py
+      - name: Report walk-forward strategy validation status
+        shell: bash
+        run: |
+          set -euo pipefail
+          python strategy_backtest.py | tee /tmp/backtest-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
+          status = report.get("status", "unknown")
+          print("## Walk-forward strategy validation")
+          print(f"- Status: **{status}**")
+          print(f"- Scored observations: {report.get('rows', 0)}")
+          print(f"- Eligible thresholds: {report.get('eligible_thresholds', [])}")
+          if status != "ok":
+              print("- **NOT VALIDATED:** insufficient clean out-of-sample data; this is not a strategy approval.")
+          else:
+              print("- Sample gates passed for at least one threshold. This is not a guarantee of profitability.")
+          PY
 
       - name: Validate paper-trade target integrity
         run: |
@@ -137,7 +154,14 @@ jobs:
           print(f"- Scans: {state.get('scan_count', 0)}")
           print(f"- Closed trades: {state.get('trade_count', 0)}/200")
           print(f"- Paper equity: ${float(state.get('equity', 0)):.2f}")
-          print(f"- Risk guard: {risk.get('status', 'unknown')} ({risk.get('drawdown_pct', 'n/a')}% drawdown)")
+          print(f"- Risk guard: {risk.get('status', 'unknown')} ({risk.get('drawdown_pct', 'n/a')}% peak drawdown)")
+          strategy = state.get("strategy", {})
+          validation = strategy.get("validation_status", "insufficient_history")
+          print(f"- Strategy validation: {validation} ({strategy.get('history_rows', 0)}/{strategy.get('required_rows', 30)} scored observations)")
+          if validation != "validated":
+              print("- Strategy profitability is not validated; no threshold change is approved by the current evidence.")
+          learning = state.get("learning", {})
+          print(f"- Ledger reconciliation: {learning.get('trades', 0)} trades, {learning.get('wins', 0)} wins; {learning.get('unbucketed_trades', 0)} trades lack recoverable score-bucket data.")
           if risk.get("status") == "halted":
               print("- New entries are blocked by the drawdown circuit breaker.")
           PY

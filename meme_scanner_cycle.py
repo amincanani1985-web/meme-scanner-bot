@@ -115,15 +115,24 @@ def normalize_state(state):
 
 
 def update_risk_control(state):
-    """Recalculate the drawdown circuit breaker using the original paper balance."""
+    """Apply the drawdown circuit breaker against the account high-water mark."""
     initial = float(state.get("initial_equity", 1000.0) or 1000.0)
     equity = float(state.get("equity", initial) or 0.0)
-    drawdown = max(0.0, (initial - equity) / initial) if initial > 0 else 0.0
+    try:
+        prior_peak = float(state.get("peak_equity", initial) or initial)
+    except (TypeError, ValueError, OverflowError):
+        prior_peak = initial
+    peak = max(initial, prior_peak, equity)
+    state["peak_equity"] = round(peak, 6)
+    drawdown = max(0.0, (peak - equity) / peak) if peak > 0 else 0.0
+    initial_loss = max(0.0, (initial - equity) / initial) if initial > 0 else 0.0
     risk = state.setdefault("risk_control", {})
     if not isinstance(risk, dict):
         risk = {}
         state["risk_control"] = risk
     risk["drawdown_pct"] = round(drawdown * 100.0, 2)
+    risk["loss_from_initial_pct"] = round(initial_loss * 100.0, 2)
+    risk["peak_equity"] = round(peak, 2)
     risk["max_drawdown_pct"] = round(MAX_EQUITY_DRAWDOWN_FRACTION * 100.0, 2)
     risk["status"] = "halted" if drawdown >= MAX_EQUITY_DRAWDOWN_FRACTION else "active"
     risk["reason"] = "max_drawdown_exceeded" if risk["status"] == "halted" else ""
@@ -469,7 +478,7 @@ def close_position(state, mint, exit_price, reason):
             state["blacklist"].append(mint)
     
     append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct, pnl_usd, state["equity"])
-    append_learning_observation(pos.get("signal_score", 0), pnl_pct * 100.0, reason)
+    append_learning_observation(pos.get("signal_score"), pnl_pct * 100.0, reason)
     symbol = pos.get("symbol", "?")
     log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
@@ -656,15 +665,71 @@ def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_u
 
 
 def append_learning_observation(score, pnl_pct, reason):
-    """Persist realized outcomes for the walk-forward learner."""
+    """Persist realized outcomes without inventing a score for legacy positions."""
     path = Path("strategy_observations.csv")
     exists = path.exists() and path.stat().st_size > 0
+    try:
+        score_value = float(score) if score is not None else None
+        if score_value is not None and (not math.isfinite(score_value) or not 0.0 <= score_value <= 100.0):
+            score_value = None
+    except (TypeError, ValueError, OverflowError):
+        score_value = None
+    try:
+        pnl_value = float(pnl_pct)
+        if not math.isfinite(pnl_value):
+            return
+    except (TypeError, ValueError, OverflowError):
+        return
     with path.open("a", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         if not exists:
             writer.writerow(["timestamp", "score", "pnl_pct", "reason"])
-        writer.writerow([datetime.utcnow().isoformat(), float(score or 0), float(pnl_pct), reason])
+        writer.writerow([datetime.utcnow().isoformat(), "" if score_value is None else score_value, pnl_value, reason])
 
+
+def reconcile_learning_from_trade_log(state, trades_path="trades_log.csv"):
+    """Reconcile headline learning totals to the ledger; preserve unknown historical scores."""
+    path = Path(trades_path)
+    if not path.exists() or path.stat().st_size == 0:
+        return state
+    valid_rows = []
+    peak = float(state.get("initial_equity", 1000.0) or 1000.0)
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if not row.get("timestamp") or not row.get("mint"):
+                continue
+            try:
+                pnl_usd = float(row.get("pnl_usd", ""))
+                equity_after = float(row.get("equity_after", ""))
+                if not math.isfinite(pnl_usd) or not math.isfinite(equity_after):
+                    continue
+            except (TypeError, ValueError, OverflowError):
+                continue
+            valid_rows.append((pnl_usd, equity_after))
+            peak = max(peak, equity_after)
+    if not valid_rows:
+        return state
+    learning = state.setdefault("learning", {})
+    if not isinstance(learning, dict):
+        learning = {}
+        state["learning"] = learning
+    bucketed = 0
+    buckets = learning.get("buckets", {})
+    if isinstance(buckets, dict):
+        for bucket in buckets.values():
+            if isinstance(bucket, dict):
+                try:
+                    bucketed += max(0, int(bucket.get("n", 0)))
+                except (TypeError, ValueError, OverflowError):
+                    continue
+    learning["trades"] = len(valid_rows)
+    learning["wins"] = sum(1 for pnl_usd, _ in valid_rows if pnl_usd > 0)
+    learning["bucketed_trades"] = bucketed
+    learning["unbucketed_trades"] = max(0, len(valid_rows) - bucketed)
+    learning["totals_source"] = "trades_log.csv"
+    state["trade_count"] = len(valid_rows)
+    state["peak_equity"] = max(float(state.get("peak_equity", peak) or peak), peak)
+    return state
 
 def load_state():
     """Load and normalize state; recover safely if the JSON file is corrupted."""
@@ -749,6 +814,7 @@ def run_cycle(state=None):
     """Run one paper-trading scan cycle using current DexScreener data."""
     state = normalize_state(state if state is not None else load_state())
     state = normalize_legacy_strategy_baseline(state)
+    reconcile_learning_from_trade_log(state)
     manage_open_positions(state)
     opened = []
     if int(state.get("trade_count", 0)) >= TARGET_TRADES:

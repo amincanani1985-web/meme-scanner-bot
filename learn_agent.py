@@ -13,14 +13,25 @@ MIN_VALIDATION_EDGE=0.25
 BASELINE_THRESHOLD=80.0
 
 def load_observations(path="strategy_observations.csv"):
-    p=Path(path)
-    if not p.exists(): return []
-    rows=[]
-    with p.open(newline="") as f:
-        for r in csv.DictReader(f):
-            try: rows.append({"timestamp":r.get("timestamp",""),"score":float(r.get("score",0)),"pnl_pct":float(r.get("pnl_pct",0)),"reason":r.get("reason","")})
-            except (TypeError,ValueError): pass
-    return rows
+    """Load complete, finite observations; never invent scores for legacy trades."""
+    p = Path(path)
+    if not p.exists():
+        return []
+    rows = []
+    with p.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                timestamp = str(row.get("timestamp", "")).strip()
+                score = float(row["score"])
+                pnl_pct = float(row["pnl_pct"])
+            except (KeyError, TypeError, ValueError, OverflowError):
+                continue
+            if not timestamp or not math.isfinite(score) or not math.isfinite(pnl_pct):
+                continue
+            if not 0.0 <= score <= 100.0:
+                continue
+            rows.append({"timestamp": timestamp, "score": score, "pnl_pct": pnl_pct, "reason": row.get("reason", "")})
+    return sorted(rows, key=lambda item: item["timestamp"])
 
 def _metrics(rows,threshold):
     s=[r for r in rows if r["score"]>=threshold]
@@ -92,21 +103,32 @@ def adaptive_update_state(state,observations):
         active = BASELINE_THRESHOLD
 
     current = active
+    strategy["history_rows"] = len(observations)
+    strategy["required_rows"] = MIN_TRADES
     if len(observations) < MIN_TRADES:
         strategy["status"] = "waiting_for_history"
-        strategy["history_rows"] = len(observations)
-        strategy["required_rows"] = MIN_TRADES
+        strategy["validation_status"] = "insufficient_history"
+        strategy["candidate_threshold"] = None
         return state
-    rollback,reason=should_rollback(observations,current)
-    if current!=BASELINE_THRESHOLD and rollback:
-        strategy.update({"active_threshold":BASELINE_THRESHOLD,"candidate_threshold":None,"status":"rolled_back","rollback_threshold":BASELINE_THRESHOLD,"rollback_reason":reason})
+    rollback, reason = should_rollback(observations, current)
+    if current != BASELINE_THRESHOLD and rollback:
+        strategy.update({"active_threshold": BASELINE_THRESHOLD, "candidate_threshold": None, "status": "rolled_back", "validation_status": "rolled_back", "rollback_threshold": BASELINE_THRESHOLD, "rollback_reason": reason})
         return state
-    rec=choose_candidate(observations,current)
-    strategy["candidate_threshold"]=rec.get("threshold"); strategy["last_update_trade"]=state.get("trade_count",0); strategy["validation"]=rec
-    if rec.get("action")=="activate" and rec["threshold"]!=current:
-        strategy.update({"active_threshold":float(rec["threshold"]),"status":"candidate_activated","activated_at_trade":state.get("trade_count",0),"rollback_threshold":BASELINE_THRESHOLD,"activation_reason":rec.get("reason")})
-    elif current==BASELINE_THRESHOLD:
-        strategy["status"]="baseline"
+    rec = choose_candidate(observations, current)
+    strategy["candidate_threshold"] = rec.get("threshold")
+    strategy["validation"] = rec
+    strategy["last_validation_trade"] = state.get("trade_count", 0)
+    if rec.get("reason") == "no_candidate_has_enough_validation_samples":
+        strategy["status"] = "waiting_for_validation"
+        strategy["validation_status"] = "insufficient_threshold_samples"
+        strategy["candidate_threshold"] = None
+        return state
+    if rec.get("action") == "activate" and rec["threshold"] != current:
+        strategy.update({"active_threshold": float(rec["threshold"]), "status": "candidate_activated", "validation_status": "validated", "activated_at_trade": state.get("trade_count", 0), "last_update_trade": state.get("trade_count", 0), "rollback_threshold": BASELINE_THRESHOLD, "activation_reason": rec.get("reason")})
+    else:
+        strategy["validation_status"] = "evaluated_no_improvement"
+        if current == BASELINE_THRESHOLD:
+            strategy["status"] = "baseline"
     return state
 
 def run(state_path="state.json",observations_path="strategy_observations.csv",apply=False):
