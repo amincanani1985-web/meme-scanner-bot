@@ -54,6 +54,8 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 
 # Candidate confirmation threshold
 CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
+CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
+MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
 
 # ============================================================================
 # STATE MANAGEMENT
@@ -70,6 +72,15 @@ def normalize_state(state):
     except (TypeError, ValueError):
         equity = 1000.0
     state["equity"] = equity
+    try:
+        initial_equity = float(state.get("initial_equity", 1000.0))
+        if not math.isfinite(initial_equity) or initial_equity <= 0:
+            initial_equity = 1000.0
+    except (TypeError, ValueError, OverflowError):
+        initial_equity = 1000.0
+    state["initial_equity"] = initial_equity
+    if not isinstance(state.get("risk_control"), dict):
+        state["risk_control"] = {}
     for key in ("positions", "cooldowns", "candidate_observations", "strategy", "learning", "whale_snapshots"):
         if not isinstance(state.get(key), dict):
             state[key] = {}
@@ -99,7 +110,24 @@ def normalize_state(state):
     strategy["active_threshold"] = threshold
     strategy.setdefault("candidate_threshold", None)
     strategy.setdefault("status", "baseline")
+    update_risk_control(state)
     return state
+
+
+def update_risk_control(state):
+    """Recalculate the drawdown circuit breaker using the original paper balance."""
+    initial = float(state.get("initial_equity", 1000.0) or 1000.0)
+    equity = float(state.get("equity", initial) or 0.0)
+    drawdown = max(0.0, (initial - equity) / initial) if initial > 0 else 0.0
+    risk = state.setdefault("risk_control", {})
+    if not isinstance(risk, dict):
+        risk = {}
+        state["risk_control"] = risk
+    risk["drawdown_pct"] = round(drawdown * 100.0, 2)
+    risk["max_drawdown_pct"] = round(MAX_EQUITY_DRAWDOWN_FRACTION * 100.0, 2)
+    risk["status"] = "halted" if drawdown >= MAX_EQUITY_DRAWDOWN_FRACTION else "active"
+    risk["reason"] = "max_drawdown_exceeded" if risk["status"] == "halted" else ""
+    return risk
 
 
 def normalize_legacy_strategy_baseline(state):
@@ -240,33 +268,40 @@ def score_market_opportunity(pair_data, learning=None):
 # ============================================================================
 
 def candidate_confirmation(state, mint, signal_score):
-    """
-    Track consecutive high-score observations for a candidate.
-    Requires 3 hits with score >= threshold before entry (stronger filter).
-    Resets on lower score.
-    
-    Returns: bool (ready for entry?)
-    """
+    """Require fresh, consecutive above-threshold observations before entry."""
     threshold = state.get("strategy", {}).get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD)
     obs = state.setdefault("candidate_observations", {})
-    
-    if mint not in obs:
-        if signal_score >= threshold:
-            obs[mint] = {"hits": 1, "last_score": signal_score}
-        return False
-    
-    entry = obs[mint]
+    now = time.time()
+    entry = obs.get(mint)
 
-    # Only uninterrupted above-threshold observations count toward confirmation.
+    if not isinstance(entry, dict):
+        if signal_score >= threshold:
+            obs[mint] = {"hits": 1, "last_score": signal_score, "last_seen": now}
+        else:
+            obs.pop(mint, None)
+        return False
+
+    try:
+        last_seen = float(entry.get("last_seen", 0) or 0)
+    except (TypeError, ValueError, OverflowError):
+        last_seen = 0.0
+    gap = now - last_seen
+    if last_seen <= 0 or not math.isfinite(last_seen) or gap < 0 or gap > CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS:
+        # Legacy observations without timestamps and stale candidates restart at one hit.
+        entry["hits"] = 1 if signal_score >= threshold else 0
+        entry["last_score"] = signal_score
+        entry["last_seen"] = now
+        return False
+
     if signal_score < threshold:
         entry["hits"] = 0
         entry["last_score"] = signal_score
+        entry["last_seen"] = now
         return False
-    
-    # Score still high = increment
-    entry["hits"] += 1
+
+    entry["hits"] = max(0, int(entry.get("hits", 0))) + 1
     entry["last_score"] = signal_score
-    
+    entry["last_seen"] = now
     return entry["hits"] >= CANDIDATE_CONFIRMATION_HITS
 
 
@@ -279,6 +314,10 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
     Try to open a position. Returns: bool (success?)
     Strict risk management: 0.5% per trade, max 4 concurrent.
     """
+    # Drawdown circuit breaker: preserve the paper account after a severe strategy failure.
+    if update_risk_control(state).get("status") == "halted":
+        return False
+
     # Circuit breakers
     if mint in state.get("positions", {}):
         return False  # already open
@@ -429,7 +468,7 @@ def close_position(state, mint, exit_price, reason):
         if mint not in state.get("blacklist", []):
             state["blacklist"].append(mint)
     
-    append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct)
+    append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct, pnl_usd, state["equity"])
     append_learning_observation(pos.get("signal_score", 0), pnl_pct * 100.0, reason)
     symbol = pos.get("symbol", "?")
     log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
@@ -448,7 +487,7 @@ def fetch_dex_pair(mint):
             return None
         valid = []
         for pair in pairs:
-            if not isinstance(pair, dict):
+            if not isinstance(pair, dict) or pair.get("chainId") != "solana":
                 continue
             try:
                 liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
@@ -473,7 +512,7 @@ def fetch_candidate_mints(limit=30):
             if not isinstance(payload, list):
                 continue
             for item in payload:
-                if not isinstance(item, dict):
+                if not isinstance(item, dict) or item.get("chainId") != "solana":
                     continue
                 mint = item.get("tokenAddress")
                 if mint and mint not in seen:
@@ -569,17 +608,51 @@ def manage_open_positions(state):
             close_position(state, mint, current_price, "max_hold_timeout")
 
 
-def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct):
-    """Append a closed paper trade to the durable CSV log."""
+def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_usd, equity_after):
+    """Append a closed paper trade using the exact schema consumed by the dashboard."""
     path = Path("trades_log.csv")
+    headers = ["timestamp", "mint", "symbol", "entry_price", "exit_price", "pnl_pct", "pnl_usd", "equity_after", "reason"]
     exists = path.exists() and path.stat().st_size > 0
+
+    # Migrate any legacy header/rows before appending, so one old format cannot
+    # silently corrupt every subsequent dashboard row.
+    if exists:
+        with path.open("r", newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            old_headers = reader.fieldnames or []
+            old_rows = list(reader)
+        if old_headers != headers:
+            migrated = []
+            for row in old_rows:
+                try:
+                    pct = float(row.get("pnl_pct") or 0)
+                except (TypeError, ValueError):
+                    pct = 0.0
+                try:
+                    amount = float(row.get("amount_usd") or 0)
+                except (TypeError, ValueError):
+                    amount = 0.0
+                migrated.append([
+                    row.get("timestamp", ""), row.get("mint", ""), row.get("symbol", ""),
+                    row.get("entry_price", ""), row.get("exit_price", ""), row.get("pnl_pct", ""),
+                    row.get("pnl_usd") or (f"{amount * pct / 100.0:.6f}" if "amount_usd" in row else ""),
+                    row.get("equity_after", ""), row.get("reason", ""),
+                ])
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(headers)
+                writer.writerows(migrated)
+            exists = True
+
     with path.open("a", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         if not exists:
-            writer.writerow(["timestamp", "mint", "symbol", "entry_price", "exit_price", "pnl_pct", "reason", "amount_usd"])
-        writer.writerow([datetime.utcnow().isoformat(), mint, position.get("symbol", "?"),
-                         f"{entry_price:.12g}", f"{exit_price:.12g}", f"{pnl_pct * 100:.6f}",
-                         reason, f"{float(position.get('amount_usd', 0) or 0):.2f}"])
+            writer.writerow(headers)
+        writer.writerow([
+            datetime.utcnow().isoformat(), mint, position.get("symbol", "?"),
+            f"{entry_price:.12g}", f"{exit_price:.12g}", f"{pnl_pct * 100:.6f}",
+            f"{pnl_usd:.6f}", f"{equity_after:.6f}", reason,
+        ])
 
 
 def append_learning_observation(score, pnl_pct, reason):
@@ -683,6 +756,12 @@ def run_cycle(state=None):
         save_state(state)
         log(f"[CYCLE] paper-trade target reached ({TARGET_TRADES}); new entries disabled")
         return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "target_reached": True}
+    risk = update_risk_control(state)
+    if risk["status"] == "halted":
+        state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        save_state(state)
+        log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; no new paper entries")
+        return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
     candidates = fetch_candidate_mints()
     for mint in candidates:
         if mint in state["positions"] or mint in state["blacklist"]:
