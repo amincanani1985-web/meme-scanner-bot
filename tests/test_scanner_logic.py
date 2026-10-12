@@ -36,10 +36,10 @@ class ScannerLogicTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "trades_log.csv"
             path.write_text(
-                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,pnl_usd,equity_after,reason\\n"
-                "2026-01-01T00:00:00Z,a,A,1,1.1,10,10,1010,max_hold\\n"
-                "2026-01-02T00:00:00Z,b,B,1,0.9,-10,-10,1000,stop_loss\\n"
-                "2026-01-03T00:00:00Z,c,C,1,1.2,20,20,1020,max_hold\\n",
+                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,pnl_usd,equity_after,reason\n"
+                "2026-01-01T00:00:00Z,a,A,1,1.1,10,10,1010,max_hold\n"
+                "2026-01-02T00:00:00Z,b,B,1,0.9,-10,-10,1000,stop_loss\n"
+                "2026-01-03T00:00:00Z,c,C,1,1.2,20,20,1020,max_hold\n",
                 encoding="utf-8",
             )
             state = {"initial_equity": 1000.0, "equity": 1020.0, "trade_count": 1,
