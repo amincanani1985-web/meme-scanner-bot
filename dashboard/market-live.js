@@ -68,7 +68,7 @@
     $("marketSellers").textContent = String(sellers);
     $("marketUpdated").textContent = lastSuccess ? new Date(lastSuccess).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
     if (!rows.length) {
-      $("marketRows").innerHTML = '<tr><td colspan="7" class="live-empty">No current Solana pairs found for tracked candidates or latest token feeds.</td></tr>';
+      $("marketRows").innerHTML = '<tr><td colspan="7" class="live-empty">برای نامزدهای رصدشده یا فهرست تازه توکن‌ها، جفت‌ارز فعالی از سولانا پیدا نشد.</td></tr>';
     } else {
       $("marketRows").innerHTML = rows.map((r) => {
         const p = r.pair || {};
@@ -153,7 +153,7 @@
         paint(lastRows,  "تازه‌سازی بازار ناموفق بود؛ آخرین قیمت‌های موفق نمایش داده می‌شوند. " + String(error.message || error));
         setStatus("قیمت‌ها قدیمی‌اند · تلاش دوباره", "warn");
       } else {
-        $("marketRows").innerHTML = '<tr><td colspan="7" class="live-empty live-error">Could not reach the live market API from this browser. Check connection or CORS/network restrictions; no live quote is being shown.</td></tr>';
+        $("marketRows").innerHTML = '<tr><td colspan="7" class="live-empty live-error">دسترسی به رابط زنده بازار از این مرورگر ممکن نشد. اتصال اینترنت یا محدودیت‌های شبکه را بررسی کنید؛ در حال حاضر قیمت زنده‌ای نمایش داده نمی‌شود.</td></tr>';
         $("marketUpdated").textContent = "در دسترس نیست";
         setStatus("خوراک زنده در دسترس نیست", "error");
         $("marketNote").textContent = "درخواست رابط زنده ناموفق بود: " + String(error.message || error) +
