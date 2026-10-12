@@ -124,13 +124,23 @@ jobs:
           git pull --rebase origin main
           git push origin HEAD:main
 
-      - name: Notify GitHub on success
+      - name: Write cycle summary
         if: success() && github.event_name != 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment "$NOTIFY_ISSUE" \
-            --body "Trading cycle succeeded. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          state = json.loads(Path("state.json").read_text(encoding="utf-8"))
+          risk = state.get("risk_control", {})
+          print("## Paper-trading cycle")
+          print(f"- Last cycle: {state.get('last_run', 'unknown')}")
+          print(f"- Scans: {state.get('scan_count', 0)}")
+          print(f"- Closed trades: {state.get('trade_count', 0)}/200")
+          print(f"- Paper equity: ${float(state.get('equity', 0)):.2f}")
+          print(f"- Risk guard: {risk.get('status', 'unknown')} ({risk.get('drawdown_pct', 'n/a')}% drawdown)")
+          if risk.get("status") == "halted":
+              print("- New entries are blocked by the drawdown circuit breaker.")
+          PY
 
       - name: Notify GitHub on failure
         if: failure() && github.event_name != 'pull_request'
