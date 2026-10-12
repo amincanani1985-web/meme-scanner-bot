@@ -55,7 +55,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py
+        run: python -m py_compile meme_scanner_cycle.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py
 
       - name: Run scanner tests 10 times
         shell: bash
