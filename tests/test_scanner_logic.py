@@ -331,7 +331,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_trade_target_disables_new_entries(self):
         state = scanner.normalize_state({"trade_count": scanner.TARGET_TRADES})
-        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
         self.assertTrue(result["target_reached"])
