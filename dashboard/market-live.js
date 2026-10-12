@@ -52,7 +52,7 @@
     }
   }
   function setStatus(text, state) {
-    if ($("marketStatus")) $("marketStatus").textContent = text;
+    if ($("marketوضعیت")) $("marketوضعیت").textContent = text;
     if ($("marketDot")) $("marketDot").style.background =
       state === "ok" ? "var(--green)" : state === "warn" ? "var(--yellow)" : "var(--red)";
   }
