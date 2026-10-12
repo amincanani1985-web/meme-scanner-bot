@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           # Pending runs must start from the latest main, not a stale push SHA.
-          ref: main
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -55,7 +55,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py
+        run: python -m py_compile meme_scanner_cycle.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -83,12 +83,15 @@ jobs:
           PY
 
       - name: Apply bounded adaptive strategy update
+        if: github.event_name != 'pull_request'
         run: python learn_agent.py --state state.json --observations strategy_observations.csv --apply
 
       - name: Run one trading cycle
+        if: github.event_name != 'pull_request'
         run: python meme_scanner_cycle.py
 
       - name: Commit updated state
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
@@ -122,7 +125,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Notify GitHub on success
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -130,7 +133,7 @@ jobs:
             --body "Trading cycle succeeded. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Notify GitHub on failure
-        if: failure()
+        if: failure() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

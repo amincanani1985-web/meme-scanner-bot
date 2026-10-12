@@ -152,7 +152,8 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_run_cycle_opens_only_after_three_confirmations(self):
         state = scanner.normalize_state({})
-        with patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+        with patch.object(scanner, "helius_configured", return_value=False), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
              patch.object(scanner, "save_state"), patch.object(scanner, "log"):
             first = scanner.run_cycle(state)
@@ -162,6 +163,29 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(second["open_positions"], 0)
         self.assertEqual(third["open_positions"], 1)
         self.assertIn("mint", state["positions"])
+        self.assertTrue(state.get("last_run"))
+
+    def test_confirmed_whale_dump_closes_open_position(self):
+        state = {
+            "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
+            "whale_snapshots": {"mint": {"owner-a": 1000.0}},
+            "positions": {"mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
+                "entry_time": time.time(), "entry_liquidity": 100000, "amount_usd": 10.0,
+                "signal_score": 85, "trailing_armed": False,
+                "whale_balances": {"owner-a": 1000.0}}},
+        }
+        live_pair = {"priceUsd": "0.98", "liquidity": {"usd": 100000},
+                     "txns": {"m5": {"buys": 5, "sells": 15}},
+                     "priceChange": {"m5": -1.0}}
+        with patch.object(scanner, "helius_configured", return_value=True), \
+             patch.object(scanner, "fetch_whale_balances", return_value={"owner-a": 700.0}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=live_pair), \
+             patch.object(scanner, "append_trade"), patch.object(scanner, "append_learning_observation"), \
+             patch.object(scanner, "log"):
+            scanner.manage_open_positions(state)
+        self.assertNotIn("mint", state["positions"])
+        self.assertIn("mint", state["blacklist"])
+        self.assertEqual(state["trade_count"], 1)
 
     def test_malformed_persisted_position_does_not_abort_scan(self):
         state = {
