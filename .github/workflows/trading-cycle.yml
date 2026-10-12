@@ -23,6 +23,8 @@ on:
 permissions:
   contents: write
   issues: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: trading-cycle
@@ -166,6 +168,15 @@ jobs:
               print("- New entries are blocked by the drawdown circuit breaker.")
           PY
 
+      - name: Configure GitHub Pages for the fresh dashboard data
+        if: success() && github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+
+      - name: Upload current dashboard artifact
+        if: success() && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dashboard
       - name: Notify GitHub on failure
         if: failure() && github.event_name != 'pull_request'
         env:
@@ -173,3 +184,18 @@ jobs:
         run: |
           gh issue comment "$NOTIFY_ISSUE" \
             --body "Trading cycle FAILED. Run #${{ github.run_number }} — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  deploy-dashboard:
+    needs: run-cycle
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
+    steps:
+      - name: Deploy latest dashboard artifact
+        id: deployment
+        uses: actions/deploy-pages@v5
