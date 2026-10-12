@@ -512,15 +512,19 @@ def manage_open_positions(state):
         pos["entry_time"] = entry_time
         pair = fetch_dex_pair(mint)
         if not pair:
+            # A missing quote is not an executable price. Closing at $0 fabricated
+            # near-100% paper losses whenever DexScreener temporarily omitted a pair.
+            # Keep the position unresolved until a valid quote returns; do not
+            # pretend a sale occurred at a price the feed never supplied.
             first_missing = pos.setdefault("price_missing_since", time.time())
             try:
-                missing_for = time.time() - float(first_missing)
+                missing_for = max(0.0, time.time() - float(first_missing))
             except (TypeError, ValueError, OverflowError):
                 pos["price_missing_since"] = time.time()
-                missing_for = 0
-            held_for = max(0.0, time.time() - entry_time)
-            if missing_for >= MAX_MISSING_PRICE_SECONDS or held_for >= MAX_HOLD_SECONDS:
-                close_position(state, mint, 0.0, "force_close_no_data")
+                missing_for = 0.0
+            pos["data_status"] = "stale"
+            if missing_for >= MAX_MISSING_PRICE_SECONDS:
+                log(f"[WARN] no executable quote for {mint} for {missing_for:.0f}s; position retained as unresolved, no zero-price close")
             continue
         try:
             current_price = float(pair.get("priceUsd") or 0)
@@ -532,6 +536,7 @@ def manage_open_positions(state):
         if not math.isfinite(current_liquidity) or current_liquidity < 0:
             current_liquidity = 0.0
         pos.pop("price_missing_since", None)
+        pos.pop("data_status", None)
         if helius_configured():
             current_whales = fetch_whale_balances(mint)
             if current_whales:
