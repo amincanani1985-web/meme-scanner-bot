@@ -1,6 +1,13 @@
 name: meme scanner trading cycle
 
 on:
+  pull_request:
+    paths:
+      - "meme_scanner_cycle.py"
+      - "tests/**"
+      - "learn_agent.py"
+      - "strategy_backtest.py"
+      - ".github/workflows/trading-cycle.yml"
   push:
     branches: [main]
     paths:
