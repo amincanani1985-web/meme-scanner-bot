@@ -42,7 +42,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_risk_halt_skips_discovery_but_still_records_cycle(self):
         state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
-        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \\
+        with patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
         self.assertTrue(result["risk_halted"])
@@ -90,8 +90,8 @@ class ScannerLogicTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "trades_log.csv"
             path.write_text(
-                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,reason,amount_usd\\n"
-                "2026-01-01T00:00:00Z,old-mint,OLD,1,0.9,-10,hard_stop_loss,5\\n",
+                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,reason,amount_usd\n"
+                "2026-01-01T00:00:00Z,old-mint,OLD,1,0.9,-10,hard_stop_loss,5\n",
                 encoding="utf-8",
             )
             with patch.object(scanner, "Path", return_value=path):
