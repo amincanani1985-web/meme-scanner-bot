@@ -56,7 +56,7 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
-SHADOW_POSITION_USD = 10.0                 # Isolated virtual sample size; never touches account equity
+SHADOW_MIN_SCORE = 60.0                     # Broad score distribution for threshold validation
 MAX_SHADOW_POSITIONS = 8                    # Cap independent shadow observations
 
 # ============================================================================
@@ -674,8 +674,8 @@ def scan_shadow_candidates(state):
     """Collect labeled virtual-trade samples while the real paper-account circuit breaker is halted."""
     candidates = fetch_candidate_mints()
     opened = []
-    threshold = max(float(state.get("strategy", {}).get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD)),
-                    OPPORTUNITY_ENTRY_THRESHOLD)
+    # Shadow samples cover a broad score range; this never changes live entry rules.
+    threshold = SHADOW_MIN_SCORE
     for mint in candidates:
         if len(state["shadow_positions"]) >= MAX_SHADOW_POSITIONS:
             break
@@ -689,8 +689,7 @@ def scan_shadow_candidates(state):
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
             continue
-        if not candidate_confirmation(state, mint, score):
-            continue
+        # Shadow samples need no live three-hit confirmation because no account capital is at risk.
         try:
             price = float(pair.get("priceUsd") or 0)
             liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
