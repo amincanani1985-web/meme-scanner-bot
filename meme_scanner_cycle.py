@@ -868,7 +868,9 @@ def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_u
 
 def append_learning_observation(score, pnl_pct, reason):
     """Persist realized outcomes without inventing a score for legacy positions."""
-    path = Path("strategy_observations.csv")
+    # Shadow outcomes are research-only and must never train or validate the live-entry threshold.
+    filename = "shadow_observations.csv" if str(reason).startswith("shadow_") else "strategy_observations.csv"
+    path = Path(filename)
     exists = path.exists() and path.stat().st_size > 0
     try:
         score_value = float(score) if score is not None else None
