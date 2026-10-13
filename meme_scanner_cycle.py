@@ -56,6 +56,8 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
+SHADOW_POSITION_USD = 10.0                 # Isolated virtual sample size; never touches account equity
+MAX_SHADOW_POSITIONS = 8                    # Cap independent shadow observations
 
 # ============================================================================
 # STATE MANAGEMENT
@@ -81,7 +83,7 @@ def normalize_state(state):
     state["initial_equity"] = initial_equity
     if not isinstance(state.get("risk_control"), dict):
         state["risk_control"] = {}
-    for key in ("positions", "cooldowns", "candidate_observations", "strategy", "learning", "whale_snapshots"):
+    for key in ("positions", "shadow_positions", "cooldowns", "candidate_observations", "strategy", "learning", "whale_snapshots"):
         if not isinstance(state.get(key), dict):
             state[key] = {}
     if not isinstance(state.get("blacklist"), list):
@@ -617,6 +619,101 @@ def manage_open_positions(state):
             close_position(state, mint, current_price, "max_hold_timeout")
 
 
+
+def manage_shadow_positions(state):
+    """Close isolated shadow positions using the same price-risk rules, without touching account equity."""
+    for mint in list(state.get("shadow_positions", {}).keys()):
+        pos = state["shadow_positions"].get(mint)
+        if not isinstance(pos, dict):
+            state["shadow_positions"].pop(mint, None)
+            continue
+        try:
+            entry_price = float(pos.get("entry_price", 0) or 0)
+            entry_time = float(pos.get("entry_time", 0) or 0)
+            peak_price = float(pos.get("peak_price", entry_price) or entry_price)
+        except (TypeError, ValueError, OverflowError):
+            state["shadow_positions"].pop(mint, None)
+            continue
+        if not all(math.isfinite(v) for v in (entry_price, entry_time, peak_price)) or entry_price <= 0:
+            state["shadow_positions"].pop(mint, None)
+            continue
+        pair = fetch_dex_pair(mint)
+        if not pair:
+            continue
+        try:
+            price = float(pair.get("priceUsd") or 0)
+            liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            continue
+        if not math.isfinite(price) or price <= 0:
+            continue
+        pos["peak_price"] = max(peak_price, price)
+        pnl = (price - entry_price) / entry_price
+        reason = None
+        if pnl >= 0.08:
+            pos["trailing_armed"] = True
+        if pos.get("trailing_armed") and pos["peak_price"] > 0:
+            if (pos["peak_price"] - price) / pos["peak_price"] >= TRAILING_STOP_PCT:
+                reason = "trailing_stop"
+        if reason is None and pnl <= -HARD_STOP_LOSS_PCT:
+            reason = "hard_stop_loss"
+        if reason is None and liquidity > 0 and liquidity_drain_detected(pos, liquidity):
+            reason = "liquidity_drained"
+        if reason is None and time.time() - entry_time >= MAX_HOLD_SECONDS:
+            reason = "max_hold_timeout"
+        if reason is None:
+            continue
+        effective_exit = price * (1.0 - EXIT_SLIPPAGE_BPS / 10000.0)
+        net_pnl_pct = (effective_exit - entry_price) / entry_price * 100.0
+        append_learning_observation(pos.get("signal_score"), net_pnl_pct, f"shadow_{reason}")
+        state["shadow_positions"].pop(mint, None)
+        log(f"[SHADOW CLOSE] {pos.get('symbol', '?')} {reason} pnl={net_pnl_pct:+.2f}% (isolated; account equity unchanged)")
+
+
+def scan_shadow_candidates(state):
+    """Collect labeled virtual-trade samples while the real paper-account circuit breaker is halted."""
+    candidates = fetch_candidate_mints()
+    opened = []
+    threshold = max(float(state.get("strategy", {}).get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD)),
+                    OPPORTUNITY_ENTRY_THRESHOLD)
+    for mint in candidates:
+        if len(state["shadow_positions"]) >= MAX_SHADOW_POSITIONS:
+            break
+        if mint in state["shadow_positions"] or mint in state["blacklist"]:
+            continue
+        pair = fetch_dex_pair(mint)
+        if not pair or not passes_market_filter(pair)[0]:
+            state["candidate_observations"].pop(mint, None)
+            continue
+        score, components = score_market_opportunity(pair, state.get("learning"))
+        if score < threshold:
+            state["candidate_observations"].pop(mint, None)
+            continue
+        if not candidate_confirmation(state, mint, score):
+            continue
+        try:
+            price = float(pair.get("priceUsd") or 0)
+            liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            continue
+        if not math.isfinite(price) or price <= 0 or not math.isfinite(liquidity) or liquidity <= 0:
+            continue
+        entry_price = price * (1.0 + ENTRY_SLIPPAGE_BPS / 10000.0)
+        state["shadow_positions"][mint] = {
+            "symbol": (pair.get("baseToken") or {}).get("symbol", "?"),
+            "entry_price": entry_price,
+            "entry_time": time.time(),
+            "entry_liquidity": liquidity,
+            "peak_price": entry_price,
+            "signal_score": score,
+            "trailing_armed": False,
+            "components": components,
+        }
+        opened.append(mint)
+    state["scan_count"] = int(state.get("scan_count", 0)) + 1
+    return {"scanned": len(candidates), "shadow_opened": opened}
+
+
 def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_usd, equity_after):
     """Append a closed paper trade using the exact schema consumed by the dashboard."""
     path = Path("trades_log.csv")
@@ -785,6 +882,8 @@ __all__ = [
     "close_position",
     "liquidity_drain_detected",
     "manage_open_positions",
+    "manage_shadow_positions",
+    "scan_shadow_candidates",
     "load_state",
     "save_state",
     "log",
@@ -816,6 +915,7 @@ def run_cycle(state=None):
     state = normalize_legacy_strategy_baseline(state)
     reconcile_learning_from_trade_log(state)
     manage_open_positions(state)
+    manage_shadow_positions(state)
     opened = []
     if int(state.get("trade_count", 0)) >= TARGET_TRADES:
         state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
@@ -824,10 +924,13 @@ def run_cycle(state=None):
         return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "target_reached": True}
     risk = update_risk_control(state)
     if risk["status"] == "halted":
+        # No account entries. Continue scans with isolated shadow positions to gather
+        # labeled evidence without risking the already impaired paper account.
+        shadow = scan_shadow_candidates(state)
         state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         save_state(state)
-        log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; no new paper entries")
-        return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
+        log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; account entries blocked; shadow_scanned={shadow['scanned']} shadow_opened={len(shadow['shadow_opened'])}")
+        return {"scanned": shadow["scanned"], "opened": opened, "shadow_opened": shadow["shadow_opened"], "open_positions": len(state["positions"]), "shadow_positions": len(state["shadow_positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
     candidates = fetch_candidate_mints()
     for mint in candidates:
         if mint in state["positions"] or mint in state["blacklist"]:
