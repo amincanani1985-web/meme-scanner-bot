@@ -207,6 +207,46 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(rows[1]["reason"], "trailing_stop")
             self.assertAlmostEqual(float(rows[1]["equity_after"]), 1000.5)
 
+    def test_candidate_feed_interleaves_sources_and_deduplicates(self):
+        boosts = Mock()
+        boosts.json.return_value = [
+            {"chainId": "solana", "tokenAddress": "boost-a"},
+            {"chainId": "solana", "tokenAddress": "shared"},
+            {"chainId": "ethereum", "tokenAddress": "not-solana"},
+        ]
+        profiles = Mock()
+        profiles.json.return_value = [
+            {"chainId": "solana", "tokenAddress": "profile-a"},
+            {"chainId": "solana", "tokenAddress": "shared"},
+        ]
+        with patch.object(scanner.requests, "get", side_effect=[boosts, profiles]):
+            self.assertEqual(scanner.fetch_candidate_mints(limit=3), ["boost-a", "profile-a", "shared"])
+
+    def test_shadow_filter_accepts_research_candidate_below_live_liquidity_floor(self):
+        research_pair = pair(liquidity={"usd": 30000}, volume={"h1": 5000}, marketCap=200000)
+        self.assertFalse(scanner.passes_market_filter(research_pair)[0])
+        self.assertEqual(scanner.passes_shadow_market_filter(research_pair), (True, "ok"))
+        score, components = scanner.score_shadow_opportunity(research_pair)
+        self.assertGreater(score, 0)
+        self.assertIn("momentum", components)
+
+    def test_corrupt_state_recovery_reconstructs_ledger_and_halts_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "state.json").write_text("{broken", encoding="utf-8")
+            (root / "trades_log.csv").write_text(
+                "timestamp,mint,symbol,entry_price,exit_price,pnl_pct,pnl_usd,equity_after,reason\n"
+                "2026-01-01T00:00:00Z,mint,TEST,1,0.9,-10,-5,995,hard_stop_loss\n",
+                encoding="utf-8",
+            )
+            with patch.object(scanner, "Path", side_effect=lambda name: root / name):
+                state = scanner.load_state()
+            self.assertAlmostEqual(state["equity"], 995.0)
+            self.assertEqual(state["trade_count"], 1)
+            self.assertTrue(state["state_recovery_required"])
+            self.assertEqual(state["risk_control"]["status"], "halted")
+            self.assertEqual(state["risk_control"]["reason"], "state_recovery_required")
+
     def test_good_pair_passes_current_market_filters(self):
         self.assertEqual(scanner.passes_market_filter(pair()), (True, "ok"))
 
