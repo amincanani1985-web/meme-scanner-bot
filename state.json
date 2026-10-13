@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 162,
+  "scan_count": 163,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-13T08:45:54Z",
+  "last_run": "2026-10-13T09:33:37Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -217,37 +217,97 @@
     "peak_equity": 1055.98
   },
   "peak_equity": 1055.98,
-  "shadow_positions": {},
+  "shadow_positions": {
+    "G3hU17QnrqRciQL5R8nNAkmwRKG9dt7ea6cxwrx2XuTj": {
+      "symbol": "SOL95",
+      "entry_price": 6.50209e-05,
+      "entry_time": 1791884016.2149854,
+      "entry_liquidity": 20559.1,
+      "peak_price": 6.50209e-05,
+      "signal_score": 0.0,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -61.13000000000001,
+        "buy_pressure": 3.827338129496402
+      }
+    },
+    "hnMDBVtBoFuoE4fq3FU3d1d4MTgXdLayE3wQhRUpump": {
+      "symbol": "DADDY",
+      "entry_price": 0.00017884299999999998,
+      "entry_time": 1791884016.585883,
+      "entry_liquidity": 35774.69,
+      "peak_price": 0.00017884299999999998,
+      "signal_score": 42.230000000000004,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -22.77,
+        "buy_pressure": 15.0
+      }
+    },
+    "49PU6ENTpYc3zkhgCruzCSBzgVAdix5muP2oVzRGpump": {
+      "symbol": "Bear",
+      "entry_price": 2.8430149999999997e-05,
+      "entry_time": 1791884016.8641703,
+      "entry_liquidity": 13875.08,
+      "peak_price": 2.8430149999999997e-05,
+      "signal_score": 37.193333333333335,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -15.139999999999997,
+        "buy_pressure": 2.333333333333333
+      }
+    },
+    "noncenHRyNbg5EWHmCwcZhHXdTLXQa6gFMyTyjGhZdd": {
+      "symbol": "nonce",
+      "entry_price": 3.711854999999999e-05,
+      "entry_time": 1791884017.5025053,
+      "entry_liquidity": 15543.29,
+      "peak_price": 3.711854999999999e-05,
+      "signal_score": 0.0,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -95.16,
+        "buy_pressure": 6.461538461538462
+      }
+    },
+    "4wfLC8LJHYD8swjPeqq4aNGGuD1UiPCH3PkZ8PJjpump": {
+      "symbol": "RIM",
+      "entry_price": 2.5283649999999996e-05,
+      "entry_time": 1791884017.8073862,
+      "entry_liquidity": 11838.62,
+      "peak_price": 2.5283649999999996e-05,
+      "signal_score": 45.78666666666666,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -1.8800000000000001,
+        "buy_pressure": -2.3333333333333335
+      }
+    }
+  },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-13T08:45:54Z",
-    "candidate_count": 30,
-    "filter_passed": 0,
-    "shadow_opened": 0,
+    "timestamp": "2026-10-13T09:33:37Z",
+    "candidate_count": 40,
+    "filter_passed": 5,
+    "shadow_opened": 5,
     "rejections": {
-      "pair_data_unavailable": 7,
-      "low_liquidity:30528": 1,
-      "low_liquidity:12781": 1,
-      "low_liquidity:2688": 1,
-      "low_liquidity:18424": 1,
-      "low_liquidity:91055": 1,
-      "low_volume_h1:8046": 1,
-      "low_liquidity:12689": 1,
-      "low_liquidity:14034": 1,
-      "low_liquidity:6719": 1,
-      "low_liquidity:14953": 1,
-      "liq_mcap_ratio:0.04": 1,
-      "low_liquidity:42207": 1,
-      "low_liquidity:3101": 1,
-      "low_liquidity:2789": 1,
-      "low_liquidity:23911": 1,
-      "low_liquidity:16866": 1,
-      "low_liquidity:3341": 1,
-      "low_liquidity:3517": 1,
-      "low_liquidity:97492": 1,
-      "low_liquidity:35920": 1,
-      "low_liquidity:74741": 1,
-      "pair_too_new:2269s": 1,
-      "low_liquidity:2059": 1
+      "pair_data_unavailable": 15,
+      "shadow_low_volume_h1:741": 1,
+      "shadow_low_volume_h1:825": 1,
+      "shadow_low_liquidity:2632": 1,
+      "shadow_low_volume_h1:1201": 1,
+      "shadow_low_activity": 4,
+      "shadow_low_volume_h1:942": 1,
+      "shadow_low_volume_h1:802": 1,
+      "shadow_low_liquidity:4373": 1,
+      "shadow_low_liquidity:7127": 1,
+      "shadow_low_volume_h1:53": 1,
+      "shadow_low_liquidity:2059": 1,
+      "shadow_liq_mcap_ratio:0.04": 1,
+      "shadow_low_liquidity:5551": 1,
+      "shadow_low_liquidity:3065": 1,
+      "shadow_low_liquidity:6766": 1,
+      "shadow_low_liquidity:2738": 1,
+      "shadow_low_volume_h1:0": 1
     }
   }
 }
