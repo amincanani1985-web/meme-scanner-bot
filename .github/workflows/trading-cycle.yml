@@ -133,6 +133,7 @@ jobs:
           git add state.json dashboard/live-data.js learn_agent.py strategy_backtest.py
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if [ -f strategy_observations.csv ]; then git add strategy_observations.csv; fi
+          if [ -f shadow_observations.csv ]; then git add shadow_observations.csv; fi
 
           if git diff --staged --quiet; then
             echo "No state changes to commit"
