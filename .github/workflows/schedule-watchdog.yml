@@ -25,7 +25,7 @@ jobs:
 
       - name: Dispatch a recovery cycle only if the heartbeat is stale
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
