@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 169,
+  "scan_count": 170,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-13T21:59:57Z",
+  "last_run": "2026-10-13T22:00:33Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -224,7 +224,8 @@
       "components": {
         "momentum": -13.910000000000004,
         "buy_pressure": -1.1666666666666665
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8KKHDdWRX3NY9gTgnxCPp2b9nMCofwzxdYzZrXwrpump": {
       "symbol": "CHONK",
@@ -237,7 +238,8 @@
       "components": {
         "momentum": -25.47,
         "buy_pressure": 7.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "Ct6HvaYv79FVwyr73MrEYNvLdtQouLquVmmZnuEkpump": {
       "symbol": "NEIL",
@@ -250,7 +252,8 @@
       "components": {
         "momentum": -9.089999999999998,
         "buy_pressure": 2.784386617100372
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "6KBDqTzgRPpa6xWeS5nPCxPwZHCRu1C51mV3S9r3pump": {
       "symbol": "CAT",
@@ -263,7 +266,8 @@
       "components": {
         "momentum": -1.84,
         "buy_pressure": 8.555555555555557
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "4GPXDygw6Ye7Y14usEefHM42GJXXsbCnBhkb4N84pump": {
       "symbol": "wizardcat",
@@ -276,7 +280,8 @@
       "components": {
         "momentum": 13.170000000000002,
         "buy_pressure": 13.222222222222221
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GZxVWTF6dze5Pw61g5oXxub7kYK2e4UzBpUwqVnMpump": {
       "symbol": "GLITCH",
@@ -289,59 +294,43 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": -2.3333333333333335
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HhzB1ZQfmjK1NuMQAaFiXBEWZ1Zri98xtVG1De6Epump": {
       "symbol": "ceal",
       "entry_price": 0.00011784149999999999,
       "entry_time": 1791928797.5466523,
       "entry_liquidity": 28423.37,
-      "peak_price": 0.00011784149999999999,
+      "peak_price": 0.0001243,
       "signal_score": 0.0,
       "trailing_armed": false,
       "components": {
         "momentum": -61.67999999999999,
         "buy_pressure": 9.379999999999999
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GK9Tu2kobcbzuCLsNQUZcXaq9A5EAEDwnm7H1Hbfpump": {
       "symbol": "MIKAN",
       "entry_price": 4.0102649999999995e-05,
       "entry_time": 1791928797.72615,
       "entry_liquidity": 16477.35,
-      "peak_price": 4.0102649999999995e-05,
+      "peak_price": 4.214e-05,
       "signal_score": 48.53604651162791,
       "trailing_armed": false,
       "components": {
         "momentum": -0.6500000000000004,
         "buy_pressure": -0.8139534883720929
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-13T21:59:57Z",
+    "timestamp": "2026-10-13T22:00:33Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
-    "rejections": {
-      "pair_data_unavailable": 11,
-      "shadow_low_liquidity:3094": 1,
-      "shadow_low_volume_h1:418": 1,
-      "shadow_low_liquidity:4503": 1,
-      "shadow_low_liquidity:2168": 1,
-      "shadow_pair_too_new:637s": 1,
-      "shadow_low_volume_h1:473": 1,
-      "shadow_low_liquidity:4520": 1,
-      "shadow_low_liquidity:2542": 1,
-      "shadow_low_liquidity:3648": 1,
-      "shadow_low_liquidity:368": 1,
-      "shadow_low_liquidity:7767": 1,
-      "shadow_low_volume_h1:0": 1,
-      "shadow_low_liquidity:9197": 1,
-      "shadow_low_volume_h1:644": 1,
-      "shadow_low_volume_h1:1259": 1,
-      "shadow_low_liquidity:3995": 1,
-      "shadow_low_liquidity:2395": 1
-    }
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   }
 }
