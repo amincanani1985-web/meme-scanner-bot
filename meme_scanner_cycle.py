@@ -19,6 +19,9 @@ ENTRY_SLIPPAGE_BPS = 150
 EXIT_SLIPPAGE_BPS = 200
 MAX_HOLD_SECONDS = 600
 MAX_MISSING_PRICE_SECONDS = 600
+# Do not label shadow outcomes from stale prices after the intended hold window.
+# A 5-minute scheduling tolerance is allowed beyond the 10-minute maximum hold.
+SHADOW_STALE_OBSERVATION_SECONDS = MAX_HOLD_SECONDS + 300
 HTTP_TIMEOUT_SECONDS = 10
 
 
@@ -725,6 +728,13 @@ def manage_shadow_positions(state):
             continue
         if not all(math.isfinite(v) for v in (entry_price, entry_time, peak_price)) or entry_price <= 0:
             state["shadow_positions"].pop(mint, None)
+            continue
+        age_seconds = time.time() - entry_time
+        if age_seconds > SHADOW_STALE_OBSERVATION_SECONDS:
+            # Price is only known at this late scan, not at the intended 10-minute
+            # exit. Recording it would contaminate research with unbounded hold times.
+            state["shadow_positions"].pop(mint, None)
+            log(f"[SHADOW DISCARD] {pos.get('symbol', '?')} stale observation age={age_seconds:.0f}s; excluded from strategy data")
             continue
         pair = fetch_dex_pair(mint)
         if not pair:
