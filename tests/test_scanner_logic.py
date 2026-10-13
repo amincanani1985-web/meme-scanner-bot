@@ -77,15 +77,45 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertAlmostEqual(state["risk_control"]["drawdown_pct"], 30.0)
         self.assertFalse(scanner.open_position(state, "mint", pair(), {}, 95, {}))
 
-    def test_risk_halt_skips_discovery_but_still_records_cycle(self):
+    def test_risk_halt_continues_shadow_scanning_without_account_entries(self):
         state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
-        with patch.object(scanner, "reconcile_learning_from_trade_log"), patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
-             patch.object(scanner, "fetch_candidate_mints") as fetch_candidates, patch.object(scanner, "log"):
-            result = scanner.run_cycle(state)
-        self.assertTrue(result["risk_halted"])
-        self.assertEqual(result["risk_control"]["status"], "halted")
-        fetch_candidates.assert_not_called()
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_market_opportunity", return_value=(95.0, {})), \
+             patch.object(scanner, "log"):
+            results = [scanner.run_cycle(state) for _ in range(3)]
+        self.assertTrue(results[-1]["risk_halted"])
+        self.assertEqual(results[-1]["risk_control"]["status"], "halted")
+        self.assertEqual(results[-1]["scanned"], 1)
+        self.assertEqual(len(state["shadow_positions"]), 1)
+        self.assertEqual(state["positions"], {})
+        self.assertEqual(state["equity"], 293.36)
+        self.assertEqual(state["trade_count"], 0)
+        self.assertEqual(state["scan_count"], 3)
         self.assertTrue(state["last_run"])
+
+    def test_shadow_close_records_labeled_sample_without_touching_account(self):
+        state = scanner.normalize_state({
+            "equity": 293.36, "initial_equity": 1000.0, "trade_count": 53,
+            "shadow_positions": {"mint": {
+                "symbol": "TEST", "entry_price": 1.0, "entry_time": time.time(),
+                "entry_liquidity": 100000, "peak_price": 1.0, "signal_score": 91,
+                "trailing_armed": False,
+            }},
+        })
+        with patch.object(scanner, "fetch_dex_pair", return_value=pair(priceUsd="0.85")), \
+             patch.object(scanner, "append_learning_observation") as observation, \
+             patch.object(scanner, "log"):
+            scanner.manage_shadow_positions(state)
+        self.assertNotIn("mint", state["shadow_positions"])
+        self.assertEqual(state["equity"], 293.36)
+        self.assertEqual(state["trade_count"], 53)
+        observation.assert_called_once()
+        self.assertEqual(observation.call_args.args[0], 91)
+        self.assertTrue(observation.call_args.args[2].startswith("shadow_"))
 
     def test_stale_candidate_confirmation_restarts_at_one_hit(self):
         now = 10000.0
