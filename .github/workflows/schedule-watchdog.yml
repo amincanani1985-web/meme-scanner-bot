@@ -16,7 +16,8 @@ permissions:
 
 concurrency:
   group: trading-cycle-watchdog
-  cancel-in-progress: true
+  # Never cancel the only scheduled health check during closely spaced commits.
+  cancel-in-progress: false
 
 jobs:
   watchdog:
