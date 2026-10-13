@@ -34,15 +34,20 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          state = json.loads(Path("state.json").read_text(encoding="utf-8"))
-          raw = state.get("last_run")
-          if not raw:
-              stale = True
-              age = None
-          else:
-              stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-              age = (datetime.now(timezone.utc) - stamp).total_seconds()
-              stale = age > 900
+          age = None
+          stale = True
+          try:
+              state = json.loads(Path("state.json").read_text(encoding="utf-8"))
+              raw = state.get("last_run") if isinstance(state, dict) else None
+              if raw:
+                  stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                  if stamp.tzinfo is None:
+                      stamp = stamp.replace(tzinfo=timezone.utc)
+                  age = (datetime.now(timezone.utc) - stamp).total_seconds()
+                  # A future heartbeat is invalid, not evidence of a healthy cycle.
+                  stale = age < -60 or age > 900
+          except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+              print(f"Heartbeat unavailable or invalid ({type(exc).__name__}); treating it as stale.")
           age_text = "unknown" if age is None else f"{age:.0f}s"
           print(f"Heartbeat age: {age_text}; stale={stale}")
           Path("/tmp/heartbeat-stale").write_text("yes" if stale else "no")

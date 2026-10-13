@@ -138,6 +138,9 @@ def update_risk_control(state):
     risk["max_drawdown_pct"] = round(MAX_EQUITY_DRAWDOWN_FRACTION * 100.0, 2)
     risk["status"] = "halted" if drawdown >= MAX_EQUITY_DRAWDOWN_FRACTION else "active"
     risk["reason"] = "max_drawdown_exceeded" if risk["status"] == "halted" else ""
+    if state.get("state_recovery_required"):
+        risk["status"] = "halted"
+        risk["reason"] = "state_recovery_required"
     return risk
 
 
@@ -227,6 +230,43 @@ def passes_market_filter(pair_data):
     return True, "ok"
 
 
+def passes_shadow_market_filter(pair_data):
+    """Apply data-quality/liquidity floors for virtual research only, never live entries."""
+    if not isinstance(pair_data, dict):
+        return False, "missing_pair_data"
+    try:
+        created_ms = int(pair_data.get("pairCreatedAt", 0) or 0)
+        liquidity = float((pair_data.get("liquidity") or {}).get("usd") or 0)
+        volume = float((pair_data.get("volume") or {}).get("h1") or 0)
+        market_cap = float(pair_data.get("marketCap") or pair_data.get("fdv") or 0)
+        price = float(pair_data.get("priceUsd") or 0)
+        txns = (pair_data.get("txns") or {}).get("m5") or {}
+        activity = float(txns.get("buys", 0) or 0) + float(txns.get("sells", 0) or 0)
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return False, "invalid_market_data"
+    values = (liquidity, volume, market_cap, price, activity)
+    if not all(math.isfinite(value) for value in values):
+        return False, "non_finite_market_data"
+    if created_ms <= 0:
+        return False, "missing_pair_age"
+    age_seconds = (time.time() * 1000 - created_ms) / 1000.0
+    if age_seconds < 900:
+        return False, f"shadow_pair_too_new:{age_seconds:.0f}s"
+    if liquidity < 10000:
+        return False, f"shadow_low_liquidity:{liquidity:.0f}"
+    if volume < 2000:
+        return False, f"shadow_low_volume_h1:{volume:.0f}"
+    if market_cap <= 0:
+        return False, "shadow_missing_market_cap"
+    if liquidity / market_cap < 0.05:
+        return False, f"shadow_liq_mcap_ratio:{liquidity / market_cap:.2f}"
+    if price <= 0:
+        return False, "shadow_invalid_price"
+    if activity < 5:
+        return False, "shadow_low_activity"
+    return True, "ok"
+
+
 # ============================================================================
 # SCORING: MARKET OPPORTUNITY SCORE (ultra-hardened)
 # ============================================================================
@@ -272,6 +312,38 @@ def score_market_opportunity(pair_data, learning=None):
     
     score = min(100.0, max(0.0, score))
     return score, components
+
+
+def score_shadow_opportunity(pair_data, learning=None):
+    """Score a research-only candidate without applying live-entry filters."""
+    if not isinstance(pair_data, dict):
+        return 0.0, {}
+    try:
+        pc_m5 = float((pair_data.get("priceChange") or {}).get("m5") or 0)
+        pc_h1 = float((pair_data.get("priceChange") or {}).get("h1") or 0)
+        buys = float(((pair_data.get("txns") or {}).get("m5") or {}).get("buys") or 0)
+        sells = float(((pair_data.get("txns") or {}).get("m5") or {}).get("sells") or 0)
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return 0.0, {}
+    if not all(math.isfinite(value) for value in (pc_m5, pc_h1, buys, sells)) or min(buys, sells) < 0:
+        return 0.0, {}
+    score = 50.0
+    momentum_bonus = min(25.0, pc_m5 * 3.0 + pc_h1)
+    score += momentum_bonus
+    ratio = buys / max(sells, 1.0)
+    buy_pressure_bonus = min(15.0, (ratio - 1.0) * 7.0)
+    score += buy_pressure_bonus
+    components = {"momentum": momentum_bonus, "buy_pressure": buy_pressure_bonus}
+    if isinstance(learning, dict):
+        try:
+            trades = int(learning.get("trades", 0) or 0)
+            wins = int(learning.get("wins", 0) or 0)
+            if trades >= 10 and 0 <= wins <= trades and wins / trades > 0.40:
+                score += 10.0
+                components["learning_bonus"] = 10.0
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError):
+            pass
+    return min(100.0, max(0.0, score)), components
 
 
 # ============================================================================
@@ -512,27 +584,44 @@ def fetch_dex_pair(mint):
         return None
 
 
-def fetch_candidate_mints(limit=30):
-    """Fetch a bounded list of candidate token mints from DexScreener discovery feeds."""
-    found, seen = [], set()
+def fetch_candidate_mints(limit=40):
+    """Fetch a bounded, interleaved Solana candidate list from both discovery feeds."""
+    if limit <= 0:
+        return []
+    feeds = []
     for url in (DEXSCREENER_TOKEN_BOOSTS_URL, DEXSCREENER_TOKEN_PROFILES_URL):
+        items_for_feed = []
+        local_seen = set()
         try:
             response = requests.get(url, timeout=HTTP_TIMEOUT_SECONDS)
             response.raise_for_status()
             payload = response.json()
             if not isinstance(payload, list):
+                feeds.append(items_for_feed)
                 continue
             for item in payload:
                 if not isinstance(item, dict) or item.get("chainId") != "solana":
                     continue
                 mint = item.get("tokenAddress")
-                if mint and mint not in seen:
+                if isinstance(mint, str) and mint and mint not in local_seen:
+                    local_seen.add(mint)
+                    items_for_feed.append(mint)
+        except (requests.RequestException, ValueError, TypeError):
+            items_for_feed = []
+        feeds.append(items_for_feed)
+
+    # Interleave feeds so a large first response cannot starve the second feed.
+    found, seen = [], set()
+    max_rows = max((len(feed) for feed in feeds), default=0)
+    for index in range(max_rows):
+        for feed in feeds:
+            if index < len(feed):
+                mint = feed[index]
+                if mint not in seen:
                     seen.add(mint)
                     found.append(mint)
                     if len(found) >= limit:
                         return found
-        except (requests.RequestException, ValueError, TypeError):
-            continue
     return found
 
 
@@ -688,13 +777,13 @@ def scan_shadow_candidates(state):
             rejections["pair_data_unavailable"] = rejections.get("pair_data_unavailable", 0) + 1
             state["candidate_observations"].pop(mint, None)
             continue
-        passes, reason = passes_market_filter(pair)
+        passes, reason = passes_shadow_market_filter(pair)
         if not passes:
             rejections[reason] = rejections.get(reason, 0) + 1
             state["candidate_observations"].pop(mint, None)
             continue
         filter_passed += 1
-        score, components = score_market_opportunity(pair, state.get("learning"))
+        score, components = score_shadow_opportunity(pair, state.get("learning"))
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
             continue
@@ -779,7 +868,9 @@ def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_u
 
 def append_learning_observation(score, pnl_pct, reason):
     """Persist realized outcomes without inventing a score for legacy positions."""
-    path = Path("strategy_observations.csv")
+    # Shadow outcomes are research-only and must never train or validate the live-entry threshold.
+    filename = "shadow_observations.csv" if str(reason).startswith("shadow_") else "strategy_observations.csv"
+    path = Path(filename)
     exists = path.exists() and path.stat().st_size > 0
     try:
         score_value = float(score) if score is not None else None
@@ -844,8 +935,41 @@ def reconcile_learning_from_trade_log(state, trades_path="trades_log.csv"):
     state["peak_equity"] = max(float(state.get("peak_equity", peak) or peak), peak)
     return state
 
+def _recover_state_fail_closed(reason):
+    """Recover ledger totals after corrupt state, and keep all account entries halted."""
+    state = normalize_state({})
+    ledger = Path("trades_log.csv")
+    valid_rows = []
+    peak = float(state.get("initial_equity", 1000.0))
+    if ledger.exists():
+        try:
+            with ledger.open(newline="", encoding="utf-8") as handle:
+                for row in csv.DictReader(handle):
+                    try:
+                        equity_after = float(row.get("equity_after", ""))
+                        pnl_usd = float(row.get("pnl_usd", ""))
+                        if not row.get("timestamp") or not row.get("mint") or not math.isfinite(equity_after) or not math.isfinite(pnl_usd):
+                            continue
+                    except (TypeError, ValueError, OverflowError):
+                        continue
+                    valid_rows.append((equity_after, pnl_usd))
+                    peak = max(peak, equity_after)
+        except OSError:
+            pass
+    if valid_rows:
+        state["equity"] = valid_rows[-1][0]
+        state["trade_count"] = len(valid_rows)
+        state["peak_equity"] = peak
+    state["state_recovery_required"] = True
+    update_risk_control(state)
+    state["risk_control"]["status"] = "halted"
+    state["risk_control"]["reason"] = "state_recovery_required"
+    log(f"[CRITICAL] {reason}; recovered ledger equity=\u0024{state['equity']:.2f}; account entries remain halted pending state repair")
+    return state
+
+
 def load_state():
-    """Load and normalize state; recover safely if the JSON file is corrupted."""
+    """Load state; corrupt state is reconstructed from the ledger and fails closed."""
     import json
     path = Path("state.json")
     if not path.exists():
@@ -853,11 +977,9 @@ def load_state():
     try:
         loaded = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        log(f"[WARN] state.json unreadable; starting from safe defaults ({type(exc).__name__})")
-        return normalize_state({})
+        return _recover_state_fail_closed(f"state.json unreadable ({type(exc).__name__})")
     if not isinstance(loaded, dict):
-        log("[WARN] state.json root is not an object; starting from safe defaults")
-        return normalize_state({})
+        return _recover_state_fail_closed("state.json root is not an object")
     return normalize_legacy_strategy_baseline(normalize_state(loaded))
 
 
@@ -892,7 +1014,9 @@ __all__ = [
     "append_trade",
     "append_learning_observation",
     "passes_market_filter",
+    "passes_shadow_market_filter",
     "score_market_opportunity",
+    "score_shadow_opportunity",
     "candidate_confirmation",
     "open_position",
     "close_position",
