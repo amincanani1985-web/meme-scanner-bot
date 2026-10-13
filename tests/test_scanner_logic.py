@@ -441,6 +441,26 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["trade_count"], 0)
         self.assertIn("price_missing_since", state["positions"]["mint"])
 
+    def test_stale_shadow_position_is_discarded_without_training_sample(self):
+        state = {
+            "equity": 293.36, "trade_count": 0,
+            "shadow_positions": {"mint": {
+                "symbol": "STALE", "entry_price": 1.0,
+                "entry_time": time.time() - scanner.SHADOW_STALE_OBSERVATION_SECONDS - 60,
+                "entry_liquidity": 100000, "peak_price": 1.0,
+                "signal_score": 85.0, "trailing_armed": False,
+            }},
+        }
+        with patch.object(scanner, "fetch_dex_pair") as fetch_pair, \
+             patch.object(scanner, "append_learning_observation") as append_observation, \
+             patch.object(scanner, "log"):
+            scanner.manage_shadow_positions(state)
+        self.assertEqual(state["shadow_positions"], {})
+        fetch_pair.assert_not_called()
+        append_observation.assert_not_called()
+        self.assertEqual(state["equity"], 293.36)
+        self.assertEqual(state["trade_count"], 0)
+
     def test_trade_target_disables_new_entries(self):
         state = scanner.normalize_state({"trade_count": scanner.TARGET_TRADES})
         with patch.object(scanner, "reconcile_learning_from_trade_log"), patch.object(scanner, "manage_open_positions"), patch.object(scanner, "save_state"), \
