@@ -12,6 +12,7 @@ on:
       - "requirements.txt"
       - ".github/workflows/ci.yml"
       - ".github/workflows/schedule-watchdog.yml"
+      - ".github/workflows/schedule-watchdog.yml"
   push:
     branches-ignore: [main]
     paths:
