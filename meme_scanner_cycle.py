@@ -674,6 +674,8 @@ def scan_shadow_candidates(state):
     """Collect labeled virtual-trade samples while the real paper-account circuit breaker is halted."""
     candidates = fetch_candidate_mints()
     opened = []
+    rejections = {}
+    filter_passed = 0
     # Shadow samples cover a broad score range; this never changes live entry rules.
     threshold = SHADOW_MIN_SCORE
     for mint in candidates:
@@ -682,9 +684,16 @@ def scan_shadow_candidates(state):
         if mint in state["shadow_positions"] or mint in state["blacklist"]:
             continue
         pair = fetch_dex_pair(mint)
-        if not pair or not passes_market_filter(pair)[0]:
+        if not pair:
+            rejections["pair_data_unavailable"] = rejections.get("pair_data_unavailable", 0) + 1
             state["candidate_observations"].pop(mint, None)
             continue
+        passes, reason = passes_market_filter(pair)
+        if not passes:
+            rejections[reason] = rejections.get(reason, 0) + 1
+            state["candidate_observations"].pop(mint, None)
+            continue
+        filter_passed += 1
         score, components = score_market_opportunity(pair, state.get("learning"))
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
@@ -710,7 +719,15 @@ def scan_shadow_candidates(state):
         }
         opened.append(mint)
     state["scan_count"] = int(state.get("scan_count", 0)) + 1
-    return {"scanned": len(candidates), "shadow_opened": opened}
+    state["shadow_scan_diagnostics"] = {
+        "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "candidate_count": len(candidates),
+        "filter_passed": filter_passed,
+        "shadow_opened": len(opened),
+        "rejections": rejections,
+    }
+    log(f"[SHADOW DIAGNOSTICS] candidates={len(candidates)} filter_passed={filter_passed} rejections={rejections}")
+    return {"scanned": len(candidates), "shadow_opened": opened, "filter_passed": filter_passed, "rejections": rejections}
 
 
 def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_usd, equity_after):

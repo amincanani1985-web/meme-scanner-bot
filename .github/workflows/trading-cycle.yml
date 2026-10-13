@@ -165,7 +165,10 @@ jobs:
           learning = state.get("learning", {})
           print(f"- Ledger reconciliation: {learning.get('trades', 0)} trades, {learning.get('wins', 0)} wins; {learning.get('unbucketed_trades', 0)} trades lack recoverable score-bucket data.")
           if risk.get("status") == "halted":
-              print("- New entries are blocked by the drawdown circuit breaker.")
+              print("- New account entries are blocked by the drawdown circuit breaker.")
+              shadow = state.get("shadow_scan_diagnostics", {})
+              print(f"- Shadow scan: {shadow.get('candidate_count', 0)} candidates; {shadow.get('filter_passed', 0)} passed market filters; {shadow.get('shadow_opened', 0)} virtual positions open.")
+              print(f"- Shadow filter rejections: {shadow.get('rejections', {})}")
           PY
 
       - name: Configure GitHub Pages for the fresh dashboard data
