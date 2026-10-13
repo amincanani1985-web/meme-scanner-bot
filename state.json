@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 171,
+  "scan_count": 172,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-13T22:24:03Z",
+  "last_run": "2026-10-13T22:26:55Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -224,7 +224,8 @@
       "components": {
         "momentum": 6.32,
         "buy_pressure": 4.666666666666667
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8KKHDdWRX3NY9gTgnxCPp2b9nMCofwzxdYzZrXwrpump": {
       "symbol": "CHONK",
@@ -237,33 +238,22 @@
       "components": {
         "momentum": -52.589999999999996,
         "buy_pressure": -3.5
-      }
-    },
-    "Ct6HvaYv79FVwyr73MrEYNvLdtQouLquVmmZnuEkpump": {
-      "symbol": "NEIL",
-      "entry_price": 0.00016808399999999996,
-      "entry_time": 1791930243.0979748,
-      "entry_liquidity": 35013.41,
-      "peak_price": 0.00016808399999999996,
-      "signal_score": 65.36409836065573,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 12.610000000000001,
-        "buy_pressure": 2.7540983606557377
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "DxnkB7w6f2eS1nfJH8ER1MeoR3apJZQKKA6sspzFpump": {
       "symbol": "SEALCAT",
       "entry_price": 0.00031272149999999997,
       "entry_time": 1791930243.1282701,
       "entry_liquidity": 46964.47,
-      "peak_price": 0.00031272149999999997,
+      "peak_price": 0.0003396,
       "signal_score": 90.0,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "6KBDqTzgRPpa6xWeS5nPCxPwZHCRu1C51mV3S9r3pump": {
       "symbol": "CAT",
@@ -276,33 +266,22 @@
       "components": {
         "momentum": -5.8100000000000005,
         "buy_pressure": 9.999999999999998
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "BKyNf5bEzJoVwvmghMfSvcNTpgLwapFz9VYkT78epump": {
       "symbol": "HATCH",
       "entry_price": 2.037105e-05,
       "entry_time": 1791930243.195512,
       "entry_liquidity": 10474.05,
-      "peak_price": 2.037105e-05,
+      "peak_price": 3.157e-05,
       "signal_score": 0.0,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -60.82,
         "buy_pressure": -5.6000000000000005
-      }
-    },
-    "FY6CZ5JZMYcKfboBYKqqBVkhbknfjUELqAFiq2Qupump": {
-      "symbol": "PEDRO",
-      "entry_price": 0.000123018,
-      "entry_time": 1791930243.2624483,
-      "entry_liquidity": 30742.76,
-      "peak_price": 0.000123018,
-      "signal_score": 74.02715654952077,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": -0.972843450479233
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "fvT29UywGTM7wgRv5RCYpjtH1N9QKCM9LXyw53Tpump": {
       "symbol": "Abdulrahman",
@@ -315,27 +294,46 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 2.2442748091603058
+      },
+      "liquidity_drain_hits": 0
+    },
+    "Ct6HvaYv79FVwyr73MrEYNvLdtQouLquVmmZnuEkpump": {
+      "symbol": "NEIL",
+      "entry_price": 0.00014991549999999998,
+      "entry_time": 1791930415.6121783,
+      "entry_liquidity": 32980.34,
+      "peak_price": 0.00014991549999999998,
+      "signal_score": 32.35745762711865,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -19.49,
+        "buy_pressure": 1.8474576271186447
+      }
+    },
+    "FY6CZ5JZMYcKfboBYKqqBVkhbknfjUELqAFiq2Qupump": {
+      "symbol": "PEDRO",
+      "entry_price": 0.00011043199999999999,
+      "entry_time": 1791930415.6753962,
+      "entry_liquidity": 28979.24,
+      "peak_price": 0.00011043199999999999,
+      "signal_score": 75.69574036511156,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 0.6957403651115623
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-13T22:24:03Z",
+    "timestamp": "2026-10-13T22:26:55Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
+    "filter_passed": 2,
+    "shadow_opened": 2,
     "rejections": {
-      "shadow_pair_too_new:239s": 1,
-      "pair_data_unavailable": 10,
-      "shadow_low_activity": 1,
-      "shadow_low_liquidity:3128": 1,
-      "shadow_low_volume_h1:575": 1,
-      "shadow_low_liquidity:2168": 1,
-      "shadow_low_volume_h1:337": 1,
-      "shadow_low_liquidity:4190": 1,
-      "shadow_low_liquidity:2480": 1,
-      "shadow_low_liquidity:3624": 1,
-      "shadow_low_liquidity:4517": 1,
-      "shadow_low_liquidity:368": 1
+      "shadow_pair_too_new:411s": 1,
+      "pair_data_unavailable": 4,
+      "shadow_pair_too_new:173s": 1,
+      "shadow_low_activity": 1
     }
   }
 }
