@@ -2,7 +2,7 @@ name: trading cycle schedule watchdog
 
 on:
   schedule:
-    - cron: "2-59/5 * * * *"
+    - cron: "3-58/5 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -29,7 +29,7 @@ jobs:
         with:
           ref: main
 
-      - name: Dispatch a recovery cycle only if the heartbeat is stale
+      - name: Dispatch a recovery cycle when the heartbeat is older than 7 minutes
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -51,11 +51,11 @@ jobs:
                       stamp = stamp.replace(tzinfo=timezone.utc)
                   age = (datetime.now(timezone.utc) - stamp).total_seconds()
                   # A future heartbeat is invalid, not evidence of a healthy cycle.
-                  stale = age < -60 or age > 900
+                  stale = age < -60 or age > 420
           except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
               print(f"Heartbeat unavailable or invalid ({type(exc).__name__}); treating it as stale.")
           age_text = "unknown" if age is None else f"{age:.0f}s"
-          print(f"Heartbeat age: {age_text}; stale={stale}")
+          print(f"Heartbeat age: {age_text}; stale={stale} (recovery threshold: 420s)")
           Path("/tmp/heartbeat-stale").write_text("yes" if stale else "no")
           PY
 
