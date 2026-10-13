@@ -43,7 +43,8 @@ jobs:
               stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
               age = (datetime.now(timezone.utc) - stamp).total_seconds()
               stale = age > 900
-          print(f"Heartbeat age: {'unknown' if age is None else f'{age:.0f}s'}; stale={stale}")
+          age_text = "unknown" if age is None else f"{age:.0f}s"
+          print(f"Heartbeat age: {age_text}; stale={stale}")
           Path("/tmp/heartbeat-stale").write_text("yes" if stale else "no")
           PY
 
