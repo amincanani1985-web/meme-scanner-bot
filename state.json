@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 161,
+  "scan_count": 162,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-13T08:42:49Z",
+  "last_run": "2026-10-13T08:45:54Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -217,5 +217,37 @@
     "peak_equity": 1055.98
   },
   "peak_equity": 1055.98,
-  "shadow_positions": {}
+  "shadow_positions": {},
+  "shadow_scan_diagnostics": {
+    "timestamp": "2026-10-13T08:45:54Z",
+    "candidate_count": 30,
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {
+      "pair_data_unavailable": 7,
+      "low_liquidity:30528": 1,
+      "low_liquidity:12781": 1,
+      "low_liquidity:2688": 1,
+      "low_liquidity:18424": 1,
+      "low_liquidity:91055": 1,
+      "low_volume_h1:8046": 1,
+      "low_liquidity:12689": 1,
+      "low_liquidity:14034": 1,
+      "low_liquidity:6719": 1,
+      "low_liquidity:14953": 1,
+      "liq_mcap_ratio:0.04": 1,
+      "low_liquidity:42207": 1,
+      "low_liquidity:3101": 1,
+      "low_liquidity:2789": 1,
+      "low_liquidity:23911": 1,
+      "low_liquidity:16866": 1,
+      "low_liquidity:3341": 1,
+      "low_liquidity:3517": 1,
+      "low_liquidity:97492": 1,
+      "low_liquidity:35920": 1,
+      "low_liquidity:74741": 1,
+      "pair_too_new:2269s": 1,
+      "low_liquidity:2059": 1
+    }
+  }
 }
