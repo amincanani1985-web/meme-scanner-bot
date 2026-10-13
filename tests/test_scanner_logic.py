@@ -104,7 +104,7 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
-             patch.object(scanner, "score_market_opportunity", return_value=(72.0, {})), \
+             patch.object(scanner, "score_market_opportunity", return_value=(42.0, {})), \
              patch.object(scanner, "candidate_confirmation") as confirmation, \
              patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
