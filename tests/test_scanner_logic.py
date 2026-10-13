@@ -124,7 +124,7 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "passes_market_filter", return_value=(False, "low_liquidity:50000")), \
              patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
-        self.assertEqual(result["rejections"], {"low_liquidity:50000": 1})
+        self.assertEqual(state["shadow_scan_diagnostics"]["rejections"], {"low_liquidity:50000": 1})
         self.assertEqual(state["shadow_scan_diagnostics"]["filter_passed"], 0)
         self.assertEqual(state["shadow_positions"], {})
         self.assertEqual(state["equity"], 293.36)
