@@ -120,14 +120,24 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "manage_open_positions"), \
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
-             patch.object(scanner, "passes_market_filter", return_value=(False, "low_liquidity:50000")), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 5000})), \
              patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
-        self.assertEqual(state["shadow_scan_diagnostics"]["rejections"], {"low_liquidity:50000": 1})
+        self.assertEqual(state["shadow_scan_diagnostics"]["rejections"], {"shadow_low_liquidity:5000": 1})
         self.assertEqual(state["shadow_scan_diagnostics"]["filter_passed"], 0)
         self.assertEqual(state["shadow_positions"], {})
         self.assertEqual(state["equity"], 293.36)
+
+    def test_shadow_observations_are_separated_from_live_strategy_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch.object(scanner, "Path", side_effect=lambda name: root / name):
+                scanner.append_learning_observation(85, 4.0, "shadow_max_hold_timeout")
+                scanner.append_learning_observation(85, -2.0, "hard_stop_loss")
+            self.assertTrue((root / "shadow_observations.csv").exists())
+            self.assertTrue((root / "strategy_observations.csv").exists())
+            self.assertIn("shadow_max_hold_timeout", (root / "shadow_observations.csv").read_text(encoding="utf-8"))
+            self.assertIn("hard_stop_loss", (root / "strategy_observations.csv").read_text(encoding="utf-8"))
 
     def test_shadow_close_records_labeled_sample_without_touching_account(self):
         state = scanner.normalize_state({
