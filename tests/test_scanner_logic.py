@@ -97,6 +97,23 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["scan_count"], 3)
         self.assertTrue(state["last_run"])
 
+    def test_shadow_collection_samples_below_live_entry_threshold_without_confirmation(self):
+        state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_market_opportunity", return_value=(72.0, {})), \
+             patch.object(scanner, "candidate_confirmation") as confirmation, \
+             patch.object(scanner, "log"):
+            result = scanner.run_cycle(state)
+        self.assertTrue(result["risk_halted"])
+        self.assertEqual(result["shadow_opened"], ["mint"])
+        self.assertEqual(state["equity"], 293.36)
+        self.assertEqual(state["trade_count"], 0)
+        confirmation.assert_not_called()
+
     def test_shadow_close_records_labeled_sample_without_touching_account(self):
         state = scanner.normalize_state({
             "equity": 293.36, "initial_equity": 1000.0, "trade_count": 53,
