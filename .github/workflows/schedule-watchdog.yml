@@ -1,0 +1,63 @@
+name: trading cycle schedule watchdog
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: trading-cycle-watchdog
+  cancel-in-progress: true
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout latest paper state
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Dispatch a recovery cycle only if the heartbeat is stale
+        env:
+          GH_TOKEN: \${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          state = json.loads(Path("state.json").read_text(encoding="utf-8"))
+          raw = state.get("last_run")
+          if not raw:
+              stale = True
+              age = None
+          else:
+              stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+              age = (datetime.now(timezone.utc) - stamp).total_seconds()
+              stale = age > 900
+          print(f"Heartbeat age: {'unknown' if age is None else f'{age:.0f}s'}; stale={stale}")
+          Path("/tmp/heartbeat-stale").write_text("yes" if stale else "no")
+          PY
+
+          if [ "$(cat /tmp/heartbeat-stale)" != "yes" ]; then
+            echo "Paper-trading heartbeat is fresh; no recovery dispatch needed."
+            exit 0
+          fi
+
+          active=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/trading-cycle.yml/runs?per_page=20" \
+            --jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" -gt 0 ]; then
+            echo "A trading cycle is already queued or running; avoiding duplicate dispatch."
+            exit 0
+          fi
+
+          gh workflow run trading-cycle.yml --ref main
+          echo "Heartbeat was stale; dispatched a recovery cycle."
