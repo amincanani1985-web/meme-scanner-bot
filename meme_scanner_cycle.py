@@ -584,7 +584,7 @@ def fetch_dex_pair(mint):
         return None
 
 
-def fetch_candidate_mints(limit=100):
+def fetch_candidate_mints(limit=40):
     """Fetch a bounded, interleaved Solana candidate list from both discovery feeds."""
     if limit <= 0:
         return []
