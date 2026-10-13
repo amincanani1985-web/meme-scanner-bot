@@ -11,6 +11,7 @@ on:
       - "run_tests.py"
       - "requirements.txt"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/schedule-watchdog.yml"
   push:
     branches-ignore: [main]
     paths:
