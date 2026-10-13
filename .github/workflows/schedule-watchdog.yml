@@ -2,12 +2,13 @@ name: trading cycle schedule watchdog
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
     paths:
       - ".github/workflows/schedule-watchdog.yml"
+      - ".github/workflows/trading-cycle.yml"
 
 permissions:
   contents: read
