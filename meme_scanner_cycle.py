@@ -56,7 +56,7 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
-SHADOW_MIN_SCORE = 60.0                     # Broad score distribution for threshold validation
+SHADOW_MIN_SCORE = 0.0                     # Broad score distribution for threshold validation
 MAX_SHADOW_POSITIONS = 8                    # Cap independent shadow observations
 
 # ============================================================================
