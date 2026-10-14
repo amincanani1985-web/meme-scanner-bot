@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 176,
+  "scan_count": 177,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-14T06:24:09Z",
+  "last_run": "2026-10-14T11:59:05Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,110 +213,118 @@
   },
   "peak_equity": 1055.98,
   "shadow_positions": {
+    "7jNwX4Me9zGEjmWY7zARDG2LYjVs1WXD6DZ1JvSfpump": {
+      "symbol": "HUMPH",
+      "entry_price": 0.000816669,
+      "entry_time": 1791979142.6877036,
+      "entry_liquidity": 86842.51,
+      "peak_price": 0.000816669,
+      "signal_score": 82.13513513513513,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 7.135135135135137
+      }
+    },
+    "FvSE99EkoiTY8Wv34V2RpWVNxnrLe7o9gyKnd4HddtjQ": {
+      "symbol": "SDR",
+      "entry_price": 6.529495e-05,
+      "entry_time": 1791979142.8060687,
+      "entry_liquidity": 20733.87,
+      "peak_price": 6.529495e-05,
+      "signal_score": 18.02,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -27.78,
+        "buy_pressure": -4.2
+      }
+    },
+    "HKZDfZnkHZxd9agRDNPyDv4iT6LmAurJnpRtj9wpump": {
+      "symbol": "MISTAKE",
+      "entry_price": 0.002528365,
+      "entry_time": 1791979143.0462706,
+      "entry_liquidity": 176538.25,
+      "peak_price": 0.002528365,
+      "signal_score": 66.71909090909091,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 14.809999999999999,
+        "buy_pressure": 1.909090909090909
+      }
+    },
+    "DPdH8mWRCntu8dDyWrrnDo1byHSYkeRz2BN6Vk21pump": {
+      "symbol": "TRENCH",
+      "entry_price": 3.504795e-05,
+      "entry_time": 1791979143.602753,
+      "entry_liquidity": 15243.94,
+      "peak_price": 3.504795e-05,
+      "signal_score": 0.0,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -148.8,
+        "buy_pressure": 3.9069767441860472
+      }
+    },
+    "8rUdZKL3TNrZTBGqD13QqDoJPhU4AdbGTFLNbQeJpump": {
+      "symbol": "TW",
+      "entry_price": 6.905044999999999e-05,
+      "entry_time": 1791979143.8536077,
+      "entry_liquidity": 21151.43,
+      "peak_price": 6.905044999999999e-05,
+      "signal_score": 19.27364485981309,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -35.959999999999994,
+        "buy_pressure": 5.233644859813085
+      }
+    },
     "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
       "symbol": "SI276",
-      "entry_price": 0.0010149999999999998,
-      "entry_time": 1791958491.1571379,
-      "entry_liquidity": 98123.95,
-      "peak_price": 0.001089,
-      "signal_score": 61.56393442622951,
+      "entry_price": 0.0011682649999999997,
+      "entry_time": 1791979144.0604198,
+      "entry_liquidity": 105787.25,
+      "peak_price": 0.0011682649999999997,
+      "signal_score": 54.27,
       "trailing_armed": false,
       "components": {
-        "momentum": 6.4,
-        "buy_pressure": 5.163934426229508
-      },
-      "liquidity_drain_hits": 0
-    },
-    "GZBTotcV7TPvquqQgjKKStyd4yk7nQ7gGttqLjwtpump": {
-      "symbol": "Hydra",
-      "entry_price": 0.00035453949999999997,
-      "entry_time": 1791958491.3939593,
-      "entry_liquidity": 51044.43,
-      "peak_price": 0.00035453949999999997,
-      "signal_score": 0.0,
-      "trailing_armed": false,
-      "components": {
-        "momentum": -54.28,
-        "buy_pressure": -4.933920704845814
-      },
-      "liquidity_drain_hits": 0
-    },
-    "GC2FMdUoe4UFdZiE1tM6dh2cbT2qNNG967Pf6d8dJETe": {
-      "symbol": "ROADSTER",
-      "entry_price": 1.7620399999999998e-05,
-      "entry_time": 1791958492.8289058,
-      "entry_liquidity": 11416.37,
-      "peak_price": 2.061e-05,
-      "signal_score": 0.0,
-      "trailing_armed": true,
-      "components": {
-        "momentum": -126.69,
-        "buy_pressure": 5.764705882352941
-      },
-      "liquidity_drain_hits": 0
-    },
-    "H9w4eoADURcRyPt3apGVhpN9qQXK3r7TBjtxcSVqpump": {
-      "symbol": "RK",
-      "entry_price": 1.9569199999999996e-05,
-      "entry_time": 1791959047.9444258,
-      "entry_liquidity": 10392.62,
-      "peak_price": 1.9569199999999996e-05,
-      "signal_score": 15.823846153846148,
-      "trailing_armed": false,
-      "components": {
-        "momentum": -32.830000000000005,
-        "buy_pressure": -1.346153846153846
+        "momentum": -2.7299999999999995,
+        "buy_pressure": 7.0
       }
     },
-    "A4Ppe8FtJC8YetpnJTXmURbZpFKhbjnYv4QtXtp9pump": {
-      "symbol": "UNTXED",
-      "entry_price": 5.212025e-05,
-      "entry_time": 1791959048.223214,
-      "entry_liquidity": 19106.1,
-      "peak_price": 5.212025e-05,
-      "signal_score": 29.146363636363635,
+    "9XKzy4KahcZaGJPJtz1PtqGPB3CiseoBrx7TcQhEpump": {
+      "symbol": "GOMO",
+      "entry_price": 0.000988407,
+      "entry_time": 1791979145.1350267,
+      "entry_liquidity": 99767.7,
+      "peak_price": 0.000988407,
+      "signal_score": 78.48,
       "trailing_armed": false,
       "components": {
-        "momentum": -21.240000000000002,
-        "buy_pressure": 0.3863636363636367
-      }
-    },
-    "9xooZuDLEGjt54K6pSP2PbP2CUxFpU84UsPysirQpump": {
-      "symbol": "CODE",
-      "entry_price": 5.8667e-05,
-      "entry_time": 1791959048.5599415,
-      "entry_liquidity": 20628.84,
-      "peak_price": 5.8667e-05,
-      "signal_score": 31.918333333333337,
-      "trailing_armed": false,
-      "components": {
-        "momentum": -20.939999999999998,
-        "buy_pressure": 2.8583333333333343
+        "momentum": 13.48,
+        "buy_pressure": 15.0
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-14T06:24:09Z",
+    "timestamp": "2026-10-14T11:59:05Z",
     "candidate_count": 40,
-    "filter_passed": 3,
-    "shadow_opened": 3,
+    "filter_passed": 7,
+    "shadow_opened": 7,
     "rejections": {
-      "shadow_low_liquidity:513": 1,
-      "pair_data_unavailable": 20,
-      "shadow_low_volume_h1:669": 1,
-      "shadow_low_liquidity:425": 1,
-      "shadow_low_liquidity:4071": 1,
-      "shadow_low_liquidity:2249": 1,
-      "shadow_low_volume_h1:633": 1,
-      "shadow_low_liquidity:8218": 1,
+      "pair_data_unavailable": 19,
+      "shadow_pair_too_new:314s": 1,
+      "shadow_low_liquidity:9039": 1,
+      "shadow_low_liquidity:0": 2,
+      "shadow_low_volume_h1:1401": 1,
+      "shadow_low_liquidity:576": 1,
+      "shadow_low_volume_h1:241": 1,
+      "shadow_low_liquidity:520": 1,
+      "shadow_low_liquidity:3566": 1,
+      "shadow_low_liquidity:3092": 1,
+      "shadow_low_liquidity:3919": 1,
+      "shadow_low_volume_h1:1271": 1,
       "shadow_liq_mcap_ratio:0.03": 1,
-      "shadow_low_liquidity:3046": 1,
-      "shadow_low_liquidity:8350": 1,
-      "shadow_low_volume_h1:831": 1,
-      "shadow_low_liquidity:2679": 1,
-      "shadow_low_volume_h1:662": 1,
-      "shadow_low_liquidity:9333": 1,
-      "shadow_low_liquidity:4243": 1
+      "shadow_low_liquidity:9846": 1
     }
   }
 }
