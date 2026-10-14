@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 183,
+  "scan_count": 184,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-14T23:19:57Z",
+  "last_run": "2026-10-14T23:31:57Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,82 +213,106 @@
   },
   "peak_equity": 1055.98,
   "shadow_positions": {
-    "8EDmp9WRic4ns7eBo5RxWNFznw2Td1fs3E41eyHapump": {
+    "4uWm1gPcWn6K9MRhQhXxgnhBq1cG2tnpBze8pNDJpump": {
       "symbol": "PEDO",
-      "entry_price": 2.9191399999999996e-05,
-      "entry_time": 1792019996.116251,
-      "entry_liquidity": 13610.83,
-      "peak_price": 2.9191399999999996e-05,
-      "signal_score": 0.0,
+      "entry_price": 0.00015052449999999998,
+      "entry_time": 1792020714.8895447,
+      "entry_liquidity": 34189.24,
+      "peak_price": 0.00015052449999999998,
+      "signal_score": 76.95348837209302,
       "trailing_armed": false,
       "components": {
-        "momentum": -179.09,
-        "buy_pressure": -0.8672566371681414
+        "momentum": 25.0,
+        "buy_pressure": 1.9534883720930236
+      }
+    },
+    "HQgMPJbGctpP9P27DdJW5f8rncz7gvg4vEL3hT7hpump": {
+      "symbol": "LILANSEM",
+      "entry_price": 7.872339999999999e-05,
+      "entry_time": 1792020715.010121,
+      "entry_liquidity": 24373.77,
+      "peak_price": 7.872339999999999e-05,
+      "signal_score": 26.7,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -26.8,
+        "buy_pressure": 3.5
+      }
+    },
+    "8EDmp9WRic4ns7eBo5RxWNFznw2Td1fs3E41eyHapump": {
+      "symbol": "PEDO",
+      "entry_price": 3.05312e-05,
+      "entry_time": 1792020715.0746455,
+      "entry_liquidity": 14474.01,
+      "peak_price": 3.05312e-05,
+      "signal_score": 7.050000000000003,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -45.05,
+        "buy_pressure": 2.1000000000000005
       }
     },
     "7fumw7GYTHZJJxkKJ8sSh1CqTdHmB234vX3xsKjepump": {
       "symbol": "VEILTRUMP",
-      "entry_price": 0.00126875,
-      "entry_time": 1792019996.504639,
-      "entry_liquidity": 97677.83,
-      "peak_price": 0.00126875,
-      "signal_score": 58.35,
+      "entry_price": 0.00124439,
+      "entry_time": 1792020715.5263493,
+      "entry_liquidity": 96679.26,
+      "peak_price": 0.00124439,
+      "signal_score": 56.337457627118646,
       "trailing_armed": false,
       "components": {
-        "momentum": 2.89,
-        "buy_pressure": 5.46
+        "momentum": 3.4899999999999998,
+        "buy_pressure": 2.8474576271186445
       }
     },
     "kXzjEQ2frgfKHAUWGS1rZFH53tyWjD6b9njoQ82pump": {
       "symbol": "CFLARE",
-      "entry_price": 0.00032804799999999995,
-      "entry_time": 1792019996.58535,
-      "entry_liquidity": 69807.26,
-      "peak_price": 0.00032804799999999995,
+      "entry_price": 9.03959e-05,
+      "entry_time": 1792020715.6544309,
+      "entry_liquidity": 36294.96,
+      "peak_price": 9.03959e-05,
       "signal_score": 0.0,
       "trailing_armed": false,
       "components": {
-        "momentum": -98.99000000000001,
-        "buy_pressure": -0.8466780238500851
+        "momentum": -207.73,
+        "buy_pressure": -0.8257713248638835
       }
     },
     "EqpoNo2heyNoseTSxCTMDQa3hQ1edpjEb3TSF7wrCzyZ": {
       "symbol": "ALON",
-      "entry_price": 7.882489999999998e-05,
-      "entry_time": 1792019996.792872,
-      "entry_liquidity": 25171.18,
-      "peak_price": 7.882489999999998e-05,
-      "signal_score": 74.61111111111111,
+      "entry_price": 5.1358999999999994e-05,
+      "entry_time": 1792020716.1457849,
+      "entry_liquidity": 20320.18,
+      "peak_price": 5.1358999999999994e-05,
+      "signal_score": 58.78516129032258,
       "trailing_armed": false,
       "components": {
-        "momentum": 25.0,
-        "buy_pressure": -0.38888888888888906
+        "momentum": 3.1399999999999935,
+        "buy_pressure": 5.64516129032258
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-14T23:19:57Z",
+    "timestamp": "2026-10-14T23:31:57Z",
     "candidate_count": 40,
-    "filter_passed": 4,
-    "shadow_opened": 4,
+    "filter_passed": 6,
+    "shadow_opened": 6,
     "rejections": {
-      "pair_data_unavailable": 19,
-      "shadow_low_activity": 2,
-      "shadow_pair_too_new:564s": 1,
-      "shadow_low_liquidity:4829": 1,
-      "shadow_low_volume_h1:74": 1,
+      "pair_data_unavailable": 20,
+      "shadow_low_liquidity:4905": 1,
+      "shadow_low_liquidity:5008": 1,
+      "shadow_low_volume_h1:110": 1,
       "shadow_low_liquidity:2067": 1,
-      "shadow_low_liquidity:3755": 1,
-      "shadow_low_volume_h1:612": 1,
+      "shadow_low_volume_h1:398": 1,
+      "shadow_low_liquidity:3143": 1,
       "shadow_low_liquidity:2956": 1,
-      "shadow_low_liquidity:2877": 1,
-      "shadow_low_liquidity:3356": 1,
-      "shadow_low_volume_h1:170": 1,
-      "shadow_low_liquidity:2556": 1,
-      "shadow_low_liquidity:6705": 1,
-      "shadow_low_liquidity:7128": 1,
-      "shadow_low_liquidity:2362": 1,
-      "shadow_low_liquidity:4920": 1
+      "shadow_low_liquidity:2945": 1,
+      "shadow_low_liquidity:3354": 1,
+      "shadow_low_volume_h1:185": 1,
+      "shadow_low_liquidity:2545": 1,
+      "shadow_low_liquidity:7187": 1,
+      "shadow_low_liquidity:5680": 1,
+      "shadow_low_activity": 1
     }
   }
 }
