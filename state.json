@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 202,
+  "scan_count": 203,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-16T11:14:26Z",
+  "last_run": "2026-10-16T14:17:28Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -94,11 +94,6 @@
       "hits": 2,
       "last_seen": 1790798683.4506,
       "last_score": 87.86
-    },
-    "8DXqVUopcdviLvujTcpwEqkKzB43Arp6E1axzsEE5Btq": {
-      "hits": 1,
-      "last_seen": 1790798420.579078,
-      "last_score": 75.08
     },
     "5188hYRf2saZt9PhLD6exKL4MCQquRmw9SGaBak6pump": {
       "hits": 1,
@@ -213,128 +208,137 @@
   },
   "peak_equity": 1055.98,
   "shadow_positions": {
-    "wLZrRQk9XBynAJSRdeQgsQrVURXGdfo4ahb1oRBpump": {
-      "symbol": "CATCH",
-      "entry_price": 9.751104999999999e-05,
-      "entry_time": 1792149264.9160953,
-      "entry_liquidity": 26616.96,
-      "peak_price": 9.751104999999999e-05,
-      "signal_score": 71.23,
+    "3xmzHi86JTUdye7bUuT9TdBPZLeBK9nBCA44JHRdpump": {
+      "symbol": "Audaster",
+      "entry_price": 0.0026237749999999996,
+      "entry_time": 1792160246.0850706,
+      "entry_liquidity": 144383.4,
+      "peak_price": 0.0026237749999999996,
+      "signal_score": 85.35463258785943,
       "trailing_armed": false,
       "components": {
-        "momentum": 19.23,
-        "buy_pressure": 2.000000000000001
+        "momentum": 25.0,
+        "buy_pressure": 10.354632587859424
+      }
+    },
+    "3YNCESdqhSgvsD4aARHC4rdqXpjyW9CWjosH82hNpump": {
+      "symbol": "DINKY",
+      "entry_price": 0.00018899299999999998,
+      "entry_time": 1792160246.771399,
+      "entry_liquidity": 37902.66,
+      "peak_price": 0.00018899299999999998,
+      "signal_score": 58.75,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 0.35000000000000003,
+        "buy_pressure": 8.400000000000002
+      }
+    },
+    "wLZrRQk9XBynAJSRdeQgsQrVURXGdfo4ahb1oRBpump": {
+      "symbol": "CATCH",
+      "entry_price": 7.909894999999999e-05,
+      "entry_time": 1792160247.3501158,
+      "entry_liquidity": 23523.74,
+      "peak_price": 7.909894999999999e-05,
+      "signal_score": 23.566666666666666,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -24.1,
+        "buy_pressure": -2.3333333333333335
+      }
+    },
+    "7Jain9Efy7C4HvGkEPkNUUiGUmgu5tkff7NWvCvGpump": {
+      "symbol": "Twin",
+      "entry_price": 0.00014463749999999999,
+      "entry_time": 1792160247.3995142,
+      "entry_liquidity": 32374.86,
+      "peak_price": 0.00014463749999999999,
+      "signal_score": 77.53921568627452,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 2.53921568627451
       }
     },
     "Diy4Q5aiNEcdn7CWhuwYtuoHtHD9rKBTHCa9hi4qpump": {
       "symbol": "STREAM",
-      "entry_price": 0.00015509199999999998,
-      "entry_time": 1792149265.0987768,
-      "entry_liquidity": 35568.1,
-      "peak_price": 0.00015509199999999998,
-      "signal_score": 7.4838461538461525,
+      "entry_price": 0.00026410299999999996,
+      "entry_time": 1792160247.4963744,
+      "entry_liquidity": 46875.58,
+      "peak_price": 0.00026410299999999996,
+      "signal_score": 43.36,
       "trailing_armed": false,
       "components": {
-        "momentum": -37.67,
-        "buy_pressure": -4.846153846153846
+        "momentum": -6.359999999999999,
+        "buy_pressure": -0.28000000000000025
       }
     },
-    "6We2unR6HXgEdHFvb4d29XUr77sZzXk8paQaZxU9pump": {
-      "symbol": "USDC",
-      "entry_price": 0.000124642,
-      "entry_time": 1792149265.5912454,
-      "entry_liquidity": 33284.39,
-      "peak_price": 0.000124642,
-      "signal_score": 76.33505154639175,
+    "8qGJc7sPvmS9Bs26ni2D67KxH97w989kuxr7Tc98pump": {
+      "symbol": "EI",
+      "entry_price": 2.83997e-05,
+      "entry_time": 1792160247.8288612,
+      "entry_liquidity": 12582.56,
+      "peak_price": 2.83997e-05,
+      "signal_score": 3.936410256410256,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -47.32,
+        "buy_pressure": 1.2564102564102566
+      }
+    },
+    "BALftXRKPbjbQ3h7dwQHNTRF7NH6hCiqwaLQWa5Zpump": {
+      "symbol": "ETR",
+      "entry_price": 0.00022847649999999998,
+      "entry_time": 1792160248.0025804,
+      "entry_liquidity": 39982.86,
+      "peak_price": 0.00022847649999999998,
+      "signal_score": 74.89655172413794,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
-        "buy_pressure": 1.3350515463917525
+        "buy_pressure": -0.10344827586206884
       }
     },
     "EnAMBDkVYMxytcSdy8G32E2xy61Q4tpyt3rEH47QLYgK": {
       "symbol": "OTCI",
-      "entry_price": 7.418635e-05,
-      "entry_time": 1792149265.712331,
-      "entry_liquidity": 22680.9,
-      "peak_price": 7.418635e-05,
-      "signal_score": 73.31016949152543,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 20.700000000000003,
-        "buy_pressure": 2.610169491525423
-      }
-    },
-    "6hjaMcRPvB4DEGpHqgHxmgipb2vrGQWMewZBAVSLpump": {
-      "symbol": "STATE?",
-      "entry_price": 0.00020350749999999997,
-      "entry_time": 1792149265.9061484,
-      "entry_liquidity": 39220.01,
-      "peak_price": 0.00020350749999999997,
-      "signal_score": 26.439999999999998,
-      "trailing_armed": false,
-      "components": {
-        "momentum": -16.560000000000002,
-        "buy_pressure": -7.0
-      }
-    },
-    "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
-      "symbol": "SI276",
-      "entry_price": 0.0010870649999999997,
-      "entry_time": 1792149266.1726363,
-      "entry_liquidity": 104161.92,
-      "peak_price": 0.0010870649999999997,
-      "signal_score": 60.065,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 2.1900000000000004,
-        "buy_pressure": 7.875
-      }
-    },
-    "pFibPnQk8ekCCtuBoQFJqeJjHVo92dAME3uH8A4pump": {
-      "symbol": "ElonThrust",
-      "entry_price": 0.0011834899999999997,
-      "entry_time": 1792149266.453557,
-      "entry_liquidity": 91981.64,
-      "peak_price": 0.0011834899999999997,
-      "signal_score": 90.0,
+      "entry_price": 7.776929999999999e-05,
+      "entry_time": 1792160248.1300864,
+      "entry_liquidity": 22314.85,
+      "peak_price": 7.776929999999999e-05,
+      "signal_score": 76.98648648648648,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
-        "buy_pressure": 15.0
-      }
-    },
-    "6VdcMnBTCj4tJVwtNdJZNzWeYmxzMnygVSzcfY35pump": {
-      "symbol": "Irene",
-      "entry_price": 0.00016250149999999996,
-      "entry_time": 1792149266.619695,
-      "entry_liquidity": 34379.99,
-      "peak_price": 0.00016250149999999996,
-      "signal_score": 77.36144578313252,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 2.36144578313253
+        "buy_pressure": 1.9864864864864864
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-16T11:14:26Z",
+    "timestamp": "2026-10-16T14:17:28Z",
     "candidate_count": 40,
     "filter_passed": 8,
     "shadow_opened": 8,
     "rejections": {
-      "pair_data_unavailable": 22,
-      "shadow_low_volume_h1:1022": 1,
-      "shadow_low_liquidity:3789": 1,
-      "shadow_low_volume_h1:27": 1,
-      "shadow_low_liquidity:3317": 1,
+      "pair_data_unavailable": 13,
+      "shadow_pair_too_new:143s": 1,
+      "shadow_low_liquidity:3499": 1,
+      "shadow_low_volume_h1:1063": 1,
+      "shadow_pair_too_new:176s": 1,
+      "shadow_low_liquidity:2113": 1,
+      "shadow_low_liquidity:4": 1,
+      "shadow_low_volume_h1:12": 1,
+      "shadow_low_volume_h1:536": 1,
+      "shadow_low_liquidity:5452": 1,
+      "shadow_low_liquidity:0": 1,
+      "shadow_low_liquidity:2128": 1,
+      "shadow_low_volume_h1:1403": 1,
+      "shadow_low_liquidity:6284": 1,
       "shadow_low_activity": 1,
-      "shadow_low_liquidity:2402": 1,
-      "shadow_low_liquidity:8224": 1,
-      "shadow_low_liquidity:2575": 1,
-      "shadow_low_liquidity:1": 1,
-      "shadow_low_liquidity:2329": 1
+      "shadow_low_volume_h1:1900": 1,
+      "shadow_low_liquidity:5869": 1,
+      "shadow_low_volume_h1:45": 1,
+      "shadow_low_liquidity:3005": 1,
+      "shadow_low_liquidity:4626": 1
     }
   }
 }
