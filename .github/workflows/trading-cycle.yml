@@ -7,6 +7,7 @@ on:
       - "tests/**"
       - "learn_agent.py"
       - "strategy_backtest.py"
+      - "shadow_learning.py"
       - ".github/workflows/trading-cycle.yml"
   push:
     branches: [main]
@@ -57,7 +58,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py
+        run: python -m py_compile meme_scanner_cycle.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py shadow_learning.py tests/test_shadow_learning.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -87,6 +88,24 @@ jobs:
               print("- **NOT VALIDATED:** insufficient clean out-of-sample data; this is not a strategy approval.")
           else:
               print("- Sample gates passed for at least one threshold. This is not a guarantee of profitability.")
+          PY
+
+      - name: Evaluate shadow outcomes on chronological holdout
+        run: |
+          set -euo pipefail
+          python shadow_learning.py | tee /tmp/shadow-learning-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/shadow-learning-report.json").read_text(encoding="utf-8"))
+          print("## Shadow learning research (not live strategy approval)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Labeled shadow outcomes: {report.get('rows', 0)}")
+          print(f"- Chronological holdout: {report.get('validation_rows', 0)}")
+          print(f"- Research-only candidate buckets: {[r['score_bucket'] for r in report.get('recommendations', [])]}")
+          print("- Shadow observations never change the live entry threshold automatically.")
+          for label, metrics in report.get("buckets", {}).items():
+              print(f"- Score {label}: n={metrics['n']}, win rate={metrics['win_rate']:.1%}, median={metrics['median_pnl']:.2f}%, robust mean={metrics['robust_mean_pnl']:.2f}%, outliers={metrics['outlier_count']}")
           PY
 
       - name: Validate paper-trade target integrity
