@@ -1,0 +1,1 @@
+window.BACKTEST_REPORT={"status":"insufficient_history","rows":5,"required_rows":30,"validation_rows":0,"eligible_thresholds":[],"thresholds":{}};\n
