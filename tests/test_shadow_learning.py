@@ -29,10 +29,12 @@ class ShadowLearningTests(unittest.TestCase):
     def test_out_of_sample_recommendation_requires_minimum_validation_samples(self):
         rows = []
         for i in range(70):
+            score = 75.0 if i < 51 else 50.0
+            pnl = 3.0 if i < 51 else -3.0
             rows.append({
                 "timestamp": f"{i:03d}",
-                "score": 75.0,
-                "pnl_pct": 3.0 if i % 3 else -1.0,
+                "score": score,
+                "pnl_pct": pnl,
                 "reason": "shadow_max_hold_timeout",
             })
         report = sl.analyze(rows, min_validation_samples=8)
