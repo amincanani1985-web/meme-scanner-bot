@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 234,
+  "scan_count": 235,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-18T10:22:48Z",
+  "last_run": "2026-10-18T10:23:22Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,7 +213,7 @@
       "entry_price": 0.00109214,
       "entry_time": 1792318929.7008905,
       "entry_liquidity": 95131.71,
-      "peak_price": 0.00109214,
+      "peak_price": 0.001109,
       "signal_score": 75.38251366120218,
       "trailing_armed": false,
       "components": {
@@ -222,28 +222,14 @@
       },
       "liquidity_drain_hits": 0
     },
-    "HZLEZULB1bV6rgxm6dWMdPnftPw42KG72bwvPeEipump": {
-      "symbol": "MC",
-      "entry_price": 0.000313026,
-      "entry_time": 1792318929.7876503,
-      "entry_liquidity": 49593.2,
-      "peak_price": 0.000313026,
-      "signal_score": 79.85807291666667,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 4.858072916666667
-      },
-      "liquidity_drain_hits": 0
-    },
     "DPER3wR4UoCRdG8tmekEL9FncyLpQKGie6hcm1pEpump": {
       "symbol": "Marianne",
       "entry_price": 3.070375e-05,
       "entry_time": 1792318929.9637327,
       "entry_liquidity": 13279.72,
-      "peak_price": 3.145e-05,
+      "peak_price": 3.405e-05,
       "signal_score": 77.55555555555556,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 2.555555555555556
@@ -319,13 +305,28 @@
         "buy_pressure": -5.25
       },
       "liquidity_drain_hits": 0
+    },
+    "HZLEZULB1bV6rgxm6dWMdPnftPw42KG72bwvPeEipump": {
+      "symbol": "MC",
+      "entry_price": 0.00021792049999999995,
+      "entry_time": 1792319002.7897775,
+      "entry_liquidity": 40809.58,
+      "peak_price": 0.00021792049999999995,
+      "signal_score": 81.25757575757575,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 6.257575757575758
+      }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-18T10:22:48Z",
+    "timestamp": "2026-10-18T10:23:22Z",
     "candidate_count": 40,
-    "filter_passed": 0,
-    "shadow_opened": 0,
-    "rejections": {}
+    "filter_passed": 1,
+    "shadow_opened": 1,
+    "rejections": {
+      "pair_data_unavailable": 4
+    }
   }
 }
