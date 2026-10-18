@@ -84,7 +84,7 @@ jobs:
           import json
           from pathlib import Path
           report = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
-          Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\\n", encoding="utf-8")
+          Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n", encoding="utf-8")
           PY
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
