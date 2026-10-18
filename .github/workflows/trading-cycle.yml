@@ -9,6 +9,7 @@ on:
       - "strategy_backtest.py"
       - "shadow_learning.py"
       - "whale_research.py"
+      - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "strategy_backtest.py"
       - "shadow_learning.py"
       - "whale_research.py"
+      - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   schedule:
     - cron: "6-59/5 * * * *"
@@ -78,6 +80,12 @@ jobs:
         run: |
           set -euo pipefail
           python strategy_backtest.py | tee /tmp/backtest-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
+          Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\\n", encoding="utf-8")
+          PY
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
@@ -173,7 +181,7 @@ jobs:
           )
           PY
 
-          git add state.json dashboard/live-data.js learn_agent.py strategy_backtest.py
+          git add state.json dashboard/live-data.js dashboard/backtest-data.js learn_agent.py strategy_backtest.py
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if [ -f strategy_observations.csv ]; then git add strategy_observations.csv; fi
           if [ -f shadow_observations.csv ]; then git add shadow_observations.csv; fi
