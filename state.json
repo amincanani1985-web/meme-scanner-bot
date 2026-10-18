@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 233,
+  "scan_count": 234,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-18T10:22:11Z",
+  "last_run": "2026-10-18T10:22:48Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -219,7 +219,8 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 0.3825136612021862
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HZLEZULB1bV6rgxm6dWMdPnftPw42KG72bwvPeEipump": {
       "symbol": "MC",
@@ -232,20 +233,22 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 4.858072916666667
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "DPER3wR4UoCRdG8tmekEL9FncyLpQKGie6hcm1pEpump": {
       "symbol": "Marianne",
       "entry_price": 3.070375e-05,
       "entry_time": 1792318929.9637327,
       "entry_liquidity": 13279.72,
-      "peak_price": 3.070375e-05,
+      "peak_price": 3.145e-05,
       "signal_score": 77.55555555555556,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 2.555555555555556
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "7iYM9cjpKKNyLvJfq4pYyjubk83dnqxtPDrRdf77pump": {
       "symbol": "iMolest ",
@@ -258,20 +261,22 @@
       "components": {
         "momentum": 24.099999999999998,
         "buy_pressure": -4.666666666666667
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "7rwLENa5Mkx1PRbLzSARQ3Gd9X3AzdeH4oR97RYnpump": {
       "symbol": "\ud83e\udd17",
       "entry_price": 0.000125657,
       "entry_time": 1792318930.785128,
       "entry_liquidity": 31142.22,
-      "peak_price": 0.000125657,
+      "peak_price": 0.0001257,
       "signal_score": 75.76616915422886,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 0.7661691542288553
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "BdXfLfcbDE8YvpbvvmmGTduqcDesaQVUm5xLxgUc2S5t": {
       "symbol": "texcat",
@@ -284,7 +289,8 @@
       "components": {
         "momentum": 5.78,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "FhTRVAkQeiaLRJHYc13DBNhgw9N8ZPacvonaKfXxpump": {
       "symbol": "MOMO",
@@ -297,7 +303,8 @@
       "components": {
         "momentum": 3.9899999999999998,
         "buy_pressure": -0.6999999999999998
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "48hnR1CWtafBumJsJod6Q8yduwDuYyumCJzuBVzvpump": {
       "symbol": "Dip",
@@ -310,24 +317,15 @@
       "components": {
         "momentum": 20.46,
         "buy_pressure": -5.25
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-18T10:22:11Z",
+    "timestamp": "2026-10-18T10:22:48Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
-    "rejections": {
-      "pair_data_unavailable": 8,
-      "shadow_low_liquidity:15": 1,
-      "shadow_low_liquidity:4065": 1,
-      "shadow_low_liquidity:4089": 1,
-      "shadow_low_liquidity:9576": 1,
-      "shadow_low_liquidity:5391": 1,
-      "shadow_low_liquidity:2402": 1,
-      "shadow_low_liquidity:4501": 1,
-      "shadow_low_volume_h1:0": 1
-    }
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   }
 }
