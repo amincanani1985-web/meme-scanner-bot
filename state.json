@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 238,
+  "scan_count": 239,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-18T19:02:10Z",
+  "last_run": "2026-10-18T19:04:51Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -219,33 +219,36 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "7iYM9cjpKKNyLvJfq4pYyjubk83dnqxtPDrRdf77pump": {
       "symbol": "iMolest ",
       "entry_price": 2.6197149999999997e-05,
       "entry_time": 1792350129.1064494,
       "entry_liquidity": 13218.22,
-      "peak_price": 2.6197149999999997e-05,
+      "peak_price": 2.961e-05,
       "signal_score": 8.98,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -38.22,
         "buy_pressure": -2.8000000000000003
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GoLdZWYNg9jg4z5SGCLJx69xag2vMjLaSQK5S7TUGoLd": {
       "symbol": "Gold",
       "entry_price": 9.271009999999999e-05,
       "entry_time": 1792350129.2114189,
       "entry_liquidity": 25944.2,
-      "peak_price": 9.271009999999999e-05,
+      "peak_price": 9.389e-05,
       "signal_score": 44.28769230769231,
       "trailing_armed": false,
       "components": {
         "momentum": -17.019999999999996,
         "buy_pressure": 11.307692307692308
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "DtcicPCKTKeAh7TDEzTym3hXeoHAoMiBdYJhMYxZpump": {
       "symbol": "CBUCKS",
@@ -258,7 +261,8 @@
       "components": {
         "momentum": -1.9699999999999998,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HKZDfZnkHZxd9agRDNPyDv4iT6LmAurJnpRtj9wpump": {
       "symbol": "MISTAKE",
@@ -271,7 +275,8 @@
       "components": {
         "momentum": 2.65,
         "buy_pressure": 1.3999999999999997
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
       "symbol": "SI276",
@@ -284,7 +289,8 @@
       "components": {
         "momentum": 2.03,
         "buy_pressure": 10.818181818181818
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "4bLHGwcRd4GCVsSP8uRMcrWMh1nBCVcNM2CC9AWPpump": {
       "symbol": "bwigitte",
@@ -297,7 +303,8 @@
       "components": {
         "momentum": -25.39,
         "buy_pressure": 2.333333333333333
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "3A3qjns31YZA6Ung91ZpoPD7J3p1bDFbTJ4ANFAPpump": {
       "symbol": "mucron",
@@ -310,28 +317,15 @@
       "components": {
         "momentum": 22.580000000000005,
         "buy_pressure": 0.6594202898550723
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-18T19:02:10Z",
+    "timestamp": "2026-10-18T19:04:51Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
-    "rejections": {
-      "pair_data_unavailable": 12,
-      "shadow_low_activity": 3,
-      "shadow_low_liquidity:10": 1,
-      "shadow_low_liquidity:2322": 1,
-      "shadow_pair_too_new:445s": 1,
-      "shadow_low_liquidity:1109": 1,
-      "shadow_low_liquidity:12": 1,
-      "shadow_low_liquidity:19": 1,
-      "shadow_low_liquidity:7432": 1,
-      "shadow_low_liquidity:2276": 1,
-      "shadow_low_liquidity:20": 1,
-      "shadow_low_liquidity:4974": 1,
-      "shadow_low_liquidity:9918": 1
-    }
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   }
 }
