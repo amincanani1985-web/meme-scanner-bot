@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 240,
+  "scan_count": 241,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-18T21:25:10Z",
+  "last_run": "2026-10-18T21:28:29Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,26 +213,28 @@
       "entry_price": 0.00045918599999999994,
       "entry_time": 1792358708.7839994,
       "entry_liquidity": 66400.32,
-      "peak_price": 0.00045918599999999994,
+      "peak_price": 0.0004813,
       "signal_score": 83.97435897435898,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 8.974358974358974
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GwyTG9Mt8N66Rjje9PkTRne8Po8aFRhuTyBYfHdApump": {
       "symbol": "PIERRE",
       "entry_price": 3.965604999999999e-05,
       "entry_time": 1792358709.2942462,
       "entry_liquidity": 15857.34,
-      "peak_price": 3.965604999999999e-05,
+      "peak_price": 4.161e-05,
       "signal_score": 76.77611940298507,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 1.776119402985075
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "4qH8A5GxvRMZgpRFjXASc6U9HAoEzKeUqxY2dPB7pump": {
       "symbol": "Groklet",
@@ -245,7 +247,8 @@
       "components": {
         "momentum": -27.89,
         "buy_pressure": 11.083333333333334
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "ByQ4cTwVyrZtzb7aFKW8QXPBMXdCWx6UdVMshLZipump": {
       "symbol": "Deadpool ",
@@ -258,7 +261,8 @@
       "components": {
         "momentum": -82.68,
         "buy_pressure": 0.7179487179487185
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "FMGe8RStdPc1YR59BBuV5Ui12DEe3Q2zVoihrJBbpump": {
       "symbol": "ZENO",
@@ -271,7 +275,8 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 10.111111111111112
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "FhTRVAkQeiaLRJHYc13DBNhgw9N8ZPacvonaKfXxpump": {
       "symbol": "MOMO",
@@ -284,46 +289,50 @@
       "components": {
         "momentum": 1.7399999999999998,
         "buy_pressure": 0.22580645161290303
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8j2G4CUi8vswXykzyp4PYNGKF9wuLBmYoT6Y4Fcnpump": {
       "symbol": "TRENCHBOT",
       "entry_price": 8.047934999999998e-05,
       "entry_time": 1792358710.584704,
       "entry_liquidity": 23986.56,
-      "peak_price": 8.047934999999998e-05,
+      "peak_price": 8.889e-05,
       "signal_score": 77.1,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 2.1000000000000005
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "48hnR1CWtafBumJsJod6Q8yduwDuYyumCJzuBVzvpump": {
       "symbol": "Dip",
-      "entry_price": 0.0003155635,
-      "entry_time": 1792358710.6811688,
-      "entry_liquidity": 49615.16,
-      "peak_price": 0.0003155635,
-      "signal_score": 79.05263157894737,
+      "entry_price": 0.0002816625,
+      "entry_time": 1792358909.7146363,
+      "entry_liquidity": 46758.39,
+      "peak_price": 0.0002816625,
+      "signal_score": 72.69512820512821,
       "trailing_armed": false,
       "components": {
-        "momentum": 25.0,
-        "buy_pressure": 4.052631578947368
+        "momentum": 24.490000000000002,
+        "buy_pressure": -1.7948717948717947
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-18T21:25:10Z",
+    "timestamp": "2026-10-18T21:28:29Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
+    "filter_passed": 1,
+    "shadow_opened": 1,
     "rejections": {
+      "shadow_liq_mcap_ratio:0.02": 1,
+      "shadow_pair_too_new:224s": 1,
       "pair_data_unavailable": 7,
-      "shadow_low_liquidity:2818": 1,
-      "shadow_low_liquidity:5102": 1,
-      "shadow_low_liquidity:2222": 1,
-      "shadow_low_liquidity:8210": 1
+      "shadow_low_liquidity:2805": 1,
+      "shadow_low_liquidity:4839": 1,
+      "shadow_low_liquidity:2203": 1,
+      "shadow_low_liquidity:8834": 1
     }
   }
 }
