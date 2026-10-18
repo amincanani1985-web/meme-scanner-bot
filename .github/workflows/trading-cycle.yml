@@ -8,6 +8,8 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "shadow_learning.py"
+      - "whale_research.py"
+      - "shadow_learning.py"
       - ".github/workflows/trading-cycle.yml"
   push:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - "tests/**"
       - "learn_agent.py"
       - "strategy_backtest.py"
+      - "shadow_learning.py"
+      - "whale_research.py"
       - ".github/workflows/trading-cycle.yml"
   schedule:
     - cron: "6-59/5 * * * *"
@@ -174,6 +178,8 @@ jobs:
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if [ -f strategy_observations.csv ]; then git add strategy_observations.csv; fi
           if [ -f shadow_observations.csv ]; then git add shadow_observations.csv; fi
+          if [ -f whale_watch_state.json ]; then git add whale_watch_state.json; fi
+          if [ -f whale_events.csv ]; then git add whale_events.csv; fi
 
           if git diff --staged --quiet; then
             echo "No state changes to commit"
