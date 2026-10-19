@@ -120,10 +120,10 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "manage_open_positions"), \
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 5000})), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 500})), \
              patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
-        self.assertEqual(state["shadow_scan_diagnostics"]["rejections"], {"shadow_low_liquidity:5000": 1})
+        self.assertEqual(state["shadow_scan_diagnostics"]["rejections"], {"shadow_low_liquidity:500": 1})
         self.assertEqual(state["shadow_scan_diagnostics"]["filter_passed"], 0)
         self.assertEqual(state["shadow_positions"], {})
         self.assertEqual(state["equity"], 293.36)
