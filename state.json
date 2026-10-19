@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 244,
+  "scan_count": 245,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-19T01:30:33Z",
+  "last_run": "2026-10-19T01:40:28Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -219,20 +219,22 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "6AZCEfnhaPDHghHhH4nArD3jXgdHnG54FXJPE3nApump": {
       "symbol": "sir",
       "entry_price": 9.820124999999998e-05,
       "entry_time": 1792373432.2936945,
       "entry_liquidity": 26632.9,
-      "peak_price": 9.820124999999998e-05,
+      "peak_price": 0.0001052,
       "signal_score": 57.685,
       "trailing_armed": false,
       "components": {
         "momentum": -1.9399999999999997,
         "buy_pressure": 9.625
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8PdoiB3jXkkJXoBtHnDsEGL4TuP8nSYoQskk97nQV7sX": {
       "symbol": "UHI",
@@ -245,20 +247,22 @@
       "components": {
         "momentum": 25.0,
         "buy_pressure": 2.3462962962962965
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "6mosQx7PJFRRLAkidpfDLBiAR9WNfofQA8AbGnuBpump": {
       "symbol": "TNUT",
       "entry_price": 0.000149408,
       "entry_time": 1792373432.6771197,
       "entry_liquidity": 32444.73,
-      "peak_price": 0.000149408,
+      "peak_price": 0.0001526,
       "signal_score": 75.05109489051095,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 0.05109489051094962
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8kh7mPfHqF4TBbszY3x76GZzt6a3GNLbZNdXjPs3pump": {
       "symbol": "Chatul",
@@ -271,20 +275,22 @@
       "components": {
         "momentum": -51.17,
         "buy_pressure": -1.0000000000000004
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "FGkCj28xhabWTYg9QyzACvs4NsN6LUyesP6EwiHepump": {
       "symbol": "UHI",
       "entry_price": 2.7506499999999998e-05,
       "entry_time": 1792373433.198418,
       "entry_liquidity": 12761.28,
-      "peak_price": 2.7506499999999998e-05,
+      "peak_price": 5.894e-05,
       "signal_score": 33.523783783783784,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -20.259999999999998,
         "buy_pressure": 3.783783783783784
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
       "symbol": "SI276",
@@ -297,39 +303,41 @@
       "components": {
         "momentum": 5.52,
         "buy_pressure": 13.125
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "9S7eZ5FPNxWbgqhE8Yw5QP2CrGVJR3A4dUeK3J6hpump": {
       "symbol": "SOLCAT",
-      "entry_price": 0.0001363145,
-      "entry_time": 1792373433.2908878,
-      "entry_liquidity": 30414.36,
-      "peak_price": 0.0001363145,
-      "signal_score": 87.2327868852459,
+      "entry_price": 0.000113883,
+      "entry_time": 1792374028.1451726,
+      "entry_liquidity": 27774.66,
+      "peak_price": 0.000113883,
+      "signal_score": 84.03999999999999,
       "trailing_armed": false,
       "components": {
-        "momentum": 25.0,
-        "buy_pressure": 12.232786885245902
+        "momentum": 19.04,
+        "buy_pressure": 15.0
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-19T01:30:33Z",
+    "timestamp": "2026-10-19T01:40:28Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
+    "filter_passed": 1,
+    "shadow_opened": 1,
     "rejections": {
-      "shadow_pair_too_new:778s": 1,
-      "shadow_pair_too_new:194s": 1,
-      "shadow_low_volume_h1:461": 1,
-      "shadow_pair_too_new:130s": 1,
-      "shadow_low_liquidity:9635": 1,
-      "pair_data_unavailable": 11,
+      "shadow_low_liquidity:3496": 1,
+      "pair_data_unavailable": 12,
+      "shadow_low_volume_h1:84": 1,
+      "shadow_pair_too_new:789s": 1,
+      "shadow_low_liquidity:5272": 1,
+      "shadow_pair_too_new:725s": 1,
       "shadow_liq_mcap_ratio:0.04": 1,
-      "shadow_low_liquidity:2714": 1,
+      "shadow_low_liquidity:2550": 1,
       "shadow_low_liquidity:7": 1,
-      "shadow_low_liquidity:2330": 1,
-      "shadow_low_volume_h1:101": 1
+      "shadow_low_liquidity:2328": 1,
+      "shadow_low_volume_h1:102": 1,
+      "shadow_pair_too_new:460s": 1
     }
   }
 }
