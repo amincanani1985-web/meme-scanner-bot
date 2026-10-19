@@ -489,15 +489,12 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(fixed["learning"]["trades"], 0)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_learning_observation_persists_features_and_migrates_legacy_csv(self):
         import json
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "shadow_observations.csv"
             path.write_text(
-                "timestamp,score,pnl_pct,reason\\n2026-01-01T00:00:00,80,-3,shadow_hard_stop_loss\\n",
+                "timestamp,score,pnl_pct,reason\n2026-01-01T00:00:00,80,-3,shadow_hard_stop_loss\n",
                 encoding="utf-8",
             )
             with patch.object(scanner, "Path", side_effect=lambda name: Path(tmp) / name):
@@ -510,3 +507,6 @@ if __name__ == "__main__":
             self.assertEqual(len(rows), 2)
             self.assertEqual(json.loads(rows[0]["features_json"]), {})
             self.assertEqual(json.loads(rows[1]["features_json"])["momentum_m5_pct"], 2.5)
+
+if __name__ == "__main__":
+    unittest.main()
