@@ -121,7 +121,7 @@ def run(rows, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
             "required_validation_rows": MIN_VALIDATION_ROWS,
             "eligible_thresholds": [],
             "thresholds": {},
-            "assumed_round_trip_cost_pct": ROUND_TRIP_COST_PCT,
+            "assumed_round_trip_cost_pct": round_trip_cost_pct,
             "cost_sensitivity": [],
         }
 
@@ -146,7 +146,7 @@ def run(rows, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
         "train_rows": len(train),
         "validation_rows": len(validation),
         "required_validation_samples_per_threshold": MIN_THRESHOLD_VALIDATION_SAMPLES,
-        "assumed_round_trip_cost_pct": ROUND_TRIP_COST_PCT,
+        "assumed_round_trip_cost_pct": round_trip_cost_pct,
         "eligible_thresholds": eligible,
         "thresholds": result,
         "cost_sensitivity": [
