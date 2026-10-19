@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 248,
+  "scan_count": 249,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-19T07:30:54Z",
+  "last_run": "2026-10-19T07:31:34Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -219,20 +219,22 @@
       "components": {
         "momentum": -51.720000000000006,
         "buy_pressure": 4.144736842105263
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "4EwkXtSRpVxMAHM8ecRDdfK3gjR2F2JgTmqqqwNQpump": {
       "symbol": "LSCW",
       "entry_price": 0.00024136699999999998,
       "entry_time": 1792395051.9756653,
       "entry_liquidity": 41930.44,
-      "peak_price": 0.00024136699999999998,
+      "peak_price": 0.000244,
       "signal_score": 76.08450704225352,
       "trailing_armed": false,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 1.0845070422535212
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
       "symbol": "SI276",
@@ -245,7 +247,8 @@
       "components": {
         "momentum": 1.1,
         "buy_pressure": 11.242424242424242
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HKZDfZnkHZxd9agRDNPyDv4iT6LmAurJnpRtj9wpump": {
       "symbol": "MISTAKE",
@@ -258,7 +261,8 @@
       "components": {
         "momentum": 9.44,
         "buy_pressure": 7.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "3WdryhSr7fsFqG2u26eMiLRr8zye3BbFGyqUhBYFpump": {
       "symbol": "KIBI",
@@ -271,20 +275,22 @@
       "components": {
         "momentum": 6.419999999999995,
         "buy_pressure": 3.8500000000000005
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GaPbQwLDPjSXGR9JxxG1aJLNthuxG58dM2XukBi8pump": {
       "symbol": "Doomsday",
       "entry_price": 0.0005881925,
       "entry_time": 1792395053.7459145,
       "entry_liquidity": 67304.54,
-      "peak_price": 0.0005881925,
+      "peak_price": 0.0005979,
       "signal_score": 44.80352941176471,
       "trailing_armed": false,
       "components": {
         "momentum": -1.8199999999999998,
         "buy_pressure": -3.3764705882352937
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "6AZCEfnhaPDHghHhH4nArD3jXgdHnG54FXJPE3nApump": {
       "symbol": "sir",
@@ -297,42 +303,29 @@
       "components": {
         "momentum": -1.02,
         "buy_pressure": 15.0
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8NfX91yvHXyHKn8cnMjg9Q4bCeRLKFDoVtEomXstpump": {
       "symbol": "XBT",
       "entry_price": 0.00035017499999999993,
       "entry_time": 1792395054.0043802,
       "entry_liquidity": 53980.25,
-      "peak_price": 0.00035017499999999993,
+      "peak_price": 0.0003673,
       "signal_score": 23.3625,
       "trailing_armed": false,
       "components": {
         "momentum": -26.95,
         "buy_pressure": 0.31250000000000044
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-19T07:30:54Z",
+    "timestamp": "2026-10-19T07:31:34Z",
     "candidate_count": 40,
-    "filter_passed": 8,
-    "shadow_opened": 8,
-    "rejections": {
-      "shadow_low_liquidity:3446": 1,
-      "shadow_low_liquidity:4850": 1,
-      "shadow_liq_mcap_ratio:0.00": 1,
-      "shadow_low_liquidity:265": 1,
-      "pair_data_unavailable": 9,
-      "shadow_low_activity": 2,
-      "shadow_low_liquidity:2698": 1,
-      "shadow_low_liquidity:2515": 1,
-      "shadow_low_liquidity:3639": 1,
-      "shadow_low_liquidity:3254": 1,
-      "shadow_low_liquidity:6": 1,
-      "shadow_low_liquidity:2557": 1,
-      "shadow_low_volume_h1:671": 1,
-      "shadow_low_liquidity:3739": 1
-    }
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   }
 }
