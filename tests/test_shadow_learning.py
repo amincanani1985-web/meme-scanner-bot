@@ -74,9 +74,6 @@ class ShadowLearningTests(unittest.TestCase):
         self.assertEqual(report["recommendations"], [])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_wilson_lower_bound_is_conservative_for_small_samples(self):
         self.assertLess(sl.wilson_lower_bound(4, 8), 0.5)
         self.assertGreater(sl.wilson_lower_bound(8, 8), 0.5)
@@ -95,7 +92,7 @@ if __name__ == "__main__":
 
     def test_shadow_recommendation_requires_positive_confidence_lower_bound(self):
         rows = []
-        # 8 validation wins at a barely profitable net return should not be enough
+        # A positive observed win rate should not pass when the confidence bound is weak
         # if the lower confidence bound on the win rate is weak.
         for i in range(70):
             score = 95.0
@@ -106,3 +103,6 @@ if __name__ == "__main__":
         bucket = report["buckets"]["90-100"]
         self.assertIn("net_win_rate_wilson_lower", bucket)
         self.assertFalse(bucket["eligible"])
+
+if __name__ == "__main__":
+    unittest.main()
