@@ -11,7 +11,7 @@ class AdaptiveTests(unittest.TestCase):
         rows=[]
         for i in range(30):
             score=85 if i>=15 else 80
-            pnl=2.0 if score==85 else -1.0
+            pnl=5.0 if score==85 else -1.0
             rows.append({"timestamp":f"2026-01-{i+1:02d}","score":score,"pnl_pct":pnl,"reason":"x"})
         r=la.walk_forward(rows,85)
         self.assertTrue(r["eligible"])
@@ -56,11 +56,11 @@ class AdaptiveTests(unittest.TestCase):
         rows=[]
         for i in range(51):
             score = (80.0, 83.0, 87.0)[i % 3]
-            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 5.0)
             rows.append({"timestamp":f"{i:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
         validation_scores = [80.0] * 7 + [83.0] * 7 + [87.0] * 9
         for offset, score in enumerate(validation_scores, start=51):
-            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 2.0)
+            pnl = -1.0 if score == 80.0 else (-0.5 if score == 83.0 else 5.0)
             rows.append({"timestamp":f"{offset:03d}","score":score,"pnl_pct":pnl,"reason":"x"})
         state={"trade_count":len(rows)}
         out=la.adaptive_update_state(state,rows)
@@ -98,6 +98,26 @@ class AdaptiveTests(unittest.TestCase):
         with patch.object(scanner,"append_trade"), patch.object(scanner,"append_learning_observation"):
             scanner.close_position(s,"mint",1.0,"max_hold")
         self.assertLess(s["equity"],1000.0)
+
+
+    def test_walk_forward_rejects_gross_profit_erased_by_costs(self):
+        rows = [
+            {"timestamp": f"{i:03d}", "score": 90.0, "pnl_pct": 1.0, "reason": "x"}
+            for i in range(30)
+        ]
+        result = la.walk_forward(rows, 90.0)
+        self.assertFalse(result["eligible"])
+        self.assertLess(result["validation"]["net_avg_pnl"], 0.0)
+
+    def test_rollback_uses_net_results_after_assumed_costs(self):
+        rows = [
+            {"timestamp": f"{i:03d}", "score": 90.0, "pnl_pct": 1.0, "reason": "x"}
+            for i in range(10)
+        ]
+        rollback, reason = la.should_rollback(rows, 90.0)
+        self.assertTrue(rollback)
+        self.assertIn("net_avg_pnl", reason)
+
 
 if __name__=="__main__":
     unittest.main()
