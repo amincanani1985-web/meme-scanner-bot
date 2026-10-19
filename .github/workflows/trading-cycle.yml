@@ -177,7 +177,7 @@ jobs:
           shadow = json.loads(Path("/tmp/shadow-learning-report-fresh.json").read_text(encoding="utf-8"))
           report = {"strategy": strategy, "shadow": shadow}
           Path("dashboard/backtest-data.js").write_text(
-              "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\\n",
+              "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
               encoding="utf-8",
           )
           print(f"Refreshed dashboard with {strategy.get('rows', 0)} strategy rows and {shadow.get('rows', 0)} shadow rows.")
