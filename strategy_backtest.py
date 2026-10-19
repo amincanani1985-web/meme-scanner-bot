@@ -49,7 +49,9 @@ def wilson_lower_bound(wins, n, z=1.96):
     return max(0.0, (center - margin) / denominator)
 
 
-def metrics(rows, threshold, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
+def metrics(rows, threshold, round_trip_cost_pct=None):
+    if round_trip_cost_pct is None:
+        round_trip_cost_pct = ROUND_TRIP_COST_PCT
     selected = [row for row in rows if row["score"] >= threshold]
     values = [float(row["pnl_pct"]) for row in selected]
     net_values = [value - round_trip_cost_pct for value in values]
@@ -94,7 +96,7 @@ def metrics(rows, threshold, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     )
     return result
 
-def run(rows):
+def run(rows, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     rows = sorted(rows, key=lambda item: item["timestamp"])
     if len(rows) < MIN_HISTORY_ROWS:
         return {
@@ -104,7 +106,7 @@ def run(rows):
             "validation_rows": 0,
             "eligible_thresholds": [],
             "thresholds": {},
-            "assumed_round_trip_cost_pct": ROUND_TRIP_COST_PCT,
+            "assumed_round_trip_cost_pct": round_trip_cost_pct,
             "cost_sensitivity": [],
         }
 
@@ -126,8 +128,8 @@ def run(rows):
     result = {}
     eligible = []
     for threshold in THRESHOLDS:
-        train_metrics = metrics(train, threshold)
-        validation_metrics = metrics(validation, threshold)
+        train_metrics = metrics(train, threshold, round_trip_cost_pct)
+        validation_metrics = metrics(validation, threshold, round_trip_cost_pct)
         result[str(threshold)] = {
             "train": train_metrics,
             "validation": validation_metrics,
@@ -159,7 +161,5 @@ if __name__ == "__main__":
     parser.add_argument("--observations", default="strategy_observations.csv")
     parser.add_argument("--round-trip-cost-pct", type=float, default=ROUND_TRIP_COST_PCT)
     args = parser.parse_args()
-    global ROUND_TRIP_COST_PCT
-    ROUND_TRIP_COST_PCT = args.round_trip_cost_pct
-    report = run(load(args.observations))
+    report = run(load(args.observations), round_trip_cost_pct=args.round_trip_cost_pct)
     print(json.dumps(report, indent=2))
