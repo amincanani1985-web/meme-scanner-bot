@@ -53,12 +53,21 @@
 <section class="card section" id="backtestPanel">
  <div class="cardhead"><b>🧪 بک‌تست و اعتبارسنجی خارج از نمونه</b><span class="live-pill" id="btStatus">در انتظار گزارش</span></div>
  <div class="live-kpis">
-  <div class="live-kpi"><span>داده‌های امتیازدار</span><b id="btRows">—</b></div>
+  <div class="live-kpi"><span>معاملات با امتیاز واقعی</span><b id="btRows">—</b></div>
   <div class="live-kpi"><span>نمونه‌های آزمون زمانی</span><b id="btValidation">—</b></div>
   <div class="live-kpi"><span>حدنصاب‌های واجد شرایط</span><b id="btEligible">—</b></div>
   <div class="live-kpi"><span>آخرین گزارش</span><b id="btUpdated">—</b></div>
  </div>
  <div class="tablewrap"><table class="live-table"><thead><tr><th>حدنصاب امتیاز</th><th>تعداد آزمون</th><th>نرخ برد</th><th>میانگین بازده</th><th>ضریب سود</th><th>وضعیت</th></tr></thead><tbody id="btRowsTable"><tr><td colspan="6" class="live-empty">گزارش بک‌تست در اولین چرخه بعدی منتشر می‌شود.</td></tr></tbody></table></div>
+ <div class="cardhead" style="margin-top:18px"><b>🧠 یادگیری از معاملات سایه پس از هزینه</b><span class="live-pill" id="shadowStatus">در انتظار گزارش</span></div>
+ <div class="live-kpis">
+  <div class="live-kpi"><span>مشاهدات سایه</span><b id="shRows">—</b></div>
+  <div class="live-kpi"><span>آزمون زمانی</span><b id="shValidation">—</b></div>
+  <div class="live-kpi"><span>هزینهٔ فرضی رفت‌وبرگشت</span><b id="shCost">—</b></div>
+  <div class="live-kpi"><span>بازه‌های تأییدشده</span><b id="shEligible">—</b></div>
+ </div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>بازه امتیاز</th><th>نمونه آزمون</th><th>نرخ برد خالص</th><th>میانگین خالص مقاوم</th><th>ضریب سود خالص</th><th>وضعیت</th></tr></thead><tbody id="shRowsTable"><tr><td colspan="6" class="live-empty">گزارش نتایج سایه در انتظار اجراست.</td></tr></tbody></table></div>
+ <p class="small" id="shNote">هزینهٔ پیش‌فرض ۲٪ رفت‌وبرگشت فقط فرض آزمایشی است، نه اندازه‌گیری دقیق کارمزد و لغزش هر توکن.</p>
  <p class="small" id="btNote">بک‌تست زمانی بر داده‌های ثبت‌شده اجرا می‌شود. واجد شرایط بودن آماری به‌تنهایی تضمین سودآوری نیست؛ این بخش معاملات زنده را فعال نمی‌کند.</p>
 </section>
 
