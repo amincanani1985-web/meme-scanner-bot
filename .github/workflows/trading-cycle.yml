@@ -163,6 +163,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python meme_scanner_cycle.py
 
+      # Recompute after the scan so the dashboard includes outcomes closed in this same cycle.
       - name: Refresh learning reports after the latest outcomes
         if: github.event_name != 'pull_request'
         shell: bash
