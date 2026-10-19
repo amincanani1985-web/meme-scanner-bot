@@ -62,7 +62,7 @@ CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
 SHADOW_MIN_SCORE = 0.0                     # Broad score distribution for threshold validation
-MAX_SHADOW_POSITIONS = 8                    # Cap independent shadow observations
+MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for faster learning
 
 # ============================================================================
 # STATE MANAGEMENT
@@ -255,19 +255,19 @@ def passes_shadow_market_filter(pair_data):
     if created_ms <= 0:
         return False, "missing_pair_age"
     age_seconds = (time.time() * 1000 - created_ms) / 1000.0
-    if age_seconds < 900:
+    if age_seconds < 300:
         return False, f"shadow_pair_too_new:{age_seconds:.0f}s"
-    if liquidity < 10000:
+    if liquidity < 1000:
         return False, f"shadow_low_liquidity:{liquidity:.0f}"
-    if volume < 2000:
+    if volume < 500:
         return False, f"shadow_low_volume_h1:{volume:.0f}"
     if market_cap <= 0:
         return False, "shadow_missing_market_cap"
-    if liquidity / market_cap < 0.05:
+    if liquidity / market_cap < 0.02:
         return False, f"shadow_liq_mcap_ratio:{liquidity / market_cap:.2f}"
     if price <= 0:
         return False, "shadow_invalid_price"
-    if activity < 5:
+    if activity < 1:
         return False, "shadow_low_activity"
     return True, "ok"
 
