@@ -76,3 +76,33 @@ class ShadowLearningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_wilson_lower_bound_is_conservative_for_small_samples(self):
+        self.assertLess(sl.wilson_lower_bound(4, 8), 0.5)
+        self.assertGreater(sl.wilson_lower_bound(8, 8), 0.5)
+
+    def test_feature_associations_ignore_missing_and_nonfinite_values(self):
+        rows = [
+            {"pnl_pct": 5.0, "features": {"momentum_m5_pct": 1.0}},
+            {"pnl_pct": 10.0, "features": {"momentum_m5_pct": 2.0}},
+            {"pnl_pct": -5.0, "features": {"momentum_m5_pct": 3.0}},
+            {"pnl_pct": 1.0, "features": {"momentum_m5_pct": float("nan")}},
+            {"pnl_pct": 7.0, "features": {}},
+        ]
+        result = sl.feature_associations(rows)
+        self.assertEqual(result["momentum_m5_pct"]["n"], 3)
+        self.assertLess(result["momentum_m5_pct"]["correlation"], 0.0)
+
+    def test_shadow_recommendation_requires_positive_confidence_lower_bound(self):
+        rows = []
+        # 8 validation wins at a barely profitable net return should not be enough
+        # if the lower confidence bound on the win rate is weak.
+        for i in range(70):
+            score = 95.0
+            pnl = 5.0 if i < 62 else -0.1
+            rows.append({"timestamp": f"{i:03d}", "score": score,
+                         "pnl_pct": pnl, "reason": "test", "features": {}})
+        report = sl.analyze(rows, round_trip_cost_pct=2.0)
+        bucket = report["buckets"]["90-100"]
+        self.assertIn("net_win_rate_wilson_lower", bucket)
+        self.assertFalse(bucket["eligible"])
