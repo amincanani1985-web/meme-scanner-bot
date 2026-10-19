@@ -38,9 +38,61 @@ def load_observations(path="shadow_observations.csv"):
                 continue
             if not 0.0 <= score <= 100.0:
                 continue
+            try:
+                features = json.loads(row.get("features_json") or "{}")
+                if not isinstance(features, dict):
+                    features = {}
+            except (TypeError, ValueError):
+                features = {}
             rows.append({"timestamp": timestamp, "score": score,
-                         "pnl_pct": pnl, "reason": row.get("reason", "")})
+                         "pnl_pct": pnl, "reason": row.get("reason", ""),
+                         "features": features})
     return sorted(rows, key=lambda row: row["timestamp"])
+
+
+def wilson_lower_bound(wins, n, z=1.96):
+    """Two-sided 95% Wilson lower confidence bound for a binomial win rate."""
+    if n <= 0:
+        return 0.0
+    p = min(1.0, max(0.0, float(wins) / n))
+    z2 = z * z
+    denominator = 1.0 + z2 / n
+    center = p + z2 / (2.0 * n)
+    margin = z * math.sqrt((p * (1.0 - p) / n) + z2 / (4.0 * n * n))
+    return max(0.0, (center - margin) / denominator)
+
+
+def feature_associations(rows):
+    """Describe Pearson association between recorded entry features and PnL; not causal."""
+    keys = sorted({key for row in rows for key in (row.get("features") or {})})
+    result = {}
+    for key in keys:
+        pairs = []
+        for row in rows:
+            try:
+                x = float((row.get("features") or {}).get(key))
+                y = float(row.get("pnl_pct"))
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if math.isfinite(x) and math.isfinite(y):
+                pairs.append((x, y))
+        n = len(pairs)
+        if n < 2:
+            continue
+        xs = [pair[0] for pair in pairs]
+        ys = [pair[1] for pair in pairs]
+        mean_x = sum(xs) / n
+        mean_y = sum(ys) / n
+        numerator = sum((x - mean_x) * (y - mean_y) for x, y in pairs)
+        denominator = math.sqrt(
+            sum((x - mean_x) ** 2 for x in xs) *
+            sum((y - mean_y) ** 2 for y in ys)
+        )
+        result[key] = {
+            "n": n,
+            "correlation": numerator / denominator if denominator else 0.0,
+        }
+    return result
 
 
 def metrics(rows, round_trip_cost_pct=2.0):
@@ -54,7 +106,7 @@ def metrics(rows, round_trip_cost_pct=2.0):
             "profit_factor": 0.0, "outlier_count": 0,
             "net_wins": 0, "net_win_rate": 0.0, "net_mean_pnl": 0.0,
             "net_median_pnl": 0.0, "net_robust_mean_pnl": 0.0,
-            "net_profit_factor": 0.0,
+            "net_profit_factor": 0.0, "net_win_rate_wilson_lower": 0.0,
         }
     net_values = [value - round_trip_cost_pct for value in values]
     outlier_mask = [abs(value) > OUTLIER_ABS_PNL_PCT for value in values]
@@ -84,6 +136,7 @@ def metrics(rows, round_trip_cost_pct=2.0):
         "net_median_pnl": median(net_values),
         "net_robust_mean_pnl": sum(net_ordinary) / len(net_ordinary) if net_ordinary else 0.0,
         "net_profit_factor": net_factor,
+        "net_win_rate_wilson_lower": wilson_lower_bound(net_wins, len(net_values)),
     }
 
 
@@ -95,7 +148,8 @@ def analyze(observations, min_history_rows=MIN_HISTORY_ROWS,
     if len(rows) < min_history_rows:
         return {"status": "insufficient_history", "rows": len(rows),
                 "required_rows": min_history_rows, "train_rows": 0,
-                "validation_rows": 0, "buckets": {}, "recommendations": []}
+                "validation_rows": 0, "buckets": {}, "recommendations": [],
+                "feature_associations": {}, "cost_sensitivity": []}
 
     split = max(1, int(len(rows) * 0.7))
     train, validation = rows[:split], rows[split:]
@@ -112,13 +166,14 @@ def analyze(observations, min_history_rows=MIN_HISTORY_ROWS,
             and result["net_median_pnl"] > 0
             and result["net_robust_mean_pnl"] > 0
             and result["net_win_rate"] >= 0.5
+            and result["net_win_rate_wilson_lower"] >= 0.5
             and result["net_profit_factor"] > 1.2
         )
         buckets[label] = result
         if result["eligible"]:
             recommendations.append({
                 "score_bucket": label,
-                "reason": "positive_out_of_sample_median_and_robust_mean",
+                "reason": "positive_out_of_sample_metrics_and_95pct_wilson_lower_bound",
                 "validation": result,
             })
 
@@ -132,7 +187,14 @@ def analyze(observations, min_history_rows=MIN_HISTORY_ROWS,
         "outlier_abs_pnl_pct": OUTLIER_ABS_PNL_PCT,
         "buckets": buckets,
         "recommendations": recommendations,
+        "feature_associations": feature_associations(validation),
+        "cost_sensitivity": [
+            {"assumed_round_trip_cost_pct": cost,
+             **metrics(validation, round_trip_cost_pct=cost)}
+            for cost in (1.0, 2.0, 3.0, 5.0)
+        ],
         "policy": "research_only_no_live_threshold_changes",
+        "confidence_policy": "95pct_wilson_lower_bound_of_net_win_rate_must_be_at_least_0.5",
     }
 
 
