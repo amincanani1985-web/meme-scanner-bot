@@ -80,10 +80,13 @@ jobs:
         run: |
           set -euo pipefail
           python strategy_backtest.py | tee /tmp/backtest-report.json
+          python shadow_learning.py | tee /tmp/shadow-learning-report.json
           python - <<'PY'
           import json
           from pathlib import Path
-          report = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
+          strategy = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
+          shadow = json.loads(Path("/tmp/shadow-learning-report.json").read_text(encoding="utf-8"))
+          report = {"strategy": strategy, "shadow": shadow}
           Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n", encoding="utf-8")
           PY
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
