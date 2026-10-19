@@ -163,6 +163,26 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python meme_scanner_cycle.py
 
+      - name: Refresh learning reports after the latest outcomes
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python strategy_backtest.py > /tmp/backtest-report-fresh.json
+          python shadow_learning.py > /tmp/shadow-learning-report-fresh.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          strategy = json.loads(Path("/tmp/backtest-report-fresh.json").read_text(encoding="utf-8"))
+          shadow = json.loads(Path("/tmp/shadow-learning-report-fresh.json").read_text(encoding="utf-8"))
+          report = {"strategy": strategy, "shadow": shadow}
+          Path("dashboard/backtest-data.js").write_text(
+              "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\\n",
+              encoding="utf-8",
+          )
+          print(f"Refreshed dashboard with {strategy.get('rows', 0)} strategy rows and {shadow.get('rows', 0)} shadow rows.")
+          PY
+
       - name: Commit updated state
         if: github.event_name != 'pull_request'
         shell: bash
