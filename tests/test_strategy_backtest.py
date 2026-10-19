@@ -33,7 +33,7 @@ class StrategyBacktestTests(unittest.TestCase):
         self.assertEqual(report["eligible_thresholds"], [])
 
     def test_valid_threshold_requires_minimum_out_of_sample_count(self):
-        rows = [{"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 1.0} for i in range(30)]
+        rows = [{"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 5.0} for i in range(30)]
         report = backtest.run(rows)
         self.assertEqual(report["status"], "ok")
         self.assertIn(85.0, report["eligible_thresholds"])
