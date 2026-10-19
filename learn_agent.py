@@ -99,7 +99,10 @@ def walk_forward(observations,threshold,train_ratio=0.7):
 def choose_candidate(observations,current_threshold=BASELINE_THRESHOLD):
     results=[walk_forward(observations,t) for t in CANDIDATE_THRESHOLDS]
     eligible=[r for r in results if r["eligible"]]
-    if not eligible: return {"action":"hold","threshold":current_threshold,"reason":"no_candidate_has_enough_validation_samples","candidates":results}
+    if not eligible:
+        enough_samples = any(r.get("validation", {}).get("n", 0) >= MIN_CANDIDATE_SAMPLES for r in results)
+        reason = "no_candidate_passed_net_validation" if enough_samples else "no_candidate_has_enough_validation_samples"
+        return {"action":"hold","threshold":current_threshold,"reason":reason,"candidates":results}
     baseline=next((r for r in eligible if r["threshold"]==current_threshold),None)
     base_avg=baseline["validation"]["net_avg_pnl"] if baseline else -999.0
     best=max(eligible,key=lambda r:(r["validation"]["net_avg_pnl"],r["validation"]["net_win_rate"],r["validation"]["net_profit_factor"]))
@@ -167,9 +170,13 @@ def adaptive_update_state(state,observations):
     strategy["candidate_threshold"] = rec.get("threshold")
     strategy["validation"] = rec
     strategy["last_validation_trade"] = state.get("trade_count", 0)
-    if rec.get("reason") == "no_candidate_has_enough_validation_samples":
+    if rec.get("reason") in ("no_candidate_has_enough_validation_samples", "no_candidate_passed_net_validation"):
         strategy["status"] = "waiting_for_validation"
-        strategy["validation_status"] = "insufficient_threshold_samples"
+        strategy["validation_status"] = (
+            "insufficient_threshold_samples"
+            if rec.get("reason") == "no_candidate_has_enough_validation_samples"
+            else "no_validated_candidate"
+        )
         strategy["candidate_threshold"] = None
         return state
     if rec.get("action") == "activate" and rec["threshold"] != current:
