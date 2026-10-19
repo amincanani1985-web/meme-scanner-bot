@@ -16,6 +16,16 @@ class ShadowLearningTests(unittest.TestCase):
         self.assertAlmostEqual(result["robust_mean_pnl"], 0.0)
         self.assertGreater(result["mean_pnl"], 600.0)
 
+    def test_round_trip_cost_can_turn_gross_profit_into_net_loss(self):
+        rows = [
+            {"score": 85.0, "pnl_pct": 3.0, "timestamp": "1"},
+            {"score": 85.0, "pnl_pct": -1.0, "timestamp": "2"},
+        ]
+        result = sl.metrics(rows, round_trip_cost_pct=2.0)
+        self.assertAlmostEqual(result["mean_pnl"], 1.0)
+        self.assertAlmostEqual(result["net_mean_pnl"], -1.0)
+        self.assertAlmostEqual(result["net_median_pnl"], -1.0)
+
     def test_analyzer_refuses_to_recommend_with_insufficient_history(self):
         rows = [
             {"score": 90.0, "pnl_pct": 10.0, "timestamp": f"{i:03d}"}
@@ -41,6 +51,17 @@ class ShadowLearningTests(unittest.TestCase):
         self.assertEqual(report["status"], "no_validated_bucket")
         self.assertEqual(report["recommendations"], [])
         self.assertGreaterEqual(report["validation_rows"], 8)
+
+    def test_profitable_gross_returns_do_not_pass_if_net_of_costs_is_negative(self):
+        rows = [
+            {"timestamp": f"{i:03d}", "score": 95.0, "pnl_pct": 1.0}
+            for i in range(70)
+        ]
+        report = sl.analyze(rows, min_validation_samples=8, round_trip_cost_pct=2.0)
+        self.assertEqual(report["status"], "no_validated_bucket")
+        self.assertEqual(report["recommendations"], [])
+        self.assertEqual(report["assumed_round_trip_cost_pct"], 2.0)
+        self.assertLess(report["buckets"]["90-100"]["net_robust_mean_pnl"], 0.0)
 
     def test_recommendation_is_based_on_chronological_holdout_not_training_rows(self):
         rows = []
