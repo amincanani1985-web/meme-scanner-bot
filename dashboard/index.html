@@ -125,17 +125,28 @@ async function loadگردش‌کارActivity(){
 load();setInterval(load,60000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
 </script><script src="./backtest-data.js"></script><script>
 (function(){
- const r=window.BACKTEST_REPORT;
+ const report=window.BACKTEST_REPORT||{};
+ const r=report.strategy||report;
+ const sh=report.shadow||null;
  const $=id=>document.getElementById(id);
  const pct=v=>(Number(v||0)*100).toFixed(1)+'%';
- if(!r){$('btStatus').textContent='گزارش هنوز منتشر نشده';$('btNote').textContent='پس از اجرای چرخه بک‌تست، داده‌ها به‌صورت خودکار به داشبورد منتشر می‌شوند.';return;}
- $('btStatus').textContent=({ok:'نمونه کافی برای بررسی',insufficient_history:'تاریخچه ناکافی',insufficient_validation_history:'نمونه آزمون ناکافی',insufficient_threshold_samples:'حدنصاب‌ها نمونه کافی ندارند'})[r.status]||r.status;
- $('btRows').textContent=(r.rows||0)+' ردیف';
+ const statusLabel=s=>({'ok':'نمونه کافی برای بررسی','insufficient_history':'تاریخچه ناکافی','insufficient_validation_history':'نمونه آزمون ناکافی','insufficient_threshold_samples':'نمونه کافی برای هیچ حدنصابی نیست','no_validated_bucket':'هیچ بازه‌ای سودآوری خالص را تأیید نکرد'})[s]||s||'نامشخص';
+ $('btStatus').textContent=statusLabel(r.status);
+ $('btRows').textContent=(r.rows||0)+' مشاهده';
  $('btValidation').textContent=(r.validation_rows||0)+' ردیف';
  $('btEligible').textContent=(r.eligible_thresholds||[]).join(', ')||'هیچ‌کدام';
- $('btUpdated').textContent=new Date().toLocaleString('fa-IR',{timeZone:'UTC',dateStyle:'short',timeStyle:'short'})+' UTC';
+ $('btUpdated').textContent=new Date().toLocaleString('fa-IR',{dateStyle:'short',timeStyle:'short'});
  const entries=Object.entries(r.thresholds||{});
- $('btRowsTable').innerHTML=entries.map(([t,v])=>{const m=v.validation||{};return '<tr><td>'+t+'</td><td>'+(m.n||0)+'</td><td>'+pct(m.win_rate)+'</td><td class="'+(m.avg_pnl>0?'up':'down')+'">'+Number(m.avg_pnl||0).toFixed(2)+'%</td><td>'+Number(m.profit_factor||0).toFixed(2)+'</td><td>'+(v.eligible?'واجد شرایط نمونه':'تأییدنشده')+'</td></tr>';}).join('')||'<tr><td colspan="6" class="live-empty">هنوز دادهٔ کافی برای مقایسه حدنصاب‌ها وجود ندارد.</td></tr>';
- $('btNote').textContent='وضعیت: '+r.status+'؛ آموزش '+(r.train_rows||0)+' ردیف و آزمون زمانی '+(r.validation_rows||0)+' ردیف. این گزارش از داده‌های ثبت‌شده محاسبه شده؛ هزینهٔ لغزش/کارمزد و کیفیت دادهٔ تاریخی می‌تواند نتیجه را تغییر دهد. هیچ حدنصابی خودکار تأیید یا برای معامله واقعی فعال نمی‌شود.';
-})();
+ $('btRowsTable').innerHTML=entries.map(([t,v])=>{const m=v.validation||{};return '<tr><td>'+t+'</td><td>'+(m.n||0)+'</td><td>'+pct(m.win_rate)+'</td><td class="'+(m.avg_pnl>0?'up':'down')+'">'+Number(m.avg_pnl||0).toFixed(2)+'%</td><td>'+Number(m.profit_factor||0).toFixed(2)+'</td><td>'+(v.eligible?'حداقل نمونه دارد، سود تأیید نشده':'تأییدنشده')+'</td></tr>';}).join('')||'<tr><td colspan="6" class="live-empty">تاریخچه معاملات امتیازدار هنوز کافی نیست.</td></tr>';
+ $('btNote').textContent='معاملات امتیازدار: '+(r.rows||0)+'؛ حداقل موردنیاز: '+(r.required_rows||30)+'؛ آزمون زمانی: '+(r.validation_rows||0)+'. این بک‌تست به‌تنهایی سودآوری را ثابت نمی‌کند.';
+ if(!sh){$('shadowStatus').textContent='گزارش در دسترس نیست';return;}
+ $('shadowStatus').textContent=statusLabel(sh.status);
+ $('shRows').textContent=(sh.rows||0)+' مشاهده';
+ $('shValidation').textContent=(sh.validation_rows||0)+' ردیف';
+ $('shCost').textContent=Number(sh.assumed_round_trip_cost_pct||0).toFixed(1)+'%';
+ $('shEligible').textContent=(sh.recommendations||[]).map(x=>x.score_bucket).join(', ')||'هیچ‌کدام';
+ const bucketEntries=Object.entries(sh.buckets||{});
+ $('shRowsTable').innerHTML=bucketEntries.map(([label,m])=>'<tr><td>'+label+'</td><td>'+m.n+'</td><td>'+pct(m.net_win_rate)+'</td><td class="'+(m.net_robust_mean_pnl>0?'up':'down')+'">'+Number(m.net_robust_mean_pnl||0).toFixed(2)+'%</td><td>'+Number(m.net_profit_factor||0).toFixed(2)+'</td><td>'+(m.eligible?'از حدنصاب عبور کرد':'رد / نمونه ناکافی')+'</td></tr>').join('')||'<tr><td colspan="6" class="live-empty">مشاهده‌ای برای اعتبارسنجی موجود نیست.</td></tr>';
+ $('shNote').textContent='وضعیت: '+sh.status+'؛ آموزش '+(sh.train_rows||0)+' ردیف، آزمون زمانی '+(sh.validation_rows||0)+' ردیف؛ هزینهٔ فرضی '+Number(sh.assumed_round_trip_cost_pct||0).toFixed(1)+'% از بازده هر معامله کم شده است. هر بازه باید حداقل نمونه، نرخ برد خالص حداقل ۵۰٪، میانه و میانگین مقاوم خالص مثبت، ضریب سود خالص بیشتر از ۱٫۲ و بدون برون‌زدگی شدید داشته باشد. هیچ حدنصابی خودکار وارد معاملات واقعی نمی‌شود.';
+})();;
 </script><script src="./market-live.js"></script></body></html>
