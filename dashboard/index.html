@@ -58,7 +58,7 @@
   <div class="live-kpi"><span>حدنصاب‌های واجد شرایط</span><b id="btEligible">—</b></div>
   <div class="live-kpi"><span>آخرین گزارش</span><b id="btUpdated">—</b></div>
  </div>
- <div class="tablewrap"><table class="live-table"><thead><tr><th>حدنصاب امتیاز</th><th>تعداد آزمون</th><th>نرخ برد</th><th>میانگین بازده</th><th>ضریب سود</th><th>وضعیت</th></tr></thead><tbody id="btRowsTable"><tr><td colspan="6" class="live-empty">گزارش بک‌تست در اولین چرخه بعدی منتشر می‌شود.</td></tr></tbody></table></div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>حدنصاب امتیاز</th><th>تعداد آزمون</th><th>نرخ برد خالص</th><th>حد پایین اطمینان ۹۵٪</th><th>میانگین خالص مقاوم</th><th>ضریب سود خالص</th><th>وضعیت</th></tr></thead><tbody id="btRowsTable"><tr><td colspan="7" class="live-empty">گزارش بک‌تست در اولین چرخه بعدی منتشر می‌شود.</td></tr></tbody></table></div>
  <div class="cardhead" style="margin-top:18px"><b>🧠 یادگیری از معاملات سایه پس از هزینه</b><span class="live-pill" id="shadowStatus">در انتظار گزارش</span></div>
  <div class="live-kpis">
   <div class="live-kpi"><span>مشاهدات سایه</span><b id="shRows">—</b></div>
@@ -132,15 +132,15 @@ load();setInterval(load,60000);loadگردش‌کارActivity();setInterval(load�
  const sh=report.shadow||null;
  const $=id=>document.getElementById(id);
  const pct=v=>(Number(v||0)*100).toFixed(1)+'%';
- const statusLabel=s=>({'ok':'نمونه کافی برای بررسی','insufficient_history':'تاریخچه ناکافی','insufficient_validation_history':'نمونه آزمون ناکافی','insufficient_threshold_samples':'نمونه کافی برای هیچ حدنصابی نیست','no_validated_bucket':'هیچ بازه‌ای سودآوری خالص را تأیید نکرد'})[s]||s||'نامشخص';
+ const statusLabel=s=>({'ok':'نمونه کافی برای بررسی','insufficient_history':'تاریخچه ناکافی','insufficient_validation_history':'نمونه آزمون ناکافی','insufficient_threshold_samples':'نمونه کافی برای هیچ حدنصابی نیست','no_validated_bucket':'هیچ بازه‌ای سودآوری خالص را تأیید نکرد','no_validated_threshold':'هیچ حدنصابی سود خالص و اطمینان کافی را نگذراند'})[s]||s||'نامشخص';
  $('btStatus').textContent=statusLabel(r.status);
  $('btRows').textContent=(r.rows||0)+' مشاهده';
  $('btValidation').textContent=(r.validation_rows||0)+' ردیف';
  $('btEligible').textContent=(r.eligible_thresholds||[]).join(', ')||'هیچ‌کدام';
  $('btUpdated').textContent=new Date().toLocaleString('fa-IR',{dateStyle:'short',timeStyle:'short'});
  const entries=Object.entries(r.thresholds||{});
- $('btRowsTable').innerHTML=entries.map(([t,v])=>{const m=v.validation||{};return '<tr><td>'+t+'</td><td>'+(m.n||0)+'</td><td>'+pct(m.win_rate)+'</td><td class="'+(m.avg_pnl>0?'up':'down')+'">'+Number(m.avg_pnl||0).toFixed(2)+'%</td><td>'+Number(m.profit_factor||0).toFixed(2)+'</td><td>'+(v.eligible?'حداقل نمونه دارد، سود تأیید نشده':'تأییدنشده')+'</td></tr>';}).join('')||'<tr><td colspan="6" class="live-empty">تاریخچه معاملات امتیازدار هنوز کافی نیست.</td></tr>';
- $('btNote').textContent='معاملات امتیازدار: '+(r.rows||0)+'؛ حداقل موردنیاز: '+(r.required_rows||30)+'؛ آزمون زمانی: '+(r.validation_rows||0)+'. این بک‌تست به‌تنهایی سودآوری را ثابت نمی‌کند.';
+ $('btRowsTable').innerHTML=entries.map(([t,v])=>{const m=v.validation||{};return '<tr><td>'+t+'</td><td>'+(m.n||0)+'</td><td>'+pct(m.net_win_rate)+'</td><td class="'+(m.net_win_rate_wilson_lower>=0.5?'up':'down')+'">'+pct(m.net_win_rate_wilson_lower)+'</td><td class="'+(m.net_robust_mean_pnl>0?'up':'down')+'">'+Number(m.net_robust_mean_pnl||0).toFixed(2)+'%</td><td>'+Number(m.net_profit_factor||0).toFixed(2)+'</td><td>'+(v.eligible?'از آزمون خالص عبور کرد':'تأییدنشده')+'</td></tr>';}).join('')||'<tr><td colspan="7" class="live-empty">تاریخچه معاملات امتیازدار هنوز کافی نیست.</td></tr>';
+ $('btNote').textContent='معاملات امتیازدار: '+(r.rows||0)+'؛ حداقل موردنیاز: '+(r.required_rows||30)+'؛ آزمون زمانی: '+(r.validation_rows||0)+'؛ هزینهٔ فرضی رفت‌وبرگشت: '+Number(r.assumed_round_trip_cost_pct||2).toFixed(1)+'%. حدنصاب فقط با بازده خالص مثبت و حد پایین اطمینان ۹۵٪ نرخ برد خالص حداقل ۵۰٪ تأیید می‌شود. این بک‌تست به‌تنهایی سودآوری را ثابت نمی‌کند.';
  if(!sh){$('shadowStatus').textContent='گزارش در دسترس نیست';return;}
  $('shadowStatus').textContent=statusLabel(sh.status);
  $('shRows').textContent=(sh.rows||0)+' مشاهده';
@@ -151,7 +151,7 @@ load();setInterval(load,60000);loadگردش‌کارActivity();setInterval(load�
  $('shRowsTable').innerHTML=bucketEntries.map(([label,m])=>'<tr><td>'+label+'</td><td>'+m.n+'</td><td>'+pct(m.net_win_rate)+'</td><td class="'+(m.net_win_rate_wilson_lower>=0.5?'up':'down')+'">'+pct(m.net_win_rate_wilson_lower)+'</td><td class="'+(m.net_robust_mean_pnl>0?'up':'down')+'">'+Number(m.net_robust_mean_pnl||0).toFixed(2)+'%</td><td>'+Number(m.net_profit_factor||0).toFixed(2)+'</td><td>'+(m.eligible?'از حدنصاب عبور کرد':'رد / نمونه ناکافی')+'</td></tr>').join('')||'<tr><td colspan="7" class="live-empty">مشاهده‌ای برای اعتبارسنجی موجود نیست.</td></tr>';
  const costRows=sh.cost_sensitivity||[];
  $('shCostTable').innerHTML=costRows.map(m=>'<tr><td>'+Number(m.assumed_round_trip_cost_pct||0).toFixed(1)+'%</td><td class="'+(m.net_mean_pnl>0?'up':'down')+'">'+Number(m.net_mean_pnl||0).toFixed(2)+'%</td><td>'+pct(m.net_win_rate)+'</td><td>'+Number(m.net_profit_factor||0).toFixed(2)+'</td><td>'+m.n+'</td></tr>').join('')||'<tr><td colspan="5" class="live-empty">تحلیل حساسیت در دسترس نیست.</td></tr>';
- const featureLabels={momentum_m5_pct:'شتاب قیمت ۵ دقیقه',momentum_h1_pct:'تغییر قیمت یک ساعت',buy_sell_ratio:'نسبت خرید به فروش',liquidity_usd:'نقدینگی دلاری',volume_h1_usd:'حجم یک ساعت',market_cap_usd:'ارزش بازار',liquidity_to_mcap_ratio:'نقدینگی به ارزش بازار'};
+ const featureLabels={momentum:'سهم امتیاز مومنتوم',buy_pressure:'سهم امتیاز فشار خرید',momentum_m5_pct:'شتاب قیمت ۵ دقیقه',momentum_h1_pct:'تغییر قیمت یک ساعت',buy_sell_ratio:'نسبت خرید به فروش',liquidity_usd:'نقدینگی دلاری',volume_h1_usd:'حجم یک ساعت',market_cap_usd:'ارزش بازار',liquidity_to_mcap_ratio:'نقدینگی به ارزش بازار'};
  const features=Object.entries(sh.feature_associations||{});
  $('shFeatureTable').innerHTML=features.map(([key,m])=>'<tr><td>'+(featureLabels[key]||key)+'</td><td>'+m.n+'</td><td class="'+(m.correlation>0?'up':m.correlation<0?'down':'')+'">'+Number(m.correlation||0).toFixed(3)+'</td><td>همبستگی توصیفی، نه رابطهٔ علّی</td></tr>').join('')||'<tr><td colspan="4" class="live-empty">دادهٔ ویژگی برای محاسبه کافی نیست؛ نمونه‌های قدیمی ویژگی ثبت نکرده‌اند.</td></tr>';
  $('shNote').textContent='وضعیت: '+sh.status+'؛ آموزش '+(sh.train_rows||0)+' ردیف، آزمون زمانی '+(sh.validation_rows||0)+' ردیف؛ هزینهٔ پیش‌فرض '+Number(sh.assumed_round_trip_cost_pct||0).toFixed(1)+'% فرضی است. پذیرش اکنون علاوه بر سود خالص، حد پایین اطمینان ۹۵٪ نرخ برد خالص حداقل ۵۰٪ می‌خواهد. همبستگی ویژگی‌ها فقط روی آزمون زمانی محاسبه می‌شود و اثبات رابطهٔ علّی نیست. هیچ حدنصابی خودکار وارد معاملات واقعی نمی‌شود.';
