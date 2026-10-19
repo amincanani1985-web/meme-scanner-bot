@@ -27,7 +27,7 @@ class StrategyBacktestTests(unittest.TestCase):
         self.assertEqual(rows[0]["score"], 85.0)
 
     def test_history_without_enough_samples_per_threshold_is_not_validated(self):
-        rows = [{"timestamp": f"{i:03d}", "score": 50.0, "pnl_pct": 1.0} for i in range(30)]
+        rows = [{"timestamp": f"{i:03d}", "score": 50.0, "pnl_pct": 5.0} for i in range(30)]
         report = backtest.run(rows)
         self.assertEqual(report["status"], "insufficient_threshold_samples")
         self.assertEqual(report["eligible_thresholds"], [])
@@ -38,6 +38,21 @@ class StrategyBacktestTests(unittest.TestCase):
         self.assertEqual(report["status"], "ok")
         self.assertIn(85.0, report["eligible_thresholds"])
         self.assertEqual(report["thresholds"]["85.0"]["validation"]["n"], 9)
+
+
+
+    def test_gross_profit_below_assumed_cost_is_not_validated(self):
+        rows = [
+            {"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 1.0}
+            for i in range(30)
+        ]
+        report = backtest.run(rows)
+        self.assertNotIn(85.0, report["eligible_thresholds"])
+        self.assertEqual(report["status"], "no_validated_threshold")
+        metrics = report["thresholds"]["85.0"]["validation"]
+        self.assertGreater(metrics["avg_pnl"], 0.0)
+        self.assertLess(metrics["net_avg_pnl"], 0.0)
+
 
 
 if __name__ == "__main__":
