@@ -2,6 +2,7 @@
 """Adaptive bounded strategy-learning engine with walk-forward validation and rollback."""
 import csv, json, math
 from pathlib import Path
+from statistics import median
 
 MIN_TRADES=30
 CANDIDATE_THRESHOLDS=(80.0,82.5,85.0,87.5,90.0)
@@ -11,6 +12,8 @@ ROLLBACK_WIN_RATE=0.30
 ROLLBACK_AVG_PNL=-2.0
 MIN_VALIDATION_EDGE=0.25
 BASELINE_THRESHOLD=80.0
+ROUND_TRIP_COST_PCT=2.0
+OUTLIER_ABS_PNL_PCT=100.0
 
 def load_observations(path="strategy_observations.csv"):
     """Load complete, finite observations; never invent scores for legacy trades."""
@@ -33,28 +36,74 @@ def load_observations(path="strategy_observations.csv"):
             rows.append({"timestamp": timestamp, "score": score, "pnl_pct": pnl_pct, "reason": row.get("reason", "")})
     return sorted(rows, key=lambda item: item["timestamp"])
 
-def _metrics(rows,threshold):
-    s=[r for r in rows if r["score"]>=threshold]
-    if not s: return {"n":0,"wins":0,"win_rate":0.0,"avg_pnl":0.0,"profit_factor":0.0}
-    wins=[r for r in s if r["pnl_pct"]>0]; losses=[r for r in s if r["pnl_pct"]<0]
-    gw=sum(r["pnl_pct"] for r in wins); gl=abs(sum(r["pnl_pct"] for r in losses))
-    return {"n":len(s),"wins":len(wins),"win_rate":len(wins)/len(s),"avg_pnl":sum(r["pnl_pct"] for r in s)/len(s),"profit_factor":gw/gl if gl else (999.0 if gw else 0.0)}
+def wilson_lower_bound(wins, n, z=1.96):
+    """Two-sided 95% Wilson lower confidence bound for a binomial win rate."""
+    if n <= 0:
+        return 0.0
+    p = min(1.0, max(0.0, float(wins) / n))
+    z2 = z * z
+    denominator = 1.0 + z2 / n
+    center = p + z2 / (2.0 * n)
+    margin = z * math.sqrt((p * (1.0 - p) / n) + z2 / (4.0 * n * n))
+    return max(0.0, (center - margin) / denominator)
+
+
+def _metrics(rows, threshold, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
+    selected = [r for r in rows if r["score"] >= threshold]
+    values = [float(r["pnl_pct"]) for r in selected]
+    net_values = [value - round_trip_cost_pct for value in values]
+    outlier_mask = [abs(value) > OUTLIER_ABS_PNL_PCT for value in values]
+    ordinary_net = [value for value, outlier in zip(net_values, outlier_mask) if not outlier]
+    wins = sum(value > 0 for value in values)
+    net_wins = sum(value > 0 for value in net_values)
+    gross_wins = sum(value for value in values if value > 0)
+    gross_losses = abs(sum(value for value in values if value < 0))
+    net_gross_wins = sum(value for value in ordinary_net if value > 0)
+    net_gross_losses = abs(sum(value for value in ordinary_net if value < 0))
+    count = len(values)
+    net_pf = (net_gross_wins / net_gross_losses if net_gross_losses
+              else (999.0 if net_gross_wins else 0.0))
+    return {
+        "n": count,
+        "wins": wins,
+        "win_rate": wins / count if count else 0.0,
+        "avg_pnl": sum(values) / count if count else 0.0,
+        "profit_factor": gross_wins / gross_losses if gross_losses else (999.0 if gross_wins else 0.0),
+        "round_trip_cost_pct": round_trip_cost_pct,
+        "net_wins": net_wins,
+        "net_win_rate": net_wins / count if count else 0.0,
+        "net_avg_pnl": sum(net_values) / count if count else 0.0,
+        "net_median_pnl": median(net_values) if net_values else 0.0,
+        "net_robust_mean_pnl": sum(ordinary_net) / len(ordinary_net) if ordinary_net else 0.0,
+        "net_profit_factor": net_pf,
+        "net_win_rate_wilson_lower": wilson_lower_bound(net_wins, count),
+        "outlier_count": sum(outlier_mask),
+    }
 
 def walk_forward(observations,threshold,train_ratio=0.7):
     rows=sorted(observations,key=lambda r:r["timestamp"])
     if len(rows)<MIN_TRADES: return {"eligible":False,"reason":f"insufficient_history:{len(rows)}/{MIN_TRADES}","threshold":threshold}
     split=max(1,int(len(rows)*train_ratio)); train=rows[:split]; val=rows[split:]
     tm=_metrics(train,threshold); vm=_metrics(val,threshold)
-    return {"eligible":vm["n"]>=MIN_CANDIDATE_SAMPLES,"threshold":threshold,"train":tm,"validation":vm}
+    eligible = (
+        vm["n"] >= MIN_CANDIDATE_SAMPLES
+        and vm["outlier_count"] == 0
+        and vm["net_median_pnl"] > 0
+        and vm["net_robust_mean_pnl"] > 0
+        and vm["net_win_rate"] >= 0.5
+        and vm["net_win_rate_wilson_lower"] >= 0.5
+        and vm["net_profit_factor"] > 1.2
+    )
+    return {"eligible":eligible,"threshold":threshold,"train":tm,"validation":vm}
 
 def choose_candidate(observations,current_threshold=BASELINE_THRESHOLD):
     results=[walk_forward(observations,t) for t in CANDIDATE_THRESHOLDS]
     eligible=[r for r in results if r["eligible"]]
     if not eligible: return {"action":"hold","threshold":current_threshold,"reason":"no_candidate_has_enough_validation_samples","candidates":results}
     baseline=next((r for r in eligible if r["threshold"]==current_threshold),None)
-    base_avg=baseline["validation"]["avg_pnl"] if baseline else -999.0
-    best=max(eligible,key=lambda r:(r["validation"]["avg_pnl"],r["validation"]["win_rate"],r["validation"]["profit_factor"]))
-    if best["threshold"]!=current_threshold and best["validation"]["avg_pnl"]>=base_avg+MIN_VALIDATION_EDGE and best["validation"]["avg_pnl"]>0:
+    base_avg=baseline["validation"]["net_avg_pnl"] if baseline else -999.0
+    best=max(eligible,key=lambda r:(r["validation"]["net_avg_pnl"],r["validation"]["net_win_rate"],r["validation"]["net_profit_factor"]))
+    if best["threshold"]!=current_threshold and best["validation"]["net_avg_pnl"]>=base_avg+MIN_VALIDATION_EDGE and best["validation"]["net_avg_pnl"]>0:
         return {"action":"activate","threshold":best["threshold"],"reason":"walk_forward_candidate_beats_baseline","selected":best,"candidates":results}
     return {"action":"hold","threshold":current_threshold,"reason":"no_validated_candidate_beats_baseline","selected":best,"candidates":results}
 
@@ -62,7 +111,7 @@ def should_rollback(observations,current_threshold):
     rows=[r for r in observations if r["score"]>=current_threshold][-ROLLBACK_WINDOW:]
     if len(rows)<ROLLBACK_WINDOW: return False,"rollback_window_not_full"
     m=_metrics(rows,current_threshold)
-    return (m["win_rate"]<ROLLBACK_WIN_RATE or m["avg_pnl"]<=ROLLBACK_AVG_PNL),f"active_strategy:win_rate={m['win_rate']:.2f},avg_pnl={m['avg_pnl']:.2f}"
+    return (m["net_win_rate"]<ROLLBACK_WIN_RATE or m["net_avg_pnl"]<=ROLLBACK_AVG_PNL),f"active_strategy:net_win_rate={m['net_win_rate']:.2f},net_avg_pnl={m['net_avg_pnl']:.2f}
 
 def adaptive_update_state(state,observations):
     if not isinstance(state, dict):
