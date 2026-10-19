@@ -7,6 +7,8 @@ Risk controls are modeled estimates and require validation against real market d
 import time
 import math
 import csv
+import io
+import json
 import requests
 from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump
 from pathlib import Path
@@ -274,6 +276,32 @@ def passes_shadow_market_filter(pair_data):
 # SCORING: MARKET OPPORTUNITY SCORE (ultra-hardened)
 # ============================================================================
 
+def _market_feature_snapshot(pair_data, pc_m5=None, pc_h1=None, buy_sell_ratio=None):
+    """Capture raw entry features separately from score contributions for later analysis."""
+    pair_data = pair_data if isinstance(pair_data, dict) else {}
+    try:
+        m5 = float(pc_m5 if pc_m5 is not None else ((pair_data.get("priceChange") or {}).get("m5") or 0))
+        h1 = float(pc_h1 if pc_h1 is not None else ((pair_data.get("priceChange") or {}).get("h1") or 0))
+        buys = float((((pair_data.get("txns") or {}).get("m5") or {}).get("buys")) or 0)
+        sells = float((((pair_data.get("txns") or {}).get("m5") or {}).get("sells")) or 0)
+        ratio = float(buy_sell_ratio if buy_sell_ratio is not None else buys / max(sells, 1.0))
+        liquidity = float(((pair_data.get("liquidity") or {}).get("usd")) or 0)
+        volume_h1 = float(((pair_data.get("volume") or {}).get("h1")) or 0)
+        market_cap = float(pair_data.get("marketCap") or pair_data.get("fdv") or 0)
+    except (TypeError, ValueError, AttributeError, OverflowError, ZeroDivisionError):
+        return {}
+    values = {
+        "momentum_m5_pct": m5,
+        "momentum_h1_pct": h1,
+        "buy_sell_ratio": ratio,
+        "liquidity_usd": liquidity,
+        "volume_h1_usd": volume_h1,
+        "market_cap_usd": market_cap,
+        "liquidity_to_mcap_ratio": liquidity / market_cap if market_cap > 0 else 0.0,
+    }
+    return {key: value for key, value in values.items() if math.isfinite(value)}
+
+
 def score_market_opportunity(pair_data, learning=None):
     """
     Score 0-100 based on proven factors:
@@ -304,7 +332,8 @@ def score_market_opportunity(pair_data, learning=None):
     buy_pressure_bonus = min(15.0, (buy_sell_ratio - 1.0) * 7.0)
     score += buy_pressure_bonus
     components["buy_pressure"] = buy_pressure_bonus
-    
+    components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, buy_sell_ratio))
+
     # 3. Learning adjustment (if available)
     if learning and learning.get("trades", 0) >= 10 and learning.get("wins", 0) >= 0:
         win_rate = learning["wins"] / learning["trades"]
@@ -337,6 +366,7 @@ def score_shadow_opportunity(pair_data, learning=None):
     buy_pressure_bonus = min(15.0, (ratio - 1.0) * 7.0)
     score += buy_pressure_bonus
     components = {"momentum": momentum_bonus, "buy_pressure": buy_pressure_bonus}
+    components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, ratio))
     if isinstance(learning, dict):
         try:
             trades = int(learning.get("trades", 0) or 0)
@@ -555,7 +585,7 @@ def close_position(state, mint, exit_price, reason):
             state["blacklist"].append(mint)
     
     append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct, pnl_usd, state["equity"])
-    append_learning_observation(pos.get("signal_score"), pnl_pct * 100.0, reason)
+    append_learning_observation(pos.get("signal_score"), pnl_pct * 100.0, reason, pos.get("entry_components"))
     symbol = pos.get("symbol", "?")
     log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
@@ -764,7 +794,7 @@ def manage_shadow_positions(state):
             continue
         effective_exit = price * (1.0 - EXIT_SLIPPAGE_BPS / 10000.0)
         net_pnl_pct = (effective_exit - entry_price) / entry_price * 100.0
-        append_learning_observation(pos.get("signal_score"), net_pnl_pct, f"shadow_{reason}")
+        append_learning_observation(pos.get("signal_score"), net_pnl_pct, f"shadow_{reason}", pos.get("components"))
         state["shadow_positions"].pop(mint, None)
         log(f"[SHADOW CLOSE] {pos.get('symbol', '?')} {reason} pnl={net_pnl_pct:+.2f}% (isolated; account equity unchanged)")
 
@@ -876,12 +906,26 @@ def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_u
         ])
 
 
-def append_learning_observation(score, pnl_pct, reason):
-    """Persist realized outcomes without inventing a score for legacy positions."""
+def append_learning_observation(score, pnl_pct, reason, features=None):
+    """Persist outcomes and entry features; migrate old CSVs without fabricating historical features."""
     # Shadow outcomes are research-only and must never train or validate the live-entry threshold.
     filename = "shadow_observations.csv" if str(reason).startswith("shadow_") else "strategy_observations.csv"
     path = Path(filename)
+    headers = ["timestamp", "score", "pnl_pct", "reason", "features_json"]
     exists = path.exists() and path.stat().st_size > 0
+    if exists:
+        with path.open(newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            old_headers = reader.fieldnames or []
+            old_rows = list(reader)
+        if "features_json" not in old_headers:
+            migrated = io.StringIO(newline="")
+            writer = csv.DictWriter(migrated, fieldnames=headers, extrasaction="ignore")
+            writer.writeheader()
+            for old_row in old_rows:
+                old_row["features_json"] = "{}"
+                writer.writerow(old_row)
+            path.write_text(migrated.getvalue(), encoding="utf-8")
     try:
         score_value = float(score) if score is not None else None
         if score_value is not None and (not math.isfinite(score_value) or not 0.0 <= score_value <= 100.0):
@@ -897,8 +941,20 @@ def append_learning_observation(score, pnl_pct, reason):
     with path.open("a", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         if not exists:
-            writer.writerow(["timestamp", "score", "pnl_pct", "reason"])
-        writer.writerow([datetime.utcnow().isoformat(), "" if score_value is None else score_value, pnl_value, reason])
+            writer.writerow(headers)
+        feature_values = features if isinstance(features, dict) else {}
+        safe_features = {}
+        for key, value in feature_values.items():
+            try:
+                number = float(value)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if math.isfinite(number):
+                safe_features[str(key)] = number
+        writer.writerow([
+            datetime.utcnow().isoformat(), "" if score_value is None else score_value,
+            pnl_value, reason, json.dumps(safe_features, sort_keys=True, separators=(",", ":")),
+        ])
 
 
 def reconcile_learning_from_trade_log(state, trades_path="trades_log.csv"):
