@@ -111,7 +111,7 @@ def should_rollback(observations,current_threshold):
     rows=[r for r in observations if r["score"]>=current_threshold][-ROLLBACK_WINDOW:]
     if len(rows)<ROLLBACK_WINDOW: return False,"rollback_window_not_full"
     m=_metrics(rows,current_threshold)
-    return (m["net_win_rate"]<ROLLBACK_WIN_RATE or m["net_avg_pnl"]<=ROLLBACK_AVG_PNL),f"active_strategy:net_win_rate={m['net_win_rate']:.2f},net_avg_pnl={m['net_avg_pnl']:.2f}
+    return (m["net_win_rate"] < ROLLBACK_WIN_RATE or m["net_avg_pnl"] <= ROLLBACK_AVG_PNL), f"active_strategy:net_win_rate={m['net_win_rate']:.2f},net_avg_pnl={m['net_avg_pnl']:.2f}"
 
 def adaptive_update_state(state,observations):
     if not isinstance(state, dict):
