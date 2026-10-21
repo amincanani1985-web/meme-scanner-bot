@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 287,
+  "scan_count": 288,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-21T15:24:33Z",
+  "last_run": "2026-10-21T15:25:23Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -226,7 +226,8 @@
         "volume_h1_usd": 20644.17,
         "market_cap_usd": 1352795.0,
         "liquidity_to_mcap_ratio": 0.0789862987370592
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "t9bnCGiZVUYsRKvx4d5dPcoDCSyuBM9C33ZNGNULARP": {
       "symbol": "LARPCHECK",
@@ -246,16 +247,17 @@
         "volume_h1_usd": 6974.03,
         "market_cap_usd": 728263.0,
         "liquidity_to_mcap_ratio": 0.12520766536265057
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "7uCYgyuNRWTTuReNnBrs9FiNPoiX2tkUnKy77hjcpump": {
       "symbol": "KIMCHI",
       "entry_price": 0.00013448749999999998,
       "entry_time": 1792596271.0751455,
       "entry_liquidity": 31503.74,
-      "peak_price": 0.00013448749999999998,
+      "peak_price": 0.0001973,
       "signal_score": 64.72,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -0.28000000000000114,
         "buy_pressure": 15.0,
@@ -266,7 +268,8 @@
         "volume_h1_usd": 1050617.63,
         "market_cap_usd": 131771.0,
         "liquidity_to_mcap_ratio": 0.2390794636149077
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "Ac4UPAYTpiNPpwXQ7cqTZnRVtPH3yeC9md8oJLo4pump": {
       "symbol": "chud",
@@ -286,7 +289,8 @@
         "volume_h1_usd": 25044.88,
         "market_cap_usd": 38384.0,
         "liquidity_to_mcap_ratio": 0.4055739370571071
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "3JEe9dCTw17NCGzeKS5ZApv4qGQTjp6TJahGkndcpump": {
       "symbol": "TRUMP",
@@ -306,7 +310,8 @@
         "volume_h1_usd": 26546.91,
         "market_cap_usd": 192849.0,
         "liquidity_to_mcap_ratio": 0.19483207068742903
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "5C69sv7RdXsfqeLkyNKLxUD2rE4HDxR9vJMNTvw5pump": {
       "symbol": "Kemchi",
@@ -326,7 +331,8 @@
         "volume_h1_usd": 164701.19,
         "market_cap_usd": 4824.0,
         "liquidity_to_mcap_ratio": 0.8798590381426201
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "ArpPsesHXKbGeJsHdquM6acT3uNs7BChyetJjiNYpump": {
       "symbol": "godspeed",
@@ -346,7 +352,8 @@
         "volume_h1_usd": 3358.78,
         "market_cap_usd": 17856.0,
         "liquidity_to_mcap_ratio": 0.6712393593189964
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8T2nkC9HQkgd2yjxc7Yn1LAietmXyZKbv1vR4FXDbonk": {
       "symbol": "Bonnie",
@@ -366,7 +373,8 @@
         "volume_h1_usd": 4430.21,
         "market_cap_usd": 81317.0,
         "liquidity_to_mcap_ratio": 0.42789478214887416
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "DC1MjRzGGdxptmztvHimSvgxtogysrshbi9ZH7fZpump": {
       "symbol": "Quanto",
@@ -386,14 +394,15 @@
         "volume_h1_usd": 1185.71,
         "market_cap_usd": 13357.0,
         "liquidity_to_mcap_ratio": 0.6288537845324549
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "Gv6jKrrjJW9NLZujVZdxj6D9xL21qcLbHso8LYFMpump": {
       "symbol": "BOUNCER",
       "entry_price": 4.0701499999999996e-05,
       "entry_time": 1792596272.5515425,
       "entry_liquidity": 15936.61,
-      "peak_price": 4.0701499999999996e-05,
+      "peak_price": 4.083e-05,
       "signal_score": 26.28,
       "trailing_armed": false,
       "components": {
@@ -406,7 +415,8 @@
         "volume_h1_usd": 3547.29,
         "market_cap_usd": 38041.0,
         "liquidity_to_mcap_ratio": 0.4189324676007466
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "BAkdiNu6qqYtQ3knyVStkJgZybbgyrhDgUXjwZLa8x4i": {
       "symbol": "BAKDINU",
@@ -426,14 +436,15 @@
         "volume_h1_usd": 3116.81,
         "market_cap_usd": 8742.0,
         "liquidity_to_mcap_ratio": 0.7643159460077785
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8uWftzVoVBqyPJj6Xq9kRUtnz54W5GP4pd4smwZHpump": {
       "symbol": "wifchi",
       "entry_price": 0.000134995,
       "entry_time": 1792596272.9792552,
       "entry_liquidity": 31129.94,
-      "peak_price": 0.000134995,
+      "peak_price": 0.0001402,
       "signal_score": 15.530000000000001,
       "trailing_armed": false,
       "components": {
@@ -446,14 +457,15 @@
         "volume_h1_usd": 200193.42,
         "market_cap_usd": 132575.0,
         "liquidity_to_mcap_ratio": 0.23481003205732603
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GqhXpkFMGLteLB7Rii9AKWwBAUy2sGAiPGF9orxpump": {
       "symbol": "FINLEY",
       "entry_price": 1.0555999999999999e-05,
       "entry_time": 1792596273.1054006,
       "entry_liquidity": 7215.78,
-      "peak_price": 1.0555999999999999e-05,
+      "peak_price": 1.078e-05,
       "signal_score": 0.0,
       "trailing_armed": false,
       "components": {
@@ -466,17 +478,19 @@
         "volume_h1_usd": 334542.53,
         "market_cap_usd": 10076.0,
         "liquidity_to_mcap_ratio": 0.7161353711790392
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-21T15:24:33Z",
+    "timestamp": "2026-10-21T15:25:23Z",
     "candidate_count": 40,
-    "filter_passed": 13,
-    "shadow_opened": 13,
+    "filter_passed": 0,
+    "shadow_opened": 0,
     "rejections": {
-      "pair_data_unavailable": 20,
-      "shadow_low_volume_h1:360": 1,
+      "pair_data_unavailable": 19,
+      "shadow_low_volume_h1:369": 1,
+      "shadow_low_liquidity:11": 1,
       "shadow_low_volume_h1:52": 1,
       "shadow_low_liquidity:7": 1,
       "shadow_low_volume_h1:137": 1,
