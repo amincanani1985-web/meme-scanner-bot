@@ -9,6 +9,7 @@ import math
 import csv
 import io
 import json
+import os
 import requests
 from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump
 from pathlib import Path
@@ -1176,9 +1177,29 @@ def run_cycle(state=None):
     return {"scanned": len(candidates), "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"]}
 
 
+def run_isolated_paper_cycle(root_dir=None):
+    """Run the same scanner against a fully separate virtual account directory."""
+    root = Path(root_dir or Path.cwd()).resolve()
+    paper_dir = root / "paper_account"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    previous_cwd = Path.cwd()
+    try:
+        os.chdir(paper_dir)
+        return run_cycle()
+    finally:
+        os.chdir(previous_cwd)
+
+
 if __name__ == "__main__":
     try:
-        run_cycle()
+        run_cycle()  # Preserve the historical account and its existing risk lock.
+        paper_result = run_isolated_paper_cycle(Path(__file__).resolve().parent)
+        log(
+            "[PAPER ACCOUNT] independent cycle complete | "
+            f"equity=${float(paper_result.get('equity', 0.0)):.2f} "
+            f"positions={paper_result.get('open_positions', 0)} "
+            f"trades={paper_result.get('trade_count', 'see paper ledger')}"
+        )
     except Exception as exc:
         log(f"[ERROR] trading cycle failed: {type(exc).__name__}: {exc}")
         raise
