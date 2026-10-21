@@ -5,7 +5,6 @@ on:
     paths:
       # Source assets only. The trading-cycle workflow deploys its own fresh
       # generated data artifact, avoiding duplicate/stale Pages deployments.
-      - "dashboard/index.html"
       - "dashboard/market-live.js"
       - ".github/workflows/deploy-dashboard.yml"
   workflow_dispatch:
