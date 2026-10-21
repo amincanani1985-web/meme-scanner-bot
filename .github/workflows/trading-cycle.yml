@@ -225,8 +225,28 @@ jobs:
           fi
 
           git commit -m "cycle update: $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main
-          git push origin HEAD:main
+
+          # Dashboard/source edits can land while this cycle is running. Rebase and
+          # retry a bounded number of times instead of losing the scan heartbeat.
+          pushed=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "Rebase conflict on attempt $attempt; aborting so we never overwrite remote state." >&2
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              pushed=true
+              break
+            fi
+            echo "Push race on attempt $attempt/5; retrying after fetching latest main."
+            sleep "$attempt"
+          done
+          if [ "$pushed" != true ]; then
+            echo "Could not publish cycle state after 5 attempts." >&2
+            exit 1
+          fi
 
       - name: Write cycle summary
         if: success() && github.event_name != 'pull_request'
