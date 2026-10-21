@@ -172,8 +172,9 @@ async function loadPaperAccount(){
    fetch(base+'state.json?ts='+stamp,{cache:'no-store'}),
    fetch(base+'trades_log.csv?ts='+stamp,{cache:'no-store'})
   ]);
-  if(!stateResponse.ok)throw Error('paper_account/state.json HTTP '+stateResponse.status);
-  const s=await stateResponse.json(), csv=tradesResponse.ok?await tradesResponse.text():'';
+  const s=stateResponse.ok?await stateResponse.json():window.PAPER_STATE;
+  const csv=tradesResponse.ok?await tradesResponse.text():String(window.PAPER_CSV||'');
+  if(!s||typeof s!=='object')throw Error('paper_account/state.json HTTP '+stateResponse.status);
   const risk=s.risk_control||{}, positions=Object.entries(s.positions||{});
   const last=s.last_run?new Date(s.last_run):null;
   $('paperEquity').textContent=money(s.equity);
