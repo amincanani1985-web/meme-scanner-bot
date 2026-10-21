@@ -82,7 +82,23 @@
   <div class="card"><div class="label">آخرین شمارش اسکن</div><div id="agentScanCount" class="value">—</div><div class="small">شمارندهٔ ثبت‌شده در state</div></div>
  </div>
  <div class="tablewrap" style="margin-top:12px"><table class="live-table"><thead><tr><th>رویداد / کار فعلی</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody id="agentOpsRows"><tr><td colspan="3" class="live-empty">در حال بارگذاری…</td></tr></tbody></table></div>
- <p class="small" id="agentOpsNote">این پنل وضعیت ثبت‌شده را از فایل اصلی state می‌خواند. تازه‌سازی داشبورد به معنی اجرای بات نیست. موقعیت Shadow هنوز حساب پیپر مستقل و دفترکل سودوزیان جداگانه محسوب نمی‌شود.</p>
+ <p class="small" id="agentOpsNote">این پنل وضعیت حساب تاریخی و اسکن Shadow را جدا از حساب پیپر مستقل نشان می‌دهد. تازه‌سازی داشبورد به معنی اجرای بات نیست؛ سفارش واقعی ارسال نمی‌شود.</p>
+</section>
+<section class="card section" id="paperAccountPanel">
+ <div class="cardhead"><b>🧪 حساب پیپر مستقل</b><span class="live-pill" id="paperStatus">در حال دریافت حساب پیپر…</span></div>
+ <div class="statusgrid">
+  <div class="statusitem"><span class="label">سرمایهٔ مجازی</span><strong id="paperEquity">—</strong></div>
+  <div class="statusitem"><span class="label">معاملات بسته‌شده</span><strong id="paperTradeCount">—</strong></div>
+  <div class="statusitem"><span class="label">موقعیت‌های باز</span><strong id="paperPositionCount">—</strong></div>
+  <div class="statusitem"><span class="label">قفل ریسک پیپر</span><strong id="paperRisk">—</strong></div>
+  <div class="statusitem"><span class="label">افت از اوج</span><strong id="paperDrawdown">—</strong></div>
+  <div class="statusitem"><span class="label">آخرین چرخه</span><strong id="paperLastRun">—</strong></div>
+ </div>
+ <div class="cardhead" style="margin-top:14px"><b>موقعیت‌های باز در حساب پیپر</b><span class="label" id="paperScanCount">— اسکن</span></div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>نماد</th><th>ورود فرضی</th><th>حجم مجازی</th><th>امتیاز</th><th>زمان ورود</th></tr></thead><tbody id="paperPositions"><tr><td colspan="5" class="live-empty">در حال بارگذاری…</td></tr></tbody></table></div>
+ <div class="cardhead" style="margin-top:14px"><b>آخرین معاملات بسته‌شدهٔ پیپر</b></div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>زمان</th><th>نماد</th><th>سود و زیان</th><th>دلار</th><th>علت خروج</th></tr></thead><tbody id="paperClosedTrades"><tr><td colspan="5" class="live-empty">در حال بارگذاری…</td></tr></tbody></table></div>
+ <p class="small" id="paperNote">حساب مستقل، دفترکل و کنترل ریسک مجزا دارد. تمام موقعیت‌ها مجازی‌اند؛ هیچ کلید کیف پول یا مسیر سفارش واقعی استفاده نمی‌شود.</p>
 </section>
 <section class="card section" id="activityPanel"><div class="cardhead"><b>🤖 فعالیت بات و اجرای گردش‌کارها</b><span class="live-pill" id="activityوضعیت">در حال اتصال به گیت‌هاب…</span></div>
  <div class="small">وضعیت زنده GitHub Actions: چرخه‌های در صف، در حال اجرا، موفق یا ناموفق. این اطلاعات جدا از داده‌های معاملات به‌روزرسانی می‌شود.</div>
@@ -147,6 +163,38 @@ async function loadAgentOps(){
   $('agentOpsNote').textContent='منبع مستقیم: state.json در شاخهٔ main · آخرین دریافت '+new Date().toLocaleTimeString('fa-IR')+'. دادهٔ قدیمی پنهان نمی‌شود. توجه: Shadow موجود دفترکل مستقل پیپر نیست.';
  }catch(e){status.textContent='وضعیت قابل دریافت نیست';status.style.color='var(--red)';rows.innerHTML='<tr><td colspan="3" class="live-empty">وضعیت واقعی بات دریافت نشد: '+esc(e.message||e)+'</td></tr>';$('agentOpsNote').textContent='اطلاعات قبلی را به‌عنوان وضعیت زنده نمایش نمی‌دهیم.';}
 }
+async function loadPaperAccount(){
+ const status=$('paperStatus');
+ try{
+  const base='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/paper_account/';
+  const stamp=Date.now();
+  const [stateResponse,tradesResponse]=await Promise.all([
+   fetch(base+'state.json?ts='+stamp,{cache:'no-store'}),
+   fetch(base+'trades_log.csv?ts='+stamp,{cache:'no-store'})
+  ]);
+  if(!stateResponse.ok)throw Error('paper_account/state.json HTTP '+stateResponse.status);
+  const s=await stateResponse.json(), csv=tradesResponse.ok?await tradesResponse.text():'';
+  const risk=s.risk_control||{}, positions=Object.entries(s.positions||{});
+  const last=s.last_run?new Date(s.last_run):null;
+  $('paperEquity').textContent=money(s.equity);
+  $('paperTradeCount').textContent=Number(s.trade_count||0).toLocaleString('fa-IR');
+  $('paperPositionCount').textContent=positions.length.toLocaleString('fa-IR');
+  $('paperRisk').textContent=risk.status==='halted'?'قفل فعال':'فعال';
+  $('paperRisk').style.color=risk.status==='halted'?'var(--red)':'var(--green)';
+  $('paperDrawdown').textContent=Number(risk.drawdown_pct||0).toFixed(2)+'٪ / سقف '+Number(risk.max_drawdown_pct||20).toFixed(0)+'٪';
+  $('paperLastRun').textContent=last?last.toLocaleString('fa-IR',{timeZone:'UTC',dateStyle:'short',timeStyle:'short'})+' UTC':'ثبت نشده';
+  $('paperScanCount').textContent=Number(s.scan_count||0).toLocaleString('fa-IR')+' اسکن';
+  $('paperPositions').innerHTML=positions.map(([mint,p])=>'<tr><td>'+esc(p.symbol||mint.slice(0,8))+'</td><td>'+money(p.entry_price)+'</td><td>'+money(p.amount_usd)+'</td><td>'+esc(Number(p.signal_score||0).toFixed(1))+'</td><td>'+esc(p.entry_time?new Date(Number(p.entry_time)*1000).toLocaleString('en-GB',{timeZone:'UTC'}):'—')+'</td></tr>').join('')||'<tr><td colspan="5" class="live-empty">در حال حاضر موقعیت پیپر بازی ثبت نشده است.</td></tr>';
+  const trades=parseCSV(csv).slice(-10).reverse();
+  $('paperClosedTrades').innerHTML=trades.map(t=>'<tr><td>'+esc(t.timestamp||'—')+'</td><td>'+esc(t.symbol||'—')+'</td><td class="'+(Number(t.pnl_usd)>0?'green':Number(t.pnl_usd)<0?'red':'')+'">'+esc(Number(t.pnl_pct||0).toFixed(2))+'٪</td><td>'+money(t.pnl_usd)+'</td><td>'+esc(t.reason||'—')+'</td></tr>').join('')||'<tr><td colspan="5" class="live-empty">هنوز معاملهٔ پیپر بسته‌شده‌ای ثبت نشده است.</td></tr>';
+  status.textContent=risk.status==='halted'?'قفل ریسک حساب پیپر فعال است':'حساب پیپر فعال است';
+  status.style.color=risk.status==='halted'?'var(--red)':'var(--green)';
+  $('paperNote').textContent='آخرین چرخه: '+(last?last.toISOString():'نامشخص')+' · موجودی مجازی '+money(s.equity)+' · دادهٔ این حساب از فایل‌ها و دفترکل مستقل خوانده می‌شود.';
+ }catch(e){
+  status.textContent='حساب پیپر در دسترس نیست';status.style.color='var(--red)';
+  $('paperNote').textContent='حساب پیپر هنوز فایل وضعیت منتشرشده ندارد یا دریافت آن ناموفق بود: '+String(e.message||e);
+ }
+}
 async function load(){const btn=$('refresh');btn.disabled=true;btn.textContent='در حال دریافت آخرین داده‌ها…';const stamp=Date.now();try{const base='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/';const [stateResponse,tradesResponse]=await Promise.all([fetch(base+'state.json?ts='+stamp,{cache:'no-store'}),fetch(base+'trades_log.csv?ts='+stamp,{cache:'no-store'})]);if(!stateResponse.ok||!tradesResponse.ok)throw Error('دریافت داده‌های اصلی ناموفق بود');const [state,csv]=await Promise.all([stateResponse.json(),tradesResponse.text()]);if(!state||typeof state.last_run!=='string'||!csv.startsWith('timestamp,'))throw Error('ساختار داده نامعتبر است');window.LIVE_STATE=state;window.LIVE_CSV=csv;render();window.refreshMarketData?.();btn.textContent='↻ تازه‌سازی داده‌ها';}catch(error){const old=document.getElementById('live-data-script');if(old)old.remove();const script=document.createElement('script');script.id='live-data-script';script.src='./live-data.js?v='+stamp;script.onload=()=>{render();window.refreshMarketData?.();btn.textContent='↻ داده ذخیره‌شده (منبع زنده در دسترس نیست)';};script.onerror=()=>{render();btn.textContent='↻ تلاش دوباره';};document.body.appendChild(script);}finally{btn.disabled=false;}}
 async function loadگردش‌کارActivity(){
  const status=$('activityوضعیت'), body=$('activityRows'), note=$('activityNote');
@@ -164,7 +212,7 @@ async function loadگردش‌کارActivity(){
   note.textContent='گزارش GitHub: '+runs.length+' اجرای مرتبط اخیر؛ '+running+' در حال اجرا، '+queued+' در صف و '+failed+' ناموفق. آخرین بررسی: '+new Date().toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})+' به وقت تهران. این وضعیت گردش‌کار است و کارکرد پیوسته را تضمین نمی‌کند.';
  }catch(e){status.textContent='وضعیت در دسترس نیست';status.style.color='var(--red)';body.innerHTML='<tr><td colspan="5" class="live-empty">دریافت وضعیت GitHub Actions ممکن نشد. پیوند اجرای گردش‌کارها را در بالا باز کنید.</td></tr>';note.textContent=String(e.message||e);}
 }
-load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
+load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadPaperAccount();setInterval(loadPaperAccount,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
 </script><script src="./backtest-data.js"></script><script>
 (function(){
  const report=window.BACKTEST_REPORT||{};
