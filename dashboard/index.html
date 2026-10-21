@@ -73,6 +73,17 @@
  <p class="small" id="btNote">بک‌تست زمانی بر داده‌های ثبت‌شده اجرا می‌شود. واجد شرایط بودن آماری به‌تنهایی تضمین سودآوری نیست؛ این بخش معاملات زنده را فعال نمی‌کند.</p>
 </section>
 
+<section class="card section" id="agentOpsPanel">
+ <div class="cardhead"><b>🧠 وضعیت واقعی بات و ایجنت</b><span class="live-pill" id="agentOpsStatus">در حال دریافت وضعیت…</span></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+  <div class="card"><div class="label">آخرین چرخهٔ اسکن</div><div id="agentLastRun" class="value" style="font-size:15px">—</div><div id="agentAge" class="small">—</div></div>
+  <div class="card"><div class="label">قفل ریسک حساب اصلی</div><div id="agentRisk" class="value" style="font-size:17px">—</div><div id="agentRiskDetail" class="small">—</div></div>
+  <div class="card"><div class="label">موقعیت‌های پیپر Shadow</div><div id="agentShadowCount" class="value">—</div><div class="small">موقعیت مجازی، نه سفارش واقعی</div></div>
+  <div class="card"><div class="label">آخرین شمارش اسکن</div><div id="agentScanCount" class="value">—</div><div class="small">شمارندهٔ ثبت‌شده در state</div></div>
+ </div>
+ <div class="tablewrap" style="margin-top:12px"><table class="live-table"><thead><tr><th>رویداد / کار فعلی</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody id="agentOpsRows"><tr><td colspan="3" class="live-empty">در حال بارگذاری…</td></tr></tbody></table></div>
+ <p class="small" id="agentOpsNote">این پنل وضعیت ثبت‌شده را از فایل اصلی state می‌خواند. تازه‌سازی داشبورد به معنی اجرای بات نیست. موقعیت Shadow هنوز حساب پیپر مستقل و دفترکل سودوزیان جداگانه محسوب نمی‌شود.</p>
+</section>
 <section class="card section" id="activityPanel"><div class="cardhead"><b>🤖 فعالیت بات و اجرای گردش‌کارها</b><span class="live-pill" id="activityوضعیت">در حال اتصال به گیت‌هاب…</span></div>
  <div class="small">وضعیت زنده GitHub Actions: چرخه‌های در صف، در حال اجرا، موفق یا ناموفق. این اطلاعات جدا از داده‌های معاملات به‌روزرسانی می‌شود.</div>
  <div class="tablewrap"><table class="live-table"><thead><tr><th>گردش‌کار</th><th>وضعیت</th><th>زمان شروع (UTC)</th><th>مدت اجرا</th><th>جزئیات</th></tr></thead><tbody id="activityRows"><tr><td colspan="5" class="live-empty">در حال بارگذاری فعالیت‌های اخیر…</td></tr></tbody></table></div>
@@ -107,6 +118,35 @@ $('dot').style.background=(stale||risk.status==='halted')?'var(--red)':(n>=200?'
 const sd=s.shadow_scan_diagnostics||{};const rej=Object.entries(sd.rejections||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>k+' ('+v+')').join('، ')||'هنوز دلیل رد ثبت نشده';$('healthNote').textContent=(risk.status==='halted'?'⛔ توقف حفاظتی فعال است: افت از اوج سرمایه '+Number(risk.drawdown_pct||0).toFixed(2)+'% از سقف مجاز '+Number(risk.max_drawdown_pct||20).toFixed(2)+'% عبور کرده؛ ورود حساب مسدود است. ':'')+'آخرین یادگیری سایه: '+Number(sd.candidate_count||0)+' نامزد، '+Number(sd.filter_passed||0)+' عبور از فیلتر داده، '+Number(sd.shadow_opened||0)+' موقعیت مجازی جدید؛ دلایل رد پرتکرار: '+rej+'. اعتبارسنجی راهبرد: '+String(st.validation_status||'insufficient_history').replaceAll('_',' ')+'؛ '+Number(st.history_rows||0)+' ردیف امتیاز معتبر از '+Number(st.required_rows||30)+' ردیف لازم. '+Number((s.learning||{}).unbucketed_trades||0)+' معامله تاریخی امتیاز قابل‌بازیابی ندارد؛ داده جعل یا حدس زده نمی‌شود. سودآوری هنوز تأیید نشده است.';
 if(n>=200){$('report').style.display='block';$('reportText').innerHTML='<div class="metric"><span class="label">سرمایه نهایی</span><br><b>'+money(eq)+'</b></div><div class="metric"><span class="label">سود و زیان کل</span><br><b class="'+(pnl>=0?'green':'red')+'">'+money(pnl)+'</b></div><div class="metric"><span class="label">بازده</span><br><b>'+pct(pnl/1000*100)+'</b></div><div class="metric"><span class="label">نرخ معاملات سودده</span><br><b>'+(rows.length?wins.length/rows.length*100:0).toFixed(1)+'%</b></div><div class="metric"><span class="label">ضریب سود به زیان</span><br><b>'+(pf===Infinity?'∞':pf.toFixed(2))+'</b></div><div class="metric"><span class="label">بیشترین افت سرمایه</span><br><b>'+maxDD.toFixed(2)+'%</b></div>';}else $('report').style.display='none';
 }catch(e){$('status').textContent='خطای داده';$('dot').style.background='var(--red)';$('staleBanner').style.display='block';$('staleText').textContent='داده‌های منتشرشده داشبورد بارگذاری نشد. برای بررسی آخرین اجرا، صفحه اجرای گردش‌کارها را باز کنید.';console.error(e);}}
+async function loadAgentOps(){
+ const status=$('agentOpsStatus'), rows=$('agentOpsRows');
+ try{
+  const url='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/state.json?ts='+Date.now();
+  const response=await fetch(url,{cache:'no-store'}); if(!response.ok)throw Error('state.json HTTP '+response.status);
+  const s=await response.json(), risk=s.risk_control||{}, shadow=s.shadow_positions||{}, positions=Object.entries(shadow);
+  const last=s.last_run?new Date(s.last_run):null, age=last?Date.now()-last.getTime():Infinity;
+  const stale=!Number.isFinite(age)||age>20*60000||age< -5*60000;
+  $('agentLastRun').textContent=last?last.toLocaleString('fa-IR',{timeZone:'UTC',dateStyle:'short',timeStyle:'short'})+' UTC':'ثبت نشده';
+  $('agentAge').textContent=last?ago(s.last_run):'زمان اجرا نامشخص';
+  $('agentRisk').textContent=risk.status==='halted'?'قفل فعال':'فعال';
+  $('agentRisk').className='value '+(risk.status==='halted'?'red':'green');
+  $('agentRiskDetail').textContent='افت سرمایه '+Number(risk.drawdown_pct||0).toFixed(2)+'٪ · سقف '+Number(risk.max_drawdown_pct||20).toFixed(0)+'٪';
+  $('agentShadowCount').textContent=String(positions.length);
+  $('agentScanCount').textContent=Number(s.scan_count||0).toLocaleString('fa-IR');
+  status.textContent=stale?'اسکن قدیمی است':risk.status==='halted'?'حساب اصلی متوقف · Shadow جداست':'وضعیت اسکن تازه است';
+  status.style.color=stale||risk.status==='halted'?'var(--red)':'var(--green)';
+  const sd=s.shadow_scan_diagnostics||{}, strategy=s.strategy||{};
+  const items=[
+   ['چرخهٔ اسکن خودکار',stale?'قدیمی / اجرای تازه تأیید نشده':'آخرین چرخه ثبت شده','آخرین اجرا: '+(last?last.toISOString():'نامشخص')],
+   ['محافظ ریسک حساب اصلی',risk.status==='halted'?'مسدود':'فعال','علت: '+(risk.reason||'—')+'؛ موجودی تاریخی '+money(s.equity)],
+   ['اسکن Shadow',positions.length?'موقعیت‌های مجازی باز':'موقعیت باز ثبت نشده',Number(sd.candidate_count||0)+' نامزد · '+Number(sd.filter_passed||0)+' عبور از فیلتر · '+Number(sd.shadow_opened||0)+' بازشده'],
+   ['یادگیری / اعتبارسنجی',strategy.validation_status||strategy.status||'نامشخص','مشاهدات '+Number(strategy.history_rows||0)+' از '+Number(strategy.required_rows||30)+' مورد لازم'],
+   ['معاملات واقعی','غیرفعال','این داشبورد فقط وضعیت و معاملات آزمایشی را گزارش می‌کند؛ هیچ سفارش واقعی ارسال نمی‌شود']
+  ];
+  rows.innerHTML=items.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+esc(x[1])+'</td><td>'+esc(x[2])+'</td></tr>').join('');
+  $('agentOpsNote').textContent='منبع مستقیم: state.json در شاخهٔ main · آخرین دریافت '+new Date().toLocaleTimeString('fa-IR')+'. دادهٔ قدیمی پنهان نمی‌شود. توجه: Shadow موجود دفترکل مستقل پیپر نیست.';
+ }catch(e){status.textContent='وضعیت قابل دریافت نیست';status.style.color='var(--red)';rows.innerHTML='<tr><td colspan="3" class="live-empty">وضعیت واقعی بات دریافت نشد: '+esc(e.message||e)+'</td></tr>';$('agentOpsNote').textContent='اطلاعات قبلی را به‌عنوان وضعیت زنده نمایش نمی‌دهیم.';}
+}
 async function load(){const btn=$('refresh');btn.disabled=true;btn.textContent='در حال دریافت آخرین داده‌ها…';const stamp=Date.now();try{const base='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/';const [stateResponse,tradesResponse]=await Promise.all([fetch(base+'state.json?ts='+stamp,{cache:'no-store'}),fetch(base+'trades_log.csv?ts='+stamp,{cache:'no-store'})]);if(!stateResponse.ok||!tradesResponse.ok)throw Error('دریافت داده‌های اصلی ناموفق بود');const [state,csv]=await Promise.all([stateResponse.json(),tradesResponse.text()]);if(!state||typeof state.last_run!=='string'||!csv.startsWith('timestamp,'))throw Error('ساختار داده نامعتبر است');window.LIVE_STATE=state;window.LIVE_CSV=csv;render();window.refreshMarketData?.();btn.textContent='↻ تازه‌سازی داده‌ها';}catch(error){const old=document.getElementById('live-data-script');if(old)old.remove();const script=document.createElement('script');script.id='live-data-script';script.src='./live-data.js?v='+stamp;script.onload=()=>{render();window.refreshMarketData?.();btn.textContent='↻ داده ذخیره‌شده (منبع زنده در دسترس نیست)';};script.onerror=()=>{render();btn.textContent='↻ تلاش دوباره';};document.body.appendChild(script);}finally{btn.disabled=false;}}
 async function loadگردش‌کارActivity(){
  const status=$('activityوضعیت'), body=$('activityRows'), note=$('activityNote');
@@ -124,7 +164,7 @@ async function loadگردش‌کارActivity(){
   note.textContent='گزارش GitHub: '+runs.length+' اجرای مرتبط اخیر؛ '+running+' در حال اجرا، '+queued+' در صف و '+failed+' ناموفق. آخرین بررسی: '+new Date().toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})+' به وقت تهران. این وضعیت گردش‌کار است و کارکرد پیوسته را تضمین نمی‌کند.';
  }catch(e){status.textContent='وضعیت در دسترس نیست';status.style.color='var(--red)';body.innerHTML='<tr><td colspan="5" class="live-empty">دریافت وضعیت GitHub Actions ممکن نشد. پیوند اجرای گردش‌کارها را در بالا باز کنید.</td></tr>';note.textContent=String(e.message||e);}
 }
-load();setInterval(load,60000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
+load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
 </script><script src="./backtest-data.js"></script><script>
 (function(){
  const report=window.BACKTEST_REPORT||{};
