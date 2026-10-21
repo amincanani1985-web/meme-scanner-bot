@@ -65,7 +65,7 @@ jobs:
           fi
 
           active=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/trading-cycle.yml/runs?per_page=20" \
-            --jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
+            --jq '[.workflow_runs[] | select(.name == "meme scanner trading cycle") | select(.status == "queued" or .status == "in_progress")] | length')
           if [ "$active" -gt 0 ]; then
             echo "A trading cycle is already queued or running; avoiding duplicate dispatch."
             exit 0
