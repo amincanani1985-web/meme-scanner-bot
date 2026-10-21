@@ -1091,6 +1091,7 @@ __all__ = [
     "manage_open_positions",
     "manage_shadow_positions",
     "scan_shadow_candidates",
+    "run_isolated_paper_cycle",
     "load_state",
     "save_state",
     "log",
