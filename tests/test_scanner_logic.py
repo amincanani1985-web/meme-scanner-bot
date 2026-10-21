@@ -508,5 +508,28 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(json.loads(rows[0]["features_json"]), {})
             self.assertEqual(json.loads(rows[1]["features_json"])["momentum_m5_pct"], 2.5)
 
+    def test_isolated_paper_cycle_writes_to_its_own_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "state.json").write_text("legacy-state", encoding="utf-8")
+            (root / "trades_log.csv").write_text("legacy-ledger", encoding="utf-8")
+            original_cwd = Path.cwd()
+
+            def fake_cycle():
+                Path("state.json").write_text("paper-state", encoding="utf-8")
+                Path("trades_log.csv").write_text("paper-ledger", encoding="utf-8")
+                return {"equity": 1000.0}
+
+            with patch.object(scanner, "run_cycle", side_effect=fake_cycle):
+                result = scanner.run_isolated_paper_cycle(root)
+
+            self.assertEqual(result["equity"], 1000.0)
+            self.assertEqual((root / "state.json").read_text(encoding="utf-8"), "legacy-state")
+            self.assertEqual((root / "trades_log.csv").read_text(encoding="utf-8"), "legacy-ledger")
+            self.assertEqual((root / "paper_account" / "state.json").read_text(encoding="utf-8"), "paper-state")
+            self.assertEqual((root / "paper_account" / "trades_log.csv").read_text(encoding="utf-8"), "paper-ledger")
+            self.assertEqual(Path.cwd(), original_cwd)
+
+
 if __name__ == "__main__":
     unittest.main()
