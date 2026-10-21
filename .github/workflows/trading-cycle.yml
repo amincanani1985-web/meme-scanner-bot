@@ -199,14 +199,21 @@ jobs:
 
           state = json.loads(Path("state.json").read_text())
           csv = Path("trades_log.csv").read_text() if Path("trades_log.csv").exists() else ""
+          paper_path = Path("paper_account/state.json")
+          paper_state = json.loads(paper_path.read_text()) if paper_path.exists() else {}
+          paper_csv_path = Path("paper_account/trades_log.csv")
+          paper_csv = paper_csv_path.read_text() if paper_csv_path.exists() else ""
           Path("dashboard/live-data.js").write_text(
               "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\n"
-              "window.LIVE_CSV=" + json.dumps(csv) + ";\n",
+              "window.LIVE_CSV=" + json.dumps(csv) + ";\n"
+              "window.PAPER_STATE=" + json.dumps(paper_state, separators=(",", ":")) + ";\n"
+              "window.PAPER_CSV=" + json.dumps(paper_csv) + ";\n",
               encoding="utf-8",
           )
           PY
 
           git add state.json dashboard/live-data.js dashboard/backtest-data.js learn_agent.py strategy_backtest.py
+          if [ -d paper_account ]; then git add paper_account/; fi
           if [ -f trades_log.csv ]; then git add trades_log.csv; fi
           if [ -f strategy_observations.csv ]; then git add strategy_observations.csv; fi
           if [ -f shadow_observations.csv ]; then git add shadow_observations.csv; fi
