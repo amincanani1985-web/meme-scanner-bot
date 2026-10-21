@@ -10,6 +10,9 @@ on:
       - "shadow_learning.py"
       - "whale_research.py"
       - "dashboard/index.html"
+      - "dashboard/live-data.js"
+      - "dashboard/backtest-data.js"
+      - "dashboard/market-live.js"
       - ".github/workflows/trading-cycle.yml"
   push:
     branches: [main]
@@ -21,6 +24,9 @@ on:
       - "shadow_learning.py"
       - "whale_research.py"
       - "dashboard/index.html"
+      - "dashboard/live-data.js"
+      - "dashboard/backtest-data.js"
+      - "dashboard/market-live.js"
       - ".github/workflows/trading-cycle.yml"
   # Keep periodic paper scans; push-triggered runs also kick off an immediate cycle.
   schedule:
