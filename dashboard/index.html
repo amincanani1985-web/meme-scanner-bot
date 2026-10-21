@@ -16,18 +16,31 @@
  <div class="actions"><div class="status"><span class="dot" id="dot"></span><span id="status">در حال بارگذاری داده‌ها…</span></div><button id="refresh" onclick="load()">↻ تازه‌سازی داده‌ها</button><a class="link" href="https://github.com/amincanani1985-web/meme-scanner-bot/actions" target="_blank" rel="noopener">اجرای گردش‌کارها ↗</a></div>
 </header>
 <div class="card banner" id="staleBanner"><b>⚠ ممکن است داده‌ها قدیمی باشند</b><div id="staleText" class="small"></div></div>
+<section class="card section" id="paperOverview">
+ <div class="cardhead"><b>🧪 وضعیت فعلی حساب پیپر مستقل</b><span class="live-pill" id="paperOverviewStatus">در حال دریافت دادهٔ حساب پیپر…</span></div>
+ <div class="grid">
+  <div class="card"><div class="label">موجودی فعلی پیپر</div><div class="value" id="overviewEquity">—</div></div>
+  <div class="card"><div class="label">سود و زیان پیپر</div><div class="value" id="overviewPnl">—</div></div>
+  <div class="card"><div class="label">بازده پیپر</div><div class="value" id="overviewReturn">—</div></div>
+  <div class="card"><div class="label">معاملات بسته‌شدهٔ پیپر</div><div class="value" id="overviewTrades">—</div></div>
+  <div class="card"><div class="label">موقعیت‌های باز پیپر</div><div class="value" id="overviewPositions">—</div></div>
+  <div class="card"><div class="label">افت سرمایهٔ پیپر</div><div class="value" id="overviewDrawdown">—</div></div>
+ </div>
+ <p class="small" id="paperOverviewNote">این خلاصه از دفترکل مستقل paper_account خوانده می‌شود. داده‌های حساب تاریخی در بخش جداگانه حفظ شده‌اند.</p>
+</section>
+<section class="card section" id="historicalAccountHeading"><div class="cardhead"><b>📚 سابقهٔ حساب اصلی تاریخی</b><span class="live-pill">فقط خواندنی · قفل ریسک حفظ شده</span></div><p class="small">کارت‌ها، نمودار و جدول‌های تاریخی زیر مربوط به دفترکل قدیمی هستند و نباید با موجودی حساب پیپر مستقل اشتباه گرفته شوند.</p></section>
 <section class="grid">
- <div class="card"><div class="label">موجودی آزمایشی</div><div class="value" id="equity">—</div></div>
- <div class="card"><div class="label">سود و زیان خالص نسبت به شروع ۱٬۰۰۰ دلار</div><div class="value" id="pnl">—</div></div>
- <div class="card"><div class="label">بازده کل</div><div class="value" id="ret">—</div></div>
- <div class="card"><div class="label">معاملات بسته‌شده</div><div class="value" id="trades">—</div></div>
- <div class="card"><div class="label">نرخ معاملات سودده</div><div class="value" id="winrate">—</div></div>
- <div class="card"><div class="label">بیشترین افت سرمایه</div><div class="value" id="dd">—</div></div>
+ <div class="card"><div class="label">موجودی تاریخی حساب اصلی</div><div class="value" id="equity">—</div></div>
+ <div class="card"><div class="label">سود و زیان تاریخی حساب اصلی</div><div class="value" id="pnl">—</div></div>
+ <div class="card"><div class="label">بازده تاریخی</div><div class="value" id="ret">—</div></div>
+ <div class="card"><div class="label">معاملات بسته‌شدهٔ تاریخی</div><div class="value" id="trades">—</div></div>
+ <div class="card"><div class="label">نرخ برد تاریخی</div><div class="value" id="winrate">—</div></div>
+ <div class="card"><div class="label">بیشترین افت تاریخی</div><div class="value" id="dd">—</div></div>
 </section>
 <section class="card section"><div class="progrow"><b>پیشرفت ارزیابی ۲۰۰ معامله</b><span id="pct">—</span></div><div class="progress"><div class="fill" id="fill"></div></div><div class="small" id="missionNote">راهبرد در حالت آزمایشی است. تکمیل نمونه معاملات، سودآوری آینده را تضمین نمی‌کند.</div></section>
 <section class="layout section">
- <div class="card"><div class="cardhead"><b>نمودار تغییرات سرمایه</b><span class="label">سرمایه آغازین ۱٬۰۰۰ دلار</span></div><div class="chart" id="chart"><div class="empty">در حال بارگذاری…</div></div><div class="small" id="curveNote"></div></div>
- <div class="card"><div class="cardhead"><b>عملکرد</b></div><div class="metrics">
+ <div class="card"><div class="cardhead"><b>نمودار تاریخی تغییرات سرمایه</b><span class="label">سرمایه آغازین ۱٬۰۰۰ دلار</span></div><div class="chart" id="chart"><div class="empty">در حال بارگذاری…</div></div><div class="small" id="curveNote"></div></div>
+ <div class="card"><div class="cardhead"><b>عملکرد تاریخی حساب اصلی</b></div><div class="metrics">
   <div class="metric"><span class="label">ضریب سود به زیان</span><br><b id="pf">—</b></div><div class="metric"><span class="label">میانگین هر معامله</span><br><b id="avg">—</b></div>
   <div class="metric"><span class="label">میانگین سود</span><br><b id="aw">—</b></div><div class="metric"><span class="label">میانگین زیان</span><br><b id="al">—</b></div>
   <div class="metric"><span class="label">سودده / زیان‌ده</span><br><b id="wl">—</b></div><div class="metric"><span class="label">تعداد اسکن‌ها</span><br><b id="scans">—</b></div>
@@ -105,8 +118,8 @@
  <div class="tablewrap"><table class="live-table"><thead><tr><th>گردش‌کار</th><th>وضعیت</th><th>زمان شروع (UTC)</th><th>مدت اجرا</th><th>جزئیات</th></tr></thead><tbody id="activityRows"><tr><td colspan="5" class="live-empty">در حال بارگذاری فعالیت‌های اخیر…</td></tr></tbody></table></div>
  <p class="small" id="activityNote">این بخش وضعیت اجرای گردش‌کار را نشان می‌دهد، نه تمام تصمیم‌های داخلی پایتون. برای دیدن مراحل و گزارش‌ها، جزئیات هر اجرا را باز کنید.</p>
 </section>
-<section class="card section"><div class="cardhead"><b>موقعیت‌های باز</b><span class="label" id="openCount">۰ فعال</span></div><div class="positions" id="open"></div></section>
-<section class="card section"><div class="cardhead"><b>معاملات بسته‌شده</b><span class="label">ابتدا جدیدترین · نتایج آزمایشی</span></div><div class="tablewrap"><table class="table"><thead><tr><th>زمان (UTC)</th><th>نماد</th><th>ورود</th><th>خروج</th><th>سود و زیان</th><th>دلار</th><th>دلیل</th></tr></thead><tbody id="closed"></tbody></table></div></section>
+<section class="card section"><div class="cardhead"><b>موقعیت‌های باز تاریخی</b><span class="label" id="openCount">۰ فعال</span></div><div class="positions" id="open"></div></section>
+<section class="card section"><div class="cardhead"><b>معاملات بسته‌شدهٔ تاریخی</b><span class="label">دفترکل اصلی · فقط سابقه</span></div><div class="tablewrap"><table class="table"><thead><tr><th>زمان (UTC)</th><th>نماد</th><th>ورود</th><th>خروج</th><th>سود و زیان</th><th>دلار</th><th>دلیل</th></tr></thead><tbody id="closed"></tbody></table></div></section>
 <section class="card section" id="report" style="display:none"><div class="cardhead"><b>🏁 گزارش ارزیابی ۲۰۰ معامله</b><span class="green">نمونه تکمیل شد</span></div><div class="metrics" id="reportText"></div><p class="small">این گزارش مربوط به معاملات آزمایشی گذشته است و پیش‌بینی یا تضمین سودآوری در بازار واقعی نیست.</p></section>
 <footer class="footer">تازه‌سازی خودکار هر ۶۰ ثانیه · منبع: وضعیت مخزن و گزارش معاملات · فقط معاملات آزمایشی · بدون دسترسی به کیف پول یا سفارش واقعی.<br>اعداد داشبورد پس از ثبت وضعیت جدید توسط اسکنر زمان‌بندی‌شده به‌روز می‌شوند. تازه‌سازی فقط داده‌های منتشرشده را دوباره بارگذاری می‌کند و چرخه معاملاتی جدیدی را آغاز نمی‌کند.</footer>
 </main>
