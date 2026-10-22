@@ -169,7 +169,7 @@ jobs:
               net_pnl += pnl
               wins += pnl > 0
           print(f"Independent paper-trade progress: {trades}/200")
-          print(f"Independent ledger: {len(rows)} closed trades, {wins} profitable, net PnL=$\{net_pnl:.6f}")
+          print("Independent ledger: {} closed trades, {} profitable, net PnL=${:.6f}".format(len(rows), wins, net_pnl))
           print("The 200-trade target uses only the isolated paper account; no synthetic trades are generated.")
           PY
 
