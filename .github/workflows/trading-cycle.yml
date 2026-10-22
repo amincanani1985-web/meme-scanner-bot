@@ -147,13 +147,30 @@ jobs:
       - name: Validate paper-trade target integrity
         run: |
           python - <<'PY'
+          import csv
           import json
           from pathlib import Path
-          state=json.loads(Path("state.json").read_text())
-          trades=int(state.get("trade_count",0))
-          assert 0 <= trades <= 200, f"invalid trade_count: {trades}"
-          print(f"Paper-trade progress: {trades}/200")
-          print("200-trade target remains data-driven; no synthetic trades are generated.")
+          state_path = Path("paper_account/state.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          trades = int(state.get("trade_count", 0))
+          assert 0 <= trades <= 200, f"invalid independent paper trade_count: {trades}"
+          ledger_path = Path("paper_account/trades_log.csv")
+          rows = []
+          if ledger_path.exists() and ledger_path.stat().st_size:
+              with ledger_path.open(newline="", encoding="utf-8") as handle:
+                  rows = [row for row in csv.DictReader(handle) if row.get("timestamp") and row.get("mint")]
+          wins = 0
+          net_pnl = 0.0
+          for row in rows:
+              try:
+                  pnl = float(row.get("pnl_usd", ""))
+              except (TypeError, ValueError):
+                  continue
+              net_pnl += pnl
+              wins += pnl > 0
+          print(f"Independent paper-trade progress: {trades}/200")
+          print(f"Independent ledger: {len(rows)} closed trades, {wins} profitable, net PnL=$\{net_pnl:.6f}")
+          print("The 200-trade target uses only the isolated paper account; no synthetic trades are generated.")
           PY
 
       - name: Apply bounded adaptive strategy update
