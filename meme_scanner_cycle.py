@@ -1191,6 +1191,7 @@ def run_cycle(state=None):
         "score_passed": 0,
         "confirmation_pending": 0,
         "opened": 0,
+        "near_misses": [],
         "rejections": {},
     }
 
@@ -1215,6 +1216,19 @@ def run_cycle(state=None):
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
             reject("score_below_threshold")
+            if score >= threshold - 10 and len(diagnostics["near_misses"]) < 5:
+                base_token = pair.get("baseToken") or {}
+                diagnostics["near_misses"].append({
+                    "mint": mint,
+                    "symbol": base_token.get("symbol") or mint[:8],
+                    "score": round(float(score), 2),
+                    "momentum_m5_pct": components.get("momentum_m5_pct", pair.get("priceChange", {}).get("m5", 0)),
+                    "momentum_h1_pct": components.get("momentum_h1_pct", pair.get("priceChange", {}).get("h1", 0)),
+                    "buy_sell_ratio": components.get("buy_sell_ratio", 0),
+                    "liquidity_usd": components.get("liquidity_usd", (pair.get("liquidity") or {}).get("usd", 0)),
+                    "volume_h1_usd": components.get("volume_h1_usd", (pair.get("volume") or {}).get("h1", 0)),
+                    "liquidity_to_mcap_ratio": components.get("liquidity_to_mcap_ratio", 0),
+                })
             continue
         diagnostics["score_passed"] += 1
         whale_balances = {}
@@ -1251,6 +1265,8 @@ def run_cycle(state=None):
         f"score_passed={diagnostics['score_passed']} opened={diagnostics['opened']} "
         f"rejections={diagnostics['rejections']}"
     )
+    if diagnostics["near_misses"]:
+        log(f"[PAPER NEAR MISSES] {diagnostics['near_misses']}")
     state["scan_count"] += 1
     state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     save_state(state)
