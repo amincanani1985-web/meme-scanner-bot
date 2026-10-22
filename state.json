@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 319,
+  "scan_count": 320,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-22T09:24:16Z",
+  "last_run": "2026-10-22T09:25:36Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -234,7 +234,7 @@
       "entry_price": 5.476939999999999e-05,
       "entry_time": 1792660710.7122962,
       "entry_liquidity": 19881.6,
-      "peak_price": 6.1e-05,
+      "peak_price": 6.385e-05,
       "signal_score": 61.91,
       "trailing_armed": true,
       "components": {
@@ -292,27 +292,6 @@
       },
       "liquidity_drain_hits": 0
     },
-    "GMDaSAbntf9ZTGvnAj53Vn3pSRVo6oe6NaiKLYy9pump": {
-      "symbol": "CAPE",
-      "entry_price": 1.8828249999999997e-05,
-      "entry_time": 1792660866.5491498,
-      "entry_liquidity": 10609.8,
-      "peak_price": 1.922e-05,
-      "signal_score": 80.51063829787233,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 5.51063829787234,
-        "momentum_m5_pct": 6.52,
-        "momentum_h1_pct": 15.5,
-        "buy_sell_ratio": 1.7872340425531914,
-        "liquidity_usd": 10609.8,
-        "volume_h1_usd": 141034.95,
-        "market_cap_usd": 17876.0,
-        "liquidity_to_mcap_ratio": 0.5935220407249944
-      },
-      "liquidity_drain_hits": 0
-    },
     "8Xg89xT8Ve34sKiYqYuMs46mycREsCA2F362UscRpump": {
       "symbol": "GLITCH",
       "entry_price": 0.0020482699999999996,
@@ -352,27 +331,8 @@
         "volume_h1_usd": 93151.63,
         "market_cap_usd": 349988.0,
         "liquidity_to_mcap_ratio": 0.1654438152165217
-      }
-    },
-    "KihGKfriB6eMvEL3bXE3ZMu2qnBgsXJZDotuGoJpump": {
-      "symbol": "BIKECHI",
-      "entry_price": 0.0004770499999999999,
-      "entry_time": 1792661054.6638532,
-      "entry_liquidity": 63511.0,
-      "peak_price": 0.0004770499999999999,
-      "signal_score": 76.68758915834522,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 1.6875891583452216,
-        "momentum_m5_pct": -10.05,
-        "momentum_h1_pct": 986.0,
-        "buy_sell_ratio": 1.2410841654778888,
-        "liquidity_usd": 63511.0,
-        "volume_h1_usd": 2457701.98,
-        "market_cap_usd": 459433.0,
-        "liquidity_to_mcap_ratio": 0.1382377843994663
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump": {
       "symbol": "SI276",
@@ -392,7 +352,8 @@
         "volume_h1_usd": 22690.21,
         "market_cap_usd": 487130.0,
         "liquidity_to_mcap_ratio": 0.14935497711083282
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "51GmLE2LDtVC6WgN9ei2GfoAgNuDz5vdU8HbfVuwpump": {
       "symbol": "POINTLESS",
@@ -412,14 +373,15 @@
         "volume_h1_usd": 1459.13,
         "market_cap_usd": 7956.0,
         "liquidity_to_mcap_ratio": 0.7867156862745097
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HsprHxBRgiVaQdRf3TnKNuZZtaX9JUSPgMFdAkk6pump": {
       "symbol": "GATO",
       "entry_price": 0.00358904,
       "entry_time": 1792661055.91928,
       "entry_liquidity": 177931.57,
-      "peak_price": 0.00358904,
+      "peak_price": 0.003598,
       "signal_score": 59.86931034482759,
       "trailing_armed": false,
       "components": {
@@ -432,24 +394,45 @@
         "volume_h1_usd": 46599.78,
         "market_cap_usd": 3489851.0,
         "liquidity_to_mcap_ratio": 0.05098543462170735
+      },
+      "liquidity_drain_hits": 0
+    },
+    "KihGKfriB6eMvEL3bXE3ZMu2qnBgsXJZDotuGoJpump": {
+      "symbol": "BIKECHI",
+      "entry_price": 0.00041665749999999997,
+      "entry_time": 1792661135.495019,
+      "entry_liquidity": 59523.57,
+      "peak_price": 0.00041665749999999997,
+      "signal_score": 77.07741935483871,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 2.0774193548387103,
+        "momentum_m5_pct": -20.45,
+        "momentum_h1_pct": 849.0,
+        "buy_sell_ratio": 1.2967741935483872,
+        "liquidity_usd": 59523.57,
+        "volume_h1_usd": 2518657.91,
+        "market_cap_usd": 401341.0,
+        "liquidity_to_mcap_ratio": 0.148311709992251
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:24:16Z",
+    "timestamp": "2026-10-22T09:25:36Z",
     "candidate_count": 40,
-    "filter_passed": 7,
-    "shadow_opened": 5,
+    "filter_passed": 4,
+    "shadow_opened": 1,
     "rejections": {
       "pair_data_unavailable": 13,
       "shadow_liq_mcap_ratio:0.00": 1,
       "shadow_low_volume_h1:13": 1,
-      "shadow_low_volume_h1:377": 1,
+      "shadow_low_volume_h1:363": 1,
       "shadow_low_volume_h1:0": 4,
-      "shadow_low_volume_h1:111": 1,
-      "shadow_low_volume_h1:16": 1,
+      "shadow_low_volume_h1:164": 1,
+      "shadow_low_volume_h1:15": 1,
       "shadow_low_activity": 1,
-      "shadow_low_volume_h1:479": 1,
+      "shadow_low_volume_h1:484": 1,
       "shadow_low_volume_h1:3": 1,
       "shadow_low_volume_h1:321": 1,
       "shadow_low_volume_h1:46": 1
