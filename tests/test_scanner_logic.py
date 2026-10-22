@@ -594,14 +594,14 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "manage_open_positions"), \
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 50000})), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 15000})), \
              patch.object(scanner, "score_market_opportunity", return_value=(90.0, {})), \
              patch.object(scanner, "log"):
             scanner.run_cycle(state)
         diagnostics = state["paper_scan_diagnostics"]
         self.assertEqual(diagnostics["candidate_count"], 1)
         self.assertEqual(diagnostics["market_filter_passed"], 0)
-        self.assertEqual(diagnostics["rejections"], {"low_liquidity:50000": 1})
+        self.assertEqual(diagnostics["rejections"], {"low_liquidity:15000": 1})
 
 
     def test_candidate_discovery_includes_established_meme_search_results(self):
