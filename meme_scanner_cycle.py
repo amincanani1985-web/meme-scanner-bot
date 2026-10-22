@@ -378,13 +378,23 @@ def score_shadow_opportunity(pair_data, learning=None):
         return 0.0, {}
     if not all(math.isfinite(value) for value in (pc_m5, pc_h1, buys, sells)) or min(buys, sells) < 0:
         return 0.0, {}
-    score = 50.0
-    momentum_bonus = min(25.0, pc_m5 * 3.0 + pc_h1)
-    score += momentum_bonus
+    hourly_bonus = max(-20.0, min(20.0, pc_h1 * 0.4))
+    if pc_m5 < -2.0:
+        short_term_bonus = max(-25.0, 8.0 + (pc_m5 + 2.0) * 1.5)
+    elif pc_m5 <= 8.0:
+        short_term_bonus = 12.0 - abs(pc_m5 - 3.0) * 1.2
+    else:
+        short_term_bonus = max(-25.0, 12.0 - (pc_m5 - 8.0) * 3.0)
+    momentum_bonus = hourly_bonus + short_term_bonus
     ratio = buys / max(sells, 1.0)
-    buy_pressure_bonus = min(15.0, (ratio - 1.0) * 7.0)
-    score += buy_pressure_bonus
-    components = {"momentum": momentum_bonus, "buy_pressure": buy_pressure_bonus}
+    buy_pressure_bonus = max(-12.0, min(12.0, (ratio - 1.0) * 6.0))
+    score = 50.0 + momentum_bonus + buy_pressure_bonus
+    components = {
+        "momentum": momentum_bonus,
+        "hourly_bonus": hourly_bonus,
+        "short_term_bonus": short_term_bonus,
+        "buy_pressure": buy_pressure_bonus,
+    }
     components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, ratio))
     if isinstance(learning, dict):
         try:
