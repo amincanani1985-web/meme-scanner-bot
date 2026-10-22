@@ -685,9 +685,12 @@ def fetch_candidate_mints(limit=40):
                     continue
                 for token_key in ("baseToken", "quoteToken"):
                     token = pair.get(token_key) or {}
-                    identity = f"{token.get('symbol', '')} {token.get('name', '')}".upper()
+                    symbol = str(token.get("symbol", "")).strip().upper()
+                    name = str(token.get("name", "")).strip().upper()
                     mint = token.get("address")
-                    if term in identity and isinstance(mint, str) and mint and mint not in search_seen:
+                    # Exact ticker/name matching avoids flooding the feed with clones
+                    # such as BONK2, WIFINU, or "POPCAT 2.0".
+                    if (symbol == term or name == term) and isinstance(mint, str) and mint and mint not in search_seen:
                         search_seen.add(mint)
                         search_items.append(mint)
                         break
