@@ -303,7 +303,7 @@ class ScannerLogicTests(unittest.TestCase):
     def test_low_liquidity_volume_ratio_and_buy_pressure_are_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(marketCap=600000))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(marketCap=700000))[0])
         self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 12, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
