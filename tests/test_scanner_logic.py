@@ -174,14 +174,17 @@ class ScannerLogicTests(unittest.TestCase):
         boosts = Mock()
         boosts.raise_for_status.return_value = None
         boosts.json.return_value = [
-            {"chainId": "ethereum", "tokenAddress": "wrong-chain"},
             {"chainId": "solana", "tokenAddress": "sol-mint"},
+            {"chainId": "ethereum", "tokenAddress": "wrong-chain"},
         ]
+        top_boosts = Mock()
+        top_boosts.raise_for_status.return_value = None
+        top_boosts.json.return_value = [{"chainId": "solana", "tokenAddress": "top-mint"}]
         profiles = Mock()
         profiles.raise_for_status.return_value = None
         profiles.json.return_value = [{"chainId": "base", "tokenAddress": "other-chain"}]
-        with patch.object(scanner.requests, "get", side_effect=[boosts, profiles]):
-            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint"])
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles]):
+            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "top-mint"])
 
     def test_pair_lookup_never_selects_a_non_solana_pair(self):
         response = Mock()
@@ -224,13 +227,22 @@ class ScannerLogicTests(unittest.TestCase):
             {"chainId": "solana", "tokenAddress": "shared"},
             {"chainId": "ethereum", "tokenAddress": "not-solana"},
         ]
+        top_boosts = Mock()
+        top_boosts.json.return_value = [
+            {"chainId": "solana", "tokenAddress": "top-a"},
+            {"chainId": "solana", "tokenAddress": "shared"},
+            {"chainId": "solana", "tokenAddress": "top-b"},
+        ]
         profiles = Mock()
         profiles.json.return_value = [
             {"chainId": "solana", "tokenAddress": "profile-a"},
             {"chainId": "solana", "tokenAddress": "shared"},
         ]
-        with patch.object(scanner.requests, "get", side_effect=[boosts, profiles]):
-            self.assertEqual(scanner.fetch_candidate_mints(limit=3), ["boost-a", "profile-a", "shared"])
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles]):
+            self.assertEqual(
+                scanner.fetch_candidate_mints(limit=10),
+                ["boost-a", "top-a", "profile-a", "shared", "top-b"],
+            )
 
     def test_shadow_filter_accepts_research_candidate_below_live_liquidity_floor(self):
         research_pair = pair(liquidity={"usd": 30000}, volume={"h1": 5000}, marketCap=200000)
