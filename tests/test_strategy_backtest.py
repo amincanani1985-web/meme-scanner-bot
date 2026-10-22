@@ -43,7 +43,7 @@ class StrategyBacktestTests(unittest.TestCase):
 
     def test_gross_profit_below_assumed_cost_is_not_validated(self):
         rows = [
-            {"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 1.0}
+            {"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 0.5}
             for i in range(30)
         ]
         report = backtest.run(rows)
