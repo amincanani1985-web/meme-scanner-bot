@@ -429,19 +429,14 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertNotIn("mint", state["positions"])
         self.assertEqual(state["trade_count"], 1)
 
-    def test_run_cycle_opens_only_after_three_confirmations(self):
+    def test_run_cycle_opens_on_first_qualified_paper_observation(self):
         state = scanner.normalize_state({})
-        with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 3), \
-             patch.object(scanner, "helius_configured", return_value=False), \
+        with patch.object(scanner, "helius_configured", return_value=False), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
              patch.object(scanner, "save_state"), patch.object(scanner, "log"):
-            first = scanner.run_cycle(state)
-            second = scanner.run_cycle(state)
-            third = scanner.run_cycle(state)
-        self.assertEqual(first["open_positions"], 0)
-        self.assertEqual(second["open_positions"], 0)
-        self.assertEqual(third["open_positions"], 1)
+            result = scanner.run_cycle(state)
+        self.assertEqual(result["open_positions"], 1)
         self.assertIn("mint", state["positions"])
         self.assertTrue(state.get("last_run"))
 
@@ -627,7 +622,7 @@ class ScannerLogicTests(unittest.TestCase):
         diagnostics = state["paper_scan_diagnostics"]
         self.assertEqual(diagnostics["candidate_count"], 1)
         self.assertEqual(diagnostics["market_filter_passed"], 0)
-        self.assertEqual(diagnostics["rejections"], {"low_liquidity:15000": 1})
+        self.assertEqual(diagnostics["rejections"], {"low_liquidity:9000": 1})
 
 
     def test_candidate_discovery_includes_established_meme_search_results(self):
