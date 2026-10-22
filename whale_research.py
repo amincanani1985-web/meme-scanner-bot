@@ -99,6 +99,87 @@ def record_balance_changes(state, mint, previous, current, pair_data, timestamp=
     return events
 
 
+def record_balance_increases(state, mint, previous, current, pair_data, timestamp=None):
+    """Record large holder-balance increases with independent buy-pressure context."""
+    if not isinstance(state, dict):
+        raise TypeError("state must be a dictionary")
+    if not isinstance(previous, dict) or not isinstance(current, dict):
+        return []
+    if not isinstance(state.get("wallets"), dict):
+        state["wallets"] = {}
+    if not isinstance(state.get("accumulation_events"), list):
+        state["accumulation_events"] = []
+    observed_at = timestamp or datetime.now(timezone.utc).isoformat()
+    market_confirmed = False
+    if isinstance(pair_data, dict):
+        try:
+            m5 = (pair_data.get("txns") or {}).get("m5") or {}
+            buys = float(m5.get("buys"))
+            sells = float(m5.get("sells"))
+            price_change = float((pair_data.get("priceChange") or {}).get("m5"))
+            market_confirmed = (
+                all(math.isfinite(value) and value >= 0 for value in (buys, sells))
+                and math.isfinite(price_change) and buys > sells and price_change > 0
+            )
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            market_confirmed = False
+    events = []
+    for owner in sorted(previous.keys() & current.keys()):
+        try:
+            old = float(previous[owner])
+            new = float(current[owner])
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not math.isfinite(old) or not math.isfinite(new) or old <= 0 or new < 0:
+            continue
+        increase_fraction = (new - old) / old
+        if increase_fraction < DROP_THRESHOLD:
+            continue
+        event = {
+            "timestamp": observed_at,
+            "mint": str(mint),
+            "owner": str(owner),
+            "increase_pct": round(increase_fraction * 100.0, 4),
+            "market_confirmed": bool(market_confirmed),
+        }
+        events.append(event)
+        wallet = state["wallets"].setdefault(str(owner), {
+            "observed_balance_drops": 0,
+            "confirmed_sell_pressure_events": 0,
+            "observed_balance_increases": 0,
+            "confirmed_buy_pressure_events": 0,
+            "tokens_seen": [],
+            "recent_events": [],
+        })
+        wallet["observed_balance_increases"] = int(wallet.get("observed_balance_increases", 0)) + 1
+        if market_confirmed:
+            wallet["confirmed_buy_pressure_events"] = int(wallet.get("confirmed_buy_pressure_events", 0)) + 1
+        tokens = wallet.setdefault("tokens_seen", [])
+        if mint not in tokens:
+            tokens.append(str(mint))
+            del tokens[:-50]
+        recent = wallet.setdefault("recent_events", [])
+        recent.append(event)
+        del recent[:-MAX_RECENT_EVENTS]
+        wallet["last_event_at"] = observed_at
+        state["accumulation_events"].append(event)
+    del state["accumulation_events"][:-200]
+    return events
+
+
+def _append_accumulation_events(events, path="whale_accumulation_events.csv"):
+    if not events:
+        return
+    file_path = Path(path)
+    headers = ["timestamp", "mint", "owner", "increase_pct", "market_confirmed"]
+    exists = file_path.exists() and file_path.stat().st_size > 0
+    with file_path.open("a", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=headers)
+        if not exists:
+            writer.writeheader()
+        writer.writerows(events)
+
+
 def _load_state(path):
     try:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -150,6 +231,7 @@ def run(state_path="whale_watch_state.json"):
     candidates.sort(key=lambda item: item[0], reverse=True)
 
     all_events = []
+    all_accumulation_events = []
     updated = 0
     watched = candidates[:MAX_WATCH_TOKENS]
     for _, mint, pair in watched:
@@ -160,6 +242,9 @@ def run(state_path="whale_watch_state.json"):
         previous = previous_record.get("balances", {}) if isinstance(previous_record, dict) else {}
         if previous:
             all_events.extend(record_balance_changes(
+                state, mint, previous, balances, pair
+            ))
+            all_accumulation_events.extend(record_balance_increases(
                 state, mint, previous, balances, pair
             ))
         state["snapshots"][mint] = {
@@ -175,6 +260,7 @@ def run(state_path="whale_watch_state.json"):
             state["snapshots"].pop(mint, None)
     Path(state_path).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     _append_events(all_events)
+    _append_accumulation_events(all_accumulation_events)
     top_wallets = sorted(
         ({"owner": owner, "observed_drops": int(data.get("observed_balance_drops", 0)),
           "confirmed_sell_pressure_events": int(data.get("confirmed_sell_pressure_events", 0)),
@@ -183,14 +269,26 @@ def run(state_path="whale_watch_state.json"):
         key=lambda item: (item["confirmed_sell_pressure_events"], item["observed_drops"]),
         reverse=True,
     )[:5]
+    top_accumulators = sorted(
+        ({"owner": owner,
+          "observed_increases": int(data.get("observed_balance_increases", 0)),
+          "confirmed_buy_pressure_events": int(data.get("confirmed_buy_pressure_events", 0)),
+          "tokens_seen": len(data.get("tokens_seen", []))}
+         for owner, data in state["wallets"].items()),
+        key=lambda item: (item["confirmed_buy_pressure_events"], item["observed_increases"]),
+        reverse=True,
+    )[:5]
     return {
         "status": "ok",
         "scanned": len(watched),
         "snapshots_updated": updated,
         "events": len(all_events),
         "confirmed_events": sum(1 for event in all_events if event["market_confirmed"]),
+        "accumulation_events": len(all_accumulation_events),
+        "confirmed_accumulations": sum(1 for event in all_accumulation_events if event["market_confirmed"]),
         "tracked_wallets": len(state["wallets"]),
         "top_wallets": top_wallets,
+        "top_accumulators": top_accumulators,
         "research_only": True,
     }
 
