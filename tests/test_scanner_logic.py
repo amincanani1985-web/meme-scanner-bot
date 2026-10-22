@@ -346,9 +346,10 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_candidate_confirmation_requires_three_consecutive_hits(self):
         state = {"strategy": {"active_threshold": 80}, "candidate_observations": {}}
-        self.assertFalse(scanner.candidate_confirmation(state, "mint", 85))
-        self.assertFalse(scanner.candidate_confirmation(state, "mint", 86))
-        self.assertTrue(scanner.candidate_confirmation(state, "mint", 87))
+        with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 3):
+            self.assertFalse(scanner.candidate_confirmation(state, "mint", 85))
+            self.assertFalse(scanner.candidate_confirmation(state, "mint", 86))
+            self.assertTrue(scanner.candidate_confirmation(state, "mint", 87))
 
     def test_paper_profile_can_confirm_on_first_qualified_observation(self):
         state = {"strategy": {"active_threshold": 60}, "candidate_observations": {}}
