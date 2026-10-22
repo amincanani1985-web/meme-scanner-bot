@@ -741,5 +741,12 @@ class PaperScenarioLabTests(unittest.TestCase):
             ])
 
 
+    def test_pullback_profile_rejects_flat_hourly_trend(self):
+        flat_trend = pair(priceChange={"m5": 0.5, "h1": 1.8})
+        accepted, reason = scanner.passes_market_filter(flat_trend)
+        self.assertFalse(accepted)
+        self.assertTrue(reason.startswith("weak_momentum_h1:"))
+
+
 if __name__ == "__main__":
     unittest.main()
