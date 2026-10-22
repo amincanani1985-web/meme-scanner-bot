@@ -612,11 +612,18 @@ class ScannerLogicTests(unittest.TestCase):
         search_result = Mock()
         search_result.raise_for_status.return_value = None
         search_result.json.return_value = {
-            "pairs": [{
-                "chainId": "solana",
-                "baseToken": {"address": "search-mint", "symbol": "BONK", "name": "Bonk"},
-                "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
-            }]
+            "pairs": [
+                {
+                    "chainId": "solana",
+                    "baseToken": {"address": "search-mint", "symbol": "BONK", "name": "Bonk"},
+                    "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                },
+                {
+                    "chainId": "solana",
+                    "baseToken": {"address": "bonk-clone", "symbol": "BONK2", "name": "BONK 2.0"},
+                    "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                },
+            ]
         }
         empty_searches = []
         for _ in range(7):
@@ -630,6 +637,7 @@ class ScannerLogicTests(unittest.TestCase):
         ):
             candidates = scanner.fetch_candidate_mints(limit=10)
         self.assertIn("search-mint", candidates)
+        self.assertNotIn("bonk-clone", candidates)
         self.assertNotIn("usdc-mint", candidates)
 
 
