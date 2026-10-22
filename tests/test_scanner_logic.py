@@ -546,5 +546,22 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["positions"], {})
 
 
+    def test_shadow_scan_rejects_bearish_signals_clamped_to_zero_score(self):
+        state = scanner.normalize_state({})
+        bearish = pair(
+            priceChange={"m5": -10.0, "h1": -90.0},
+            txns={"m5": {"buys": 0, "sells": 10}},
+            liquidity={"usd": 5000},
+            volume={"h1": 10000},
+            marketCap=100000,
+        )
+        with patch.object(scanner, "fetch_candidate_mints", return_value=["bearish"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=bearish), \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(state)
+        self.assertEqual(result["shadow_opened"], [])
+        self.assertEqual(state["shadow_positions"], {})
+
+
 if __name__ == "__main__":
     unittest.main()
