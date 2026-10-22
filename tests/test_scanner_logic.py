@@ -244,7 +244,13 @@ class ScannerLogicTests(unittest.TestCase):
             {"chainId": "solana", "tokenAddress": "profile-a"},
             {"chainId": "solana", "tokenAddress": "shared"},
         ]
-        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles]):
+        empty_searches = []
+        for _ in range(8):
+            response = Mock()
+            response.raise_for_status.return_value = None
+            response.json.return_value = {"pairs": []}
+            empty_searches.append(response)
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, *empty_searches]):
             self.assertEqual(
                 scanner.fetch_candidate_mints(limit=10),
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
