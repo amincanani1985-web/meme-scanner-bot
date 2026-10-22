@@ -531,5 +531,20 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(Path.cwd(), original_cwd)
 
 
+    def test_active_paper_cycle_collects_shadow_outcomes_without_double_counting_scans(self):
+        state = scanner.normalize_state({})
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_market_opportunity", return_value=(70.0, {})), \
+             patch.object(scanner, "log"):
+            scanner.run_cycle(state)
+        self.assertIn("mint", state["shadow_positions"])
+        self.assertEqual(state["scan_count"], 1)
+        self.assertEqual(state["positions"], {})
+
+
 if __name__ == "__main__":
     unittest.main()
