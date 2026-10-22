@@ -563,5 +563,21 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["shadow_positions"], {})
 
 
+    def test_active_scan_records_market_filter_rejection_reason(self):
+        state = scanner.normalize_state({})
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 50000})), \
+             patch.object(scanner, "score_market_opportunity", return_value=(90.0, {})), \
+             patch.object(scanner, "log"):
+            scanner.run_cycle(state)
+        diagnostics = state["paper_scan_diagnostics"]
+        self.assertEqual(diagnostics["candidate_count"], 1)
+        self.assertEqual(diagnostics["market_filter_passed"], 0)
+        self.assertEqual(diagnostics["rejections"], {"low_liquidity:50000": 1})
+
+
 if __name__ == "__main__":
     unittest.main()
