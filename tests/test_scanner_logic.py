@@ -658,6 +658,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_active_scan_persists_near_miss_score_and_features(self):
         state = scanner.normalize_state({})
+        state["strategy"]["active_threshold"] = 75.0
         components = {
             "momentum_m5_pct": 3.0,
             "momentum_h1_pct": 25.0,
