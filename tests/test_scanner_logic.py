@@ -431,7 +431,8 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_run_cycle_opens_only_after_three_confirmations(self):
         state = scanner.normalize_state({})
-        with patch.object(scanner, "helius_configured", return_value=False), \
+        with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 3), \
+             patch.object(scanner, "helius_configured", return_value=False), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
              patch.object(scanner, "save_state"), patch.object(scanner, "log"):
@@ -804,11 +805,11 @@ class PaperScenarioLabTests(unittest.TestCase):
         )
         self.assertEqual(scanner.passes_market_filter(candidate), (True, "ok"))
 
-    def test_pullback_profile_rejects_flat_hourly_trend(self):
-        flat_trend = pair(priceChange={"m5": 0.5, "h1": 1.8})
-        accepted, reason = scanner.passes_market_filter(flat_trend)
+    def test_pullback_profile_rejects_negative_hourly_trend(self):
+        negative_trend = pair(priceChange={"m5": 0.5, "h1": -0.1})
+        accepted, reason = scanner.passes_market_filter(negative_trend)
         self.assertFalse(accepted)
-        self.assertTrue(reason.startswith("weak_momentum_h1:"))
+        self.assertTrue(reason.startswith("negative_momentum_h1:"))
 
 
 if __name__ == "__main__":
