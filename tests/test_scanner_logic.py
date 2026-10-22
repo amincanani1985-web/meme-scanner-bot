@@ -617,11 +617,25 @@ class ScannerLogicTests(unittest.TestCase):
                     "chainId": "solana",
                     "baseToken": {"address": "search-mint", "symbol": "BONK", "name": "Bonk"},
                     "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                    "liquidity": {"usd": 50000},
+                    "volume": {"h1": 40000},
+                    "pairCreatedAt": 1760000000000,
                 },
                 {
                     "chainId": "solana",
                     "baseToken": {"address": "bonk-clone", "symbol": "BONK2", "name": "BONK 2.0"},
                     "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                    "liquidity": {"usd": 50000},
+                    "volume": {"h1": 40000},
+                    "pairCreatedAt": 1760000000000,
+                },
+                {
+                    "chainId": "solana",
+                    "baseToken": {"address": "illiquid-mint", "symbol": "WIF", "name": "dogwifhat"},
+                    "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                    "liquidity": {"usd": 10000},
+                    "volume": {"h1": 40000},
+                    "pairCreatedAt": 1760000000000,
                 },
             ]
         }
@@ -638,6 +652,7 @@ class ScannerLogicTests(unittest.TestCase):
             candidates = scanner.fetch_candidate_mints(limit=10)
         self.assertIn("search-mint", candidates)
         self.assertNotIn("bonk-clone", candidates)
+        self.assertNotIn("illiquid-mint", candidates)
         self.assertNotIn("usdc-mint", candidates)
 
 
