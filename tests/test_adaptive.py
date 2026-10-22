@@ -85,9 +85,10 @@ class AdaptiveTests(unittest.TestCase):
 
     def test_entry_confirmation_requires_three_hits(self):
         s={"candidate_observations":{}}
-        self.assertFalse(scanner.candidate_confirmation(s,"mint",85))
-        self.assertFalse(scanner.candidate_confirmation(s,"mint",86))
-        self.assertTrue(scanner.candidate_confirmation(s,"mint",87))
+        with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 3):
+            self.assertFalse(scanner.candidate_confirmation(s,"mint",85))
+            self.assertFalse(scanner.candidate_confirmation(s,"mint",86))
+            self.assertTrue(scanner.candidate_confirmation(s,"mint",87))
 
     def test_slippage_changes_pnl(self):
         s={"equity":1000.0,"positions":{},"trade_count":0,"blacklist":[],"cooldowns":{}}
