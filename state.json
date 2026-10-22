@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 317,
+  "scan_count": 318,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-22T09:21:08Z",
+  "last_run": "2026-10-22T09:21:57Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -250,27 +250,6 @@
       },
       "liquidity_drain_hits": 0
     },
-    "3Xq3nspu91fEzGbzi9kSJ4FYAnBeeiLHPoxQx6cPSQj1": {
-      "symbol": "BLACKTOBER",
-      "entry_price": 0.00010911249999999999,
-      "entry_time": 1792660511.655997,
-      "entry_liquidity": 26556.27,
-      "peak_price": 0.0001198,
-      "signal_score": 78.0625,
-      "trailing_armed": true,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 3.0625,
-        "momentum_m5_pct": 9.42,
-        "momentum_h1_pct": 17.77,
-        "buy_sell_ratio": 1.4375,
-        "liquidity_usd": 26556.27,
-        "volume_h1_usd": 74105.71,
-        "market_cap_usd": 102946.0,
-        "liquidity_to_mcap_ratio": 0.25796310687156376
-      },
-      "liquidity_drain_hits": 0
-    },
     "GNE7e774tkGyxMMzP36ofhNuRrUZ15H4e1LE1xekpump": {
       "symbol": "KIMCHIBULL",
       "entry_price": 0.00624428,
@@ -394,14 +373,15 @@
         "volume_h1_usd": 2275632.87,
         "market_cap_usd": 518656.0,
         "liquidity_to_mcap_ratio": 0.12953352511105626
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "GMDaSAbntf9ZTGvnAj53Vn3pSRVo6oe6NaiKLYy9pump": {
       "symbol": "CAPE",
       "entry_price": 1.8828249999999997e-05,
       "entry_time": 1792660866.5491498,
       "entry_liquidity": 10609.8,
-      "peak_price": 1.8828249999999997e-05,
+      "peak_price": 1.922e-05,
       "signal_score": 80.51063829787233,
       "trailing_armed": false,
       "components": {
@@ -414,7 +394,8 @@
         "volume_h1_usd": 141034.95,
         "market_cap_usd": 17876.0,
         "liquidity_to_mcap_ratio": 0.5935220407249944
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "8Xg89xT8Ve34sKiYqYuMs46mycREsCA2F362UscRpump": {
       "symbol": "GLITCH",
@@ -434,24 +415,25 @@
         "volume_h1_usd": 8592.25,
         "market_cap_usd": 1884716.0,
         "liquidity_to_mcap_ratio": 0.06620484465564043
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:21:08Z",
+    "timestamp": "2026-10-22T09:21:57Z",
     "candidate_count": 40,
-    "filter_passed": 5,
-    "shadow_opened": 3,
+    "filter_passed": 3,
+    "shadow_opened": 0,
     "rejections": {
       "pair_data_unavailable": 13,
       "shadow_liq_mcap_ratio:0.00": 1,
       "shadow_low_volume_h1:13": 1,
-      "shadow_low_volume_h1:377": 1,
+      "shadow_low_volume_h1:394": 1,
       "shadow_low_volume_h1:0": 4,
       "shadow_low_volume_h1:111": 1,
       "shadow_low_volume_h1:20": 1,
       "shadow_low_activity": 1,
-      "shadow_low_volume_h1:489": 1,
+      "shadow_low_volume_h1:496": 1,
       "shadow_low_volume_h1:3": 1,
       "shadow_low_volume_h1:321": 1,
       "shadow_low_volume_h1:46": 1
