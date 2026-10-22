@@ -83,7 +83,7 @@
  <div class="tablewrap"><table class="live-table"><thead><tr><th>بازه امتیاز</th><th>نمونه آزمون</th><th>نرخ برد خالص</th><th>حد پایین اطمینان ۹۵٪</th><th>میانگین خالص مقاوم</th><th>ضریب سود خالص</th><th>وضعیت</th></tr></thead><tbody id="shRowsTable"><tr><td colspan="7" class="live-empty">گزارش نتایج سایه در انتظار اجراست.</td></tr></tbody></table></div>
  <div class="tablewrap" style="margin-top:14px"><table class="live-table"><thead><tr><th>هزینهٔ فرضی رفت‌وبرگشت</th><th>میانگین خالص آزمون</th><th>نرخ برد خالص</th><th>ضریب سود خالص</th><th>تعداد نمونه</th></tr></thead><tbody id="shCostTable"><tr><td colspan="5" class="live-empty">تحلیل حساسیت هزینه در انتظار اجراست.</td></tr></tbody></table></div>
  <div class="tablewrap" style="margin-top:14px"><table class="live-table"><thead><tr><th>ویژگی ورودی</th><th>نمونهٔ دارای داده</th><th>همبستگی با سودوزیان</th><th>توضیح</th></tr></thead><tbody id="shFeatureTable"><tr><td colspan="4" class="live-empty">ویژگی‌های ورودی در انتظار دادهٔ جدید هستند.</td></tr></tbody></table></div>
- <p class="small" id="shNote">هزینهٔ پیش‌فرض ۲٪ رفت‌وبرگشت فقط فرض آزمایشی است، نه اندازه‌گیری دقیق کارمزد و لغزش هر توکن.</p>
+ <p class="small" id="shNote">کارمزد اضافهٔ پیش‌فرض پس از لغزش شبیه‌سازی‌شده ۲٪ رفت‌وبرگشت فقط فرض آزمایشی است، نه اندازه‌گیری دقیق کارمزد و لغزش هر توکن.</p>
  <p class="small" id="btNote">بک‌تست زمانی بر داده‌های ثبت‌شده اجرا می‌شود. واجد شرایط بودن آماری به‌تنهایی تضمین سودآوری نیست؛ این بخش معاملات زنده را فعال نمی‌کند.</p>
 </section>
 
@@ -270,7 +270,7 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
  $('btUpdated').textContent=new Date().toLocaleString('fa-IR',{dateStyle:'short',timeStyle:'short'});
  const entries=Object.entries(r.thresholds||{});
  $('btRowsTable').innerHTML=entries.map(([t,v])=>{const m=v.validation||{};return '<tr><td>'+t+'</td><td>'+(m.n||0)+'</td><td>'+pct(m.net_win_rate)+'</td><td class="'+(m.net_win_rate_wilson_lower>=0.5?'up':'down')+'">'+pct(m.net_win_rate_wilson_lower)+'</td><td class="'+(m.net_robust_mean_pnl>0?'up':'down')+'">'+Number(m.net_robust_mean_pnl||0).toFixed(2)+'%</td><td>'+Number(m.net_profit_factor||0).toFixed(2)+'</td><td>'+(v.eligible?'از آزمون خالص عبور کرد':'تأییدنشده')+'</td></tr>';}).join('')||'<tr><td colspan="7" class="live-empty">تاریخچه معاملات امتیازدار هنوز کافی نیست.</td></tr>';
- $('btNote').textContent='معاملات امتیازدار: '+(r.rows||0)+'؛ حداقل موردنیاز: '+(r.required_rows||30)+'؛ آزمون زمانی: '+(r.validation_rows||0)+'؛ هزینهٔ فرضی رفت‌وبرگشت: '+Number(r.assumed_round_trip_cost_pct||2).toFixed(1)+'%. حدنصاب فقط با بازده خالص مثبت و حد پایین اطمینان ۹۵٪ نرخ برد خالص حداقل ۵۰٪ تأیید می‌شود. این بک‌تست به‌تنهایی سودآوری را ثابت نمی‌کند.';
+ $('btNote').textContent='معاملات امتیازدار: '+(r.rows||0)+'؛ حداقل موردنیاز: '+(r.required_rows||30)+'؛ آزمون زمانی: '+(r.validation_rows||0)+'؛ کارمزد فرضی اضافه پس از لغزش شبیه‌سازی‌شده: '+Number(r.assumed_round_trip_cost_pct||2).toFixed(1)+'%. حدنصاب فقط با بازده خالص مثبت و حد پایین اطمینان ۹۵٪ نرخ برد خالص حداقل ۵۰٪ تأیید می‌شود. این بک‌تست به‌تنهایی سودآوری را ثابت نمی‌کند.';
  if(!sh){$('shadowStatus').textContent='گزارش در دسترس نیست';return;}
  $('shadowStatus').textContent=statusLabel(sh.status);
  $('shRows').textContent=(sh.rows||0)+' مشاهده';
