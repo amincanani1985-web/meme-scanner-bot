@@ -64,7 +64,8 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_hardened_risk_constants(self):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
-        self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 80.0)
+        self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 75.0)
+        self.assertEqual(scanner.MAX_PRICE_CHANGE_M5_PCT, 15.0)
         self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.005)
         self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.02)
 
@@ -297,10 +298,10 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertTrue(reason.startswith("pair_too_new:"))
 
     def test_low_liquidity_volume_ratio_and_buy_pressure_are_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 99999}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(marketCap=300000))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 19, "sells": 10}}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(marketCap=500000))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 14, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(priceChange={"m5": 15, "h1": -0.1}))[0])
@@ -629,6 +630,30 @@ class ScannerLogicTests(unittest.TestCase):
             candidates = scanner.fetch_candidate_mints(limit=10)
         self.assertIn("search-mint", candidates)
         self.assertNotIn("usdc-mint", candidates)
+
+
+    def test_pullback_profile_accepts_hourly_strength_but_rejects_m5_chasing(self):
+        pullback = pair(
+            liquidity={"usd": 22000},
+            volume={"h1": 50000},
+            marketCap=70000,
+            txns={"m5": {"buys": 15, "sells": 10}},
+            priceChange={"m5": -1.0, "h1": 60.0},
+        )
+        self.assertEqual(scanner.passes_market_filter(pullback), (True, "ok"))
+        score, _ = scanner.score_market_opportunity(pullback)
+        self.assertGreaterEqual(score, scanner.OPPORTUNITY_ENTRY_THRESHOLD)
+
+        overextended = pair(
+            liquidity={"usd": 25000},
+            volume={"h1": 50000},
+            marketCap=80000,
+            txns={"m5": {"buys": 30, "sells": 10}},
+            priceChange={"m5": 16.89, "h1": 22.47},
+        )
+        accepted, reason = scanner.passes_market_filter(overextended)
+        self.assertFalse(accepted)
+        self.assertTrue(reason.startswith("overextended_momentum_m5:"))
 
 
 if __name__ == "__main__":
