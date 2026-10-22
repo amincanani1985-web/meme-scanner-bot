@@ -35,16 +35,19 @@ HTTP_TIMEOUT_SECONDS = 10
 # CORE RISK PARAMETERS (HARDENED v20 - profit-focused)
 # ============================================================================
 
-# Entry filters: EXTREME SELECTIVITY
-MIN_LIQUIDITY_USD = 100000                # Was 50k → thick order book only
-MIN_VOLUME_H1_USD = 20000                 # Was 5k → proven volume
-MIN_LIQUIDITY_TO_MCAP_RATIO = 0.40        # Was 0.35 → stronger filter
-MIN_BUY_SELL_RATIO_M5 = 2.0               # Was 1.5 → strong buyer pressure
-MIN_PRICE_CHANGE_M5_PCT = 1.5             # Was 1.0 → real momentum
-MIN_PAIR_AGE_SECONDS = 3600               # 60 min → avoid brand new scams
+# Experimental paper profile: prefer a sustained hourly trend with a modest 5m pullback.
+# The historical score buckets did not validate momentum-chasing; these settings remain
+# paper-only and must earn promotion through forward outcomes, not assumed profitability.
+MIN_LIQUIDITY_USD = 20000
+MIN_VOLUME_H1_USD = 20000
+MIN_LIQUIDITY_TO_MCAP_RATIO = 0.25
+MIN_BUY_SELL_RATIO_M5 = 1.5
+MIN_PRICE_CHANGE_M5_PCT = -2.0
+MAX_PRICE_CHANGE_M5_PCT = 15.0
+MIN_PAIR_AGE_SECONDS = 1800               # 30 min; still excludes the newest launches
 
-# Entry scoring: ULTRA SELECTIVE
-OPPORTUNITY_ENTRY_THRESHOLD = 80.0        # Was 75.0 → only ELITE signals
+# Entry scoring: experimental pullback threshold, paper account only.
+OPPORTUNITY_ENTRY_THRESHOLD = 75.0
 MAX_CONCURRENT_POSITIONS = 4              # Was 8 → reduce correlation
 MAX_POSITION_EQUITY_FRACTION = 0.005      # 0.5% per trade (was 1%)
 MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.02    # 2% total (was 5%)
@@ -227,6 +230,8 @@ def passes_market_filter(pair_data):
     pc_m5 = pair_data.get("priceChange", {}).get("m5", 0) or 0
     if pc_m5 < MIN_PRICE_CHANGE_M5_PCT:
         return False, f"weak_momentum_m5:{pc_m5:.1f}%"
+    if pc_m5 > MAX_PRICE_CHANGE_M5_PCT:
+        return False, f"overextended_momentum_m5:{pc_m5:.1f}%"
     
     pc_h1 = pair_data.get("priceChange", {}).get("h1", 0) or 0
     if pc_h1 < 0:
