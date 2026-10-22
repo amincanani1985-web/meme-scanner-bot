@@ -1191,6 +1191,7 @@ def run_cycle(state=None):
         "score_passed": 0,
         "confirmation_pending": 0,
         "opened": 0,
+        "evaluated_candidates": [],
         "near_misses": [],
         "rejections": {},
     }
@@ -1213,22 +1214,27 @@ def run_cycle(state=None):
         diagnostics["market_filter_passed"] += 1
         score, components = score_market_opportunity(pair, state.get("learning"))
         threshold = float(state["strategy"].get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
+        base_token = pair.get("baseToken") or {}
+        candidate_snapshot = {
+            "mint": mint,
+            "symbol": base_token.get("symbol") or mint[:8],
+            "score": round(float(score), 2),
+            "threshold": round(threshold, 2),
+            "eligible_by_score": score >= threshold,
+            "momentum_m5_pct": components.get("momentum_m5_pct", (pair.get("priceChange") or {}).get("m5", 0)),
+            "momentum_h1_pct": components.get("momentum_h1_pct", (pair.get("priceChange") or {}).get("h1", 0)),
+            "buy_sell_ratio": components.get("buy_sell_ratio", 0),
+            "liquidity_usd": components.get("liquidity_usd", (pair.get("liquidity") or {}).get("usd", 0)),
+            "volume_h1_usd": components.get("volume_h1_usd", (pair.get("volume") or {}).get("h1", 0)),
+            "liquidity_to_mcap_ratio": components.get("liquidity_to_mcap_ratio", 0),
+        }
+        if len(diagnostics["evaluated_candidates"]) < 5:
+            diagnostics["evaluated_candidates"].append(candidate_snapshot)
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
             reject("score_below_threshold")
             if score >= threshold - 10 and len(diagnostics["near_misses"]) < 5:
-                base_token = pair.get("baseToken") or {}
-                diagnostics["near_misses"].append({
-                    "mint": mint,
-                    "symbol": base_token.get("symbol") or mint[:8],
-                    "score": round(float(score), 2),
-                    "momentum_m5_pct": components.get("momentum_m5_pct", (pair.get("priceChange") or {}).get("m5", 0)),
-                    "momentum_h1_pct": components.get("momentum_h1_pct", (pair.get("priceChange") or {}).get("h1", 0)),
-                    "buy_sell_ratio": components.get("buy_sell_ratio", 0),
-                    "liquidity_usd": components.get("liquidity_usd", (pair.get("liquidity") or {}).get("usd", 0)),
-                    "volume_h1_usd": components.get("volume_h1_usd", (pair.get("volume") or {}).get("h1", 0)),
-                    "liquidity_to_mcap_ratio": components.get("liquidity_to_mcap_ratio", 0),
-                })
+                diagnostics["near_misses"].append(candidate_snapshot)
             continue
         diagnostics["score_passed"] += 1
         whale_balances = {}
