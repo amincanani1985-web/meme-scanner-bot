@@ -95,7 +95,7 @@ def feature_associations(rows):
     return result
 
 
-def metrics(rows, round_trip_cost_pct=2.0):
+def metrics(rows, round_trip_cost_pct=1.0):
     """Return gross and cost-adjusted metrics; extreme outliers cannot validate a bucket."""
     values = [float(row["pnl_pct"]) for row in rows
               if math.isfinite(float(row["pnl_pct"]))]
@@ -191,7 +191,7 @@ def analyze(observations, min_history_rows=MIN_HISTORY_ROWS,
         "cost_sensitivity": [
             {"assumed_round_trip_cost_pct": cost,
              **metrics(validation, round_trip_cost_pct=cost)}
-            for cost in (1.0, 2.0, 3.0, 5.0)
+            for cost in (0.5, 1.0, 1.5, 2.0)
         ],
         "policy": "research_only_no_live_threshold_changes",
         "confidence_policy": "95pct_wilson_lower_bound_of_net_win_rate_must_be_at_least_0.5",
@@ -201,8 +201,8 @@ def analyze(observations, min_history_rows=MIN_HISTORY_ROWS,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--observations", default="shadow_observations.csv")
-    parser.add_argument("--round-trip-cost-pct", type=float, default=2.0,
-                        help="Assumed total fees and slippage as percentage points per round trip")
+    parser.add_argument("--round-trip-cost-pct", type=float, default=1.0,
+                        help="Additional round-trip fee reserve after simulated entry/exit slippage")
     args = parser.parse_args()
     print(json.dumps(analyze(load_observations(args.observations),
                              round_trip_cost_pct=args.round_trip_cost_pct), indent=2))
