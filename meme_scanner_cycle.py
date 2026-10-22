@@ -683,6 +683,19 @@ def fetch_candidate_mints(limit=40):
             for pair in pairs:
                 if not isinstance(pair, dict) or pair.get("chainId") != "solana":
                     continue
+                try:
+                    pair_liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
+                    pair_volume_h1 = float((pair.get("volume") or {}).get("h1") or 0)
+                    pair_created_ms = float(pair.get("pairCreatedAt") or 0)
+                except (TypeError, ValueError):
+                    continue
+                pair_age_seconds = time.time() - pair_created_ms / 1000 if pair_created_ms > 0 else 0
+                if (
+                    pair_liquidity < MIN_LIQUIDITY_USD
+                    or pair_volume_h1 < MIN_VOLUME_H1_USD
+                    or pair_age_seconds < MIN_PAIR_AGE_SECONDS
+                ):
+                    continue
                 for token_key in ("baseToken", "quoteToken"):
                     token = pair.get(token_key) or {}
                     symbol = str(token.get("symbol", "")).strip().upper()
@@ -696,13 +709,13 @@ def fetch_candidate_mints(limit=40):
                         break
         except (requests.RequestException, ValueError, TypeError, AttributeError):
             continue
-    feeds.append(search_items)
-
+    # Prioritize established, liquid search results before the noisy launch feeds.
+    feeds = [search_items, *feeds]
     source_counts = {
-        "latest_boosts": len(feeds[0]),
-        "top_boosts": len(feeds[1]),
-        "profiles": len(feeds[2]),
-        "meme_search": len(feeds[3]),
+        "meme_search": len(feeds[0]),
+        "latest_boosts": len(feeds[1]),
+        "top_boosts": len(feeds[2]),
+        "profiles": len(feeds[3]),
     }
     # Interleave feeds so a large first response cannot starve any one source.
     found, seen = [], set()
