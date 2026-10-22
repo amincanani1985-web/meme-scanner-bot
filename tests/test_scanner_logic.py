@@ -317,22 +317,24 @@ class ScannerLogicTests(unittest.TestCase):
     def test_low_liquidity_volume_ratio_and_buy_pressure_are_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(marketCap=700000))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(marketCap=2100000))[0])
         self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 12, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(priceChange={"m5": 15, "h1": -0.1}))[0])
 
-    def test_score_rewards_stronger_momentum_and_buy_pressure(self):
-        baseline, _ = scanner.score_market_opportunity(pair())
-        weaker_momentum, _ = scanner.score_market_opportunity(
+    def test_score_rewards_controlled_movement_and_stronger_buy_pressure(self):
+        controlled_pullback, _ = scanner.score_market_opportunity(
             pair(priceChange={"m5": 2.0, "h1": 10.0})
+        )
+        overextended, _ = scanner.score_market_opportunity(
+            pair(priceChange={"m5": 15.0, "h1": 10.0})
         )
         weaker_buying, _ = scanner.score_market_opportunity(
             pair(txns={"m5": {"buys": 20, "sells": 10}})
         )
-        self.assertGreater(baseline, weaker_momentum)
-        self.assertGreater(baseline, weaker_buying)
+        self.assertGreater(controlled_pullback, overextended)
+        self.assertGreater(controlled_pullback, weaker_buying)
 
     def test_learning_bonus_only_applies_with_positive_history(self):
         baseline, _ = scanner.score_market_opportunity(pair())
@@ -347,6 +349,11 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertFalse(scanner.candidate_confirmation(state, "mint", 85))
         self.assertFalse(scanner.candidate_confirmation(state, "mint", 86))
         self.assertTrue(scanner.candidate_confirmation(state, "mint", 87))
+
+    def test_paper_profile_can_confirm_on_first_qualified_observation(self):
+        state = {"strategy": {"active_threshold": 60}, "candidate_observations": {}}
+        with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 1):
+            self.assertTrue(scanner.candidate_confirmation(state, "mint", 75))
 
     def test_candidate_confirmation_restarts_after_score_drop(self):
         state = {"strategy": {"active_threshold": 80}, "candidate_observations": {}}
