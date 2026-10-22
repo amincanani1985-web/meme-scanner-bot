@@ -45,6 +45,34 @@ class WhaleResearchTests(unittest.TestCase):
         self.assertEqual(len(wallet["tokens_seen"]), 2)
         self.assertNotIn("profit", wallet)
 
+    def test_large_balance_increase_is_recorded_as_accumulation_only_with_buy_pressure(self):
+        state = {}
+        events = wr.record_balance_increases(
+            state, "mint-a", {"wallet-a": 1000.0, "wallet-b": 500.0},
+            {"wallet-a": 1300.0, "wallet-b": 550.0},
+            {"txns": {"m5": {"buys": 20, "sells": 5}},
+             "priceChange": {"m5": 3.0}},
+            timestamp="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["owner"], "wallet-a")
+        self.assertEqual(events[0]["increase_pct"], 30.0)
+        self.assertTrue(events[0]["market_confirmed"])
+        self.assertEqual(state["wallets"]["wallet-a"]["confirmed_buy_pressure_events"], 1)
+
+    def test_balance_increase_without_buy_pressure_is_not_a_confirmed_accumulation(self):
+        state = {}
+        events = wr.record_balance_increases(
+            state, "mint-a", {"wallet-a": 1000.0}, {"wallet-a": 1300.0},
+            {"txns": {"m5": {"buys": 3, "sells": 8}},
+             "priceChange": {"m5": -1.0}},
+            timestamp="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(len(events), 1)
+        self.assertFalse(events[0]["market_confirmed"])
+        self.assertEqual(state["wallets"]["wallet-a"]["observed_balance_increases"], 1)
+        self.assertEqual(state["wallets"]["wallet-a"]["confirmed_buy_pressure_events"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
