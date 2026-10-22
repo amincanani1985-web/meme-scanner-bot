@@ -186,7 +186,7 @@ class ScannerLogicTests(unittest.TestCase):
         profiles.raise_for_status.return_value = None
         profiles.json.return_value = [{"chainId": "base", "tokenAddress": "other-chain"}]
         empty_searches = []
-        for _ in range(8):
+        for _ in range(len(scanner.DISCOVERY_SEARCH_TERMS)):
             response = Mock()
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
@@ -640,7 +640,7 @@ class ScannerLogicTests(unittest.TestCase):
             ]
         }
         empty_searches = []
-        for _ in range(7):
+        for _ in range(len(scanner.DISCOVERY_SEARCH_TERMS) - 1):
             response = Mock()
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
