@@ -24,6 +24,7 @@ LAST_DISCOVERY_DIAGNOSTICS = {"selected": 0, "source_counts": {}}
 DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/latest/dex/tokens/{}"
 ENTRY_SLIPPAGE_BPS = 150
 EXIT_SLIPPAGE_BPS = 200
+PAPER_ROUND_TRIP_FEE_PCT = 1.0  # Additional fee reserve; entry/exit slippage is modeled separately
 MAX_HOLD_SECONDS = 600
 MAX_MISSING_PRICE_SECONDS = 600
 # Do not label shadow outcomes from stale prices after the intended hold window.
@@ -569,7 +570,11 @@ def close_position(state, mint, exit_price, reason):
         float(exit_price) * (1.0 - EXIT_SLIPPAGE_BPS / 10000.0)
         if float(exit_price) > 0 else 0.0
     )
-    pnl_pct = (effective_exit_price - entry_price) / entry_price
+    gross_pnl_pct = (effective_exit_price - entry_price) / entry_price
+    # Ledger PnL is net of both modeled entry/exit slippage and a conservative
+    # additional round-trip fee reserve. Strategy observations retain gross-after-
+    # slippage PnL so the validator can subtract that fee reserve exactly once.
+    pnl_pct = gross_pnl_pct - PAPER_ROUND_TRIP_FEE_PCT / 100.0
     pnl_usd = amount_usd * pnl_pct
     
     # Update equity
@@ -600,7 +605,7 @@ def close_position(state, mint, exit_price, reason):
             state["blacklist"].append(mint)
     
     append_trade(mint, pos, entry_price, effective_exit_price, reason, pnl_pct, pnl_usd, state["equity"])
-    append_learning_observation(pos.get("signal_score"), pnl_pct * 100.0, reason, pos.get("entry_components"))
+    append_learning_observation(pos.get("signal_score"), gross_pnl_pct * 100.0, reason, pos.get("entry_components"))
     symbol = pos.get("symbol", "?")
     log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
