@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 322,
+  "scan_count": 323,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-22T09:29:44Z",
+  "last_run": "2026-10-22T09:30:39Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -360,7 +360,7 @@
       "entry_price": 6.554869999999998e-05,
       "entry_time": 1792661337.3958082,
       "entry_liquidity": 21918.55,
-      "peak_price": 6.574e-05,
+      "peak_price": 6.727e-05,
       "signal_score": 73.89473684210526,
       "trailing_armed": false,
       "components": {
@@ -436,16 +436,37 @@
         "volume_h1_usd": 116836.97,
         "market_cap_usd": 15108.0,
         "liquidity_to_mcap_ratio": 0.6230791633571617
+      },
+      "liquidity_drain_hits": 0
+    },
+    "6LDrBVbBqJPG7AKe1ssXpQzahj2bbWJZFPbBHW7ZeFj": {
+      "symbol": "MONEKO",
+      "entry_price": 3.58904e-05,
+      "entry_time": 1792661437.930032,
+      "entry_liquidity": 16346.1,
+      "peak_price": 3.58904e-05,
+      "signal_score": 80.53146853146853,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 5.531468531468532,
+        "momentum_m5_pct": 20.04,
+        "momentum_h1_pct": -24.83,
+        "buy_sell_ratio": 1.7902097902097902,
+        "liquidity_usd": 16346.1,
+        "volume_h1_usd": 211509.34,
+        "market_cap_usd": 35368.0,
+        "liquidity_to_mcap_ratio": 0.4621720199049989
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:29:44Z",
+    "timestamp": "2026-10-22T09:30:39Z",
     "candidate_count": 40,
-    "filter_passed": 4,
+    "filter_passed": 3,
     "shadow_opened": 1,
     "rejections": {
-      "pair_data_unavailable": 12,
+      "pair_data_unavailable": 13,
       "shadow_liq_mcap_ratio:0.00": 1,
       "shadow_low_volume_h1:13": 1,
       "shadow_low_volume_h1:345": 1,
@@ -455,8 +476,7 @@
       "shadow_low_activity": 1,
       "shadow_low_volume_h1:476": 1,
       "shadow_low_volume_h1:3": 1,
-      "shadow_low_volume_h1:318": 1,
-      "shadow_low_volume_h1:46": 1
+      "shadow_low_volume_h1:318": 1
     }
   }
 }
