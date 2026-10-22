@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Hardened meme-coin paper scanner.
-Entry: high-conviction score (80+) with three consecutive confirmations.
+Entry: paper-only exploratory profile; risk controls remain enabled.
 Risk controls are modeled estimates and require validation against real market data.
 """
 import time
@@ -40,14 +40,14 @@ HTTP_TIMEOUT_SECONDS = 10
 # Experimental paper profile: prefer a sustained hourly trend with a modest 5m pullback.
 # The historical score buckets did not validate momentum-chasing; these settings remain
 # paper-only and must earn promotion through forward outcomes, not assumed profitability.
-MIN_LIQUIDITY_USD = 20000
-MIN_VOLUME_H1_USD = 20000
-MIN_LIQUIDITY_TO_MCAP_RATIO = 0.15
-MIN_BUY_SELL_RATIO_M5 = 1.25
-MIN_PRICE_CHANGE_M5_PCT = -2.0
+MIN_LIQUIDITY_USD = 10000
+MIN_VOLUME_H1_USD = 10000
+MIN_LIQUIDITY_TO_MCAP_RATIO = 0.05
+MIN_BUY_SELL_RATIO_M5 = 1.0
+MIN_PRICE_CHANGE_M5_PCT = -8.0
 MAX_PRICE_CHANGE_M5_PCT = 15.0
-MIN_PRICE_CHANGE_H1_PCT = 5.0
-MIN_PAIR_AGE_SECONDS = 1800               # 30 min; still excludes the newest launches
+MIN_PRICE_CHANGE_H1_PCT = 0.0
+MIN_PAIR_AGE_SECONDS = 600                # 10 min; paper-only exploration profile
 
 # Entry scoring: experimental low-score/pullback threshold, paper account only.
 # The 60-70 historical holdout bucket looked promising but had only four samples,
@@ -71,7 +71,7 @@ WHALE_DUMP_THRESHOLD = 0.20               # Whale selling > 20% = exit
 STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 
 # Candidate confirmation threshold
-CANDIDATE_CONFIRMATION_HITS = 3           # Require 3 observations (was 2)
+CANDIDATE_CONFIRMATION_HITS = 1           # Paper-only: enter on first qualified observation (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
 SHADOW_MIN_SCORE = 50.0                    # Exclude bearish/zero-clamped signals from the useful research cohort
@@ -337,18 +337,27 @@ def score_market_opportunity(pair_data, learning=None):
     score = 50.0  # baseline
     components = {}
     
-    # 1. Price momentum (m5 = short-term signal, h1 = confirmation)
+    # Prefer a controlled move with a positive hourly trend over a vertical 5m pump.
     pc_m5 = pair_data.get("priceChange", {}).get("m5", 0) or 0
     pc_h1 = pair_data.get("priceChange", {}).get("h1", 0) or 0
-    momentum_bonus = min(25.0, pc_m5 * 3.0 + pc_h1 * 1.0)
+    hourly_bonus = max(-20.0, min(20.0, pc_h1 * 0.4))
+    if pc_m5 < -2.0:
+        short_term_bonus = max(-25.0, 8.0 + (pc_m5 + 2.0) * 1.5)
+    elif pc_m5 <= 8.0:
+        short_term_bonus = 12.0 - abs(pc_m5 - 3.0) * 1.2
+    else:
+        short_term_bonus = max(-25.0, 12.0 - (pc_m5 - 8.0) * 3.0)
+    momentum_bonus = hourly_bonus + short_term_bonus
     score += momentum_bonus
     components["momentum"] = momentum_bonus
-    
-    # 2. Buy/sell pressure (strong buyers = strong signal)
+    components["hourly_bonus"] = hourly_bonus
+    components["short_term_bonus"] = short_term_bonus
+
+    # Buy/sell pressure is bounded to prevent extreme ratios dominating the score.
     buys = pair_data.get("txns", {}).get("m5", {}).get("buys", 0) or 0
     sells = pair_data.get("txns", {}).get("m5", {}).get("sells", 0) or 1
     buy_sell_ratio = buys / max(sells, 1)
-    buy_pressure_bonus = min(15.0, (buy_sell_ratio - 1.0) * 7.0)
+    buy_pressure_bonus = max(-12.0, min(12.0, (buy_sell_ratio - 1.0) * 6.0))
     score += buy_pressure_bonus
     components["buy_pressure"] = buy_pressure_bonus
     components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, buy_sell_ratio))
@@ -422,8 +431,8 @@ def candidate_confirmation(state, mint, signal_score):
     if not isinstance(entry, dict):
         if signal_score >= threshold:
             obs[mint] = {"hits": 1, "last_score": signal_score, "last_seen": now}
-        else:
-            obs.pop(mint, None)
+            return CANDIDATE_CONFIRMATION_HITS <= 1
+        obs.pop(mint, None)
         return False
 
     try:
