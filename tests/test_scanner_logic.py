@@ -674,10 +674,14 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "score_market_opportunity", return_value=(72.0, components)), \
              patch.object(scanner, "log"):
             scanner.run_cycle(state)
-        near_miss = state["paper_scan_diagnostics"]["near_misses"][0]
+        diagnostics = state["paper_scan_diagnostics"]
+        near_miss = diagnostics["near_misses"][0]
         self.assertEqual(near_miss["score"], 72.0)
         self.assertEqual(near_miss["symbol"], "TEST")
         self.assertEqual(near_miss["momentum_m5_pct"], 3.0)
+        evaluated = diagnostics["evaluated_candidates"][0]
+        self.assertEqual(evaluated["score"], 72.0)
+        self.assertFalse(evaluated["eligible_by_score"])
 
 
 if __name__ == "__main__":
