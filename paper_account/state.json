@@ -100,7 +100,7 @@
       "entry_price": 0.00010091129999999998,
       "entry_time": 1792660199.140589,
       "entry_liquidity": 25441.1,
-      "peak_price": 0.0001045,
+      "peak_price": 0.0001057,
       "signal_score": 79.33333333333333,
       "trailing_armed": false,
       "components": {
@@ -184,7 +184,7 @@
       "entry_price": 0.00036225349999999994,
       "entry_time": 1792660410.4860702,
       "entry_liquidity": 54192.03,
-      "peak_price": 0.00036225349999999994,
+      "peak_price": 0.0003688,
       "signal_score": 76.03613053613054,
       "trailing_armed": false,
       "components": {
@@ -197,7 +197,8 @@
         "volume_h1_usd": 1983409.84,
         "market_cap_usd": 348907.0,
         "liquidity_to_mcap_ratio": 0.15531941176301994
-      }
+      },
+      "liquidity_drain_hits": 0
     }
   },
   "cooldowns": {},
@@ -216,29 +217,30 @@
   "whale_snapshots": {},
   "blacklist": [],
   "trade_count": 0,
-  "scan_count": 21,
+  "scan_count": 22,
   "version": "v21-live-price",
   "peak_equity": 1000.0,
-  "last_run": "2026-10-22T09:13:33Z",
+  "last_run": "2026-10-22T09:14:23Z",
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:13:31Z",
+    "timestamp": "2026-10-22T09:14:21Z",
     "candidate_count": 40,
-    "filter_passed": 6,
-    "shadow_opened": 1,
+    "filter_passed": 5,
+    "shadow_opened": 0,
     "rejections": {
       "pair_data_unavailable": 13,
       "shadow_liq_mcap_ratio:0.00": 1,
       "shadow_low_volume_h1:0": 5,
       "shadow_low_volume_h1:325": 1,
-      "shadow_low_volume_h1:30": 1,
       "shadow_low_volume_h1:117": 1,
-      "shadow_low_volume_h1:252": 1,
+      "shadow_low_volume_h1:30": 1,
       "shadow_low_volume_h1:306": 1,
-      "shadow_low_volume_h1:3": 2
+      "shadow_low_volume_h1:3": 1,
+      "shadow_low_volume_h1:252": 1,
+      "shadow_low_volume_h1:7": 1
     }
   },
   "paper_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:13:31Z",
+    "timestamp": "2026-10-22T09:14:21Z",
     "candidate_count": 40,
     "market_filter_passed": 1,
     "score_passed": 0,
@@ -246,30 +248,30 @@
     "opened": 0,
     "near_misses": [],
     "rejections": {
-      "liq_mcap_ratio:0.16": 1,
-      "liq_mcap_ratio:0.15": 2,
       "pair_data_unavailable": 13,
-      "low_volume_h1:4486": 1,
+      "liq_mcap_ratio:0.16": 1,
+      "low_volume_h1:4408": 1,
+      "liq_mcap_ratio:0.15": 2,
       "liq_mcap_ratio:0.04": 1,
       "low_volume_h1:0": 4,
-      "low_liquidity:15094": 1,
       "low_liquidity:10317": 1,
-      "weak_buy_pressure:1.11": 1,
+      "low_liquidity:10299": 1,
       "low_volume_h1:7061": 1,
-      "pair_too_new:882s": 1,
-      "low_liquidity:2364": 1,
+      "pair_too_new:932s": 1,
+      "weak_buy_pressure:1.25": 1,
       "low_liquidity:2634": 1,
+      "low_liquidity:2364": 1,
+      "low_liquidity:18737": 1,
       "low_volume_h1:732": 1,
-      "low_liquidity:18543": 1,
       "low_liquidity:5844": 1,
-      "low_volume_h1:252": 1,
       "low_volume_h1:306": 1,
       "low_liquidity:2936": 1,
-      "low_liquidity:10810": 1,
+      "low_volume_h1:252": 1,
       "liq_mcap_ratio:0.05": 1,
       "low_liquidity:4615": 1,
+      "low_liquidity:10810": 1,
       "score_below_threshold": 1,
-      "low_liquidity:2162": 1
+      "low_liquidity:2280": 1
     }
   }
 }
