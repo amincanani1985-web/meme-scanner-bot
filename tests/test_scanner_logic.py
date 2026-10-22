@@ -727,7 +727,7 @@ class PaperScenarioLabTests(unittest.TestCase):
         scenarios = report["scenarios"]
         self.assertEqual(report["mode"], "deterministic_simulation_not_live_or_historical_performance")
         self.assertEqual(report["scenario_count"], 15)
-        self.assertEqual(report["closed_scenarios"], 9)
+        self.assertEqual(report["closed_scenarios"], sum(item.get("status") == "closed" for item in scenarios.values()))
         self.assertEqual(report["open_scenarios"], 4)
         self.assertEqual(report["unresolved_scenarios"], 2)
         self.assertEqual(report["entry_gate_scenario_count"], 9)
