@@ -1,0 +1,100 @@
+name: paper profit target loop
+
+on:
+  workflow_run:
+    workflows: ["meme scanner trading cycle"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: paper-profit-target-loop
+  cancel-in-progress: false
+
+jobs:
+  continue-until-profitable:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout latest paper state
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Continue scans until a net-profitable paper trade or safety stop
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/check-paper-target.py <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          try:
+              state = json.loads(Path("paper_account/state.json").read_text(encoding="utf-8"))
+          except (OSError, ValueError, TypeError):
+              print("true state_invalid 0 0 0.000000")
+              raise SystemExit(0)
+
+          ledger = Path("paper_account/trades_log.csv")
+          pnls = []
+          if ledger.exists() and ledger.stat().st_size:
+              with ledger.open(newline="", encoding="utf-8") as handle:
+                  for row in csv.DictReader(handle):
+                      try:
+                          pnl = float(row.get("pnl_usd", ""))
+                      except (TypeError, ValueError):
+                          continue
+                      if pnl == pnl and abs(pnl) != float("inf"):
+                          pnls.append(pnl)
+
+          wins = sum(pnl > 0 for pnl in pnls)
+          net = sum(pnls)
+          risk_status = (state.get("risk_control") or {}).get("status", "unknown")
+          if wins > 0:
+              stop, reason = True, "profit"
+          elif risk_status == "halted":
+              stop, reason = True, "risk_halt"
+          elif len(pnls) >= 200:
+              stop, reason = True, "trade_cap"
+          else:
+              stop, reason = False, "continue"
+          print(f"{'true' if stop else 'false'} {reason} {len(pnls)} {wins} {net:.6f}")
+          PY
+
+          check_target() {
+            python /tmp/check-paper-target.py
+          }
+
+          read -r stop reason trades wins net < <(check_target)
+          echo "Paper target check: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
+          if [ "$stop" = "true" ]; then
+            echo "Stopping paper loop at safety/result gate: $reason"
+            exit 0
+          fi
+
+          # Preserve the intended five-minute cadence even when GitHub cron is delayed.
+          sleep 240
+          git fetch origin main
+          git reset --hard origin/main
+
+          read -r stop reason trades wins net < <(check_target)
+          echo "Paper target recheck: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
+          if [ "$stop" = "true" ]; then
+            echo "Stopping paper loop at safety/result gate: $reason"
+            exit 0
+          fi
+
+          active=$(gh run list --workflow trading-cycle.yml --branch main --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" -gt 0 ]; then
+            echo "A trading cycle is already queued or running; it will trigger the next target check."
+            exit 0
+          fi
+
+          echo "No net-profitable closed paper trade yet; dispatching the next isolated paper cycle."
+          gh workflow run trading-cycle.yml --ref main
