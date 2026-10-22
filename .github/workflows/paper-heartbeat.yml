@@ -1,0 +1,70 @@
+name: paper heartbeat recovery
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/paper-heartbeat.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: trading-cycle-watchdog
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout latest paper state
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Dispatch only when paper state is stale and no cycle is active
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          stale = True
+          age = None
+          try:
+              state = json.loads(Path("paper_account/state.json").read_text(encoding="utf-8"))
+              raw = state.get("last_run") if isinstance(state, dict) else None
+              if raw:
+                  stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                  if stamp.tzinfo is None:
+                      stamp = stamp.replace(tzinfo=timezone.utc)
+                  age = (datetime.now(timezone.utc) - stamp).total_seconds()
+                  stale = age < -60 or age > 420
+          except (OSError, ValueError, TypeError, json.JSONDecodeError):
+              stale = True
+          print(f"stale={'true' if stale else 'false'}")
+          print(f"age_seconds={'' if age is None else int(age)}")
+          PY
+
+          if [ "$stale" != "true" ]; then
+            echo "Independent paper-account heartbeat is fresh (${age_seconds:-unknown}s)."
+            exit 0
+          fi
+
+          active=$(gh run list --workflow trading-cycle.yml --branch main --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" -gt 0 ]; then
+            echo "Paper heartbeat is stale, but a trading cycle is already queued or running."
+            exit 0
+          fi
+
+          echo "Paper heartbeat is stale (${age_seconds:-unknown}s); dispatching a recovery cycle."
+          gh workflow run trading-cycle.yml --ref main
