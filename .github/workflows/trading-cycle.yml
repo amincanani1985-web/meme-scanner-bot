@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "meme_scanner_cycle.py"
+      - "paper_scenario_lab.py"
       - "tests/**"
       - "learn_agent.py"
       - "strategy_backtest.py"
@@ -15,6 +16,7 @@ on:
     branches: [main]
     paths:
       - "meme_scanner_cycle.py"
+      - "paper_scenario_lab.py"
       - "tests/**"
       - "learn_agent.py"
       - "strategy_backtest.py"
