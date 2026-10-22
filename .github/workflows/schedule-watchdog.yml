@@ -43,7 +43,10 @@ jobs:
           age = None
           stale = True
           try:
-              state = json.loads(Path("state.json").read_text(encoding="utf-8"))
+              # The historical account can heartbeat even when the independent paper
+              # account failed. Monitor the account whose performance is being evaluated.
+              state_path = Path("paper_account/state.json")
+              state = json.loads(state_path.read_text(encoding="utf-8"))
               raw = state.get("last_run") if isinstance(state, dict) else None
               if raw:
                   stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
@@ -52,8 +55,10 @@ jobs:
                   age = (datetime.now(timezone.utc) - stamp).total_seconds()
                   # A future heartbeat is invalid, not evidence of a healthy cycle.
                   stale = age < -60 or age > 420
+              else:
+                  print(f"No last_run timestamp in {state_path}; treating it as stale.")
           except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
-              print(f"Heartbeat unavailable or invalid ({type(exc).__name__}); treating it as stale.")
+              print(f"Paper-account heartbeat unavailable or invalid ({type(exc).__name__}); treating it as stale.")
           age_text = "unknown" if age is None else f"{age:.0f}s"
           print(f"Heartbeat age: {age_text}; stale={stale} (recovery threshold: 420s)")
           Path("/tmp/heartbeat-stale").write_text("yes" if stale else "no")
