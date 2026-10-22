@@ -20,6 +20,7 @@ DEXSCREENER_TOKEN_TOP_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/top
 DEXSCREENER_TOKEN_PROFILES_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
 DEXSCREENER_SEARCH_URL = "https://api.dexscreener.com/latest/dex/search"
 DISCOVERY_SEARCH_TERMS = ("BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO")
+LAST_DISCOVERY_DIAGNOSTICS = {"selected": 0, "source_counts": {}}
 DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/latest/dex/tokens/{}"
 ENTRY_SLIPPAGE_BPS = 150
 EXIT_SLIPPAGE_BPS = 200
@@ -633,6 +634,7 @@ def fetch_dex_pair(mint):
 
 def fetch_candidate_mints(limit=40):
     """Fetch a bounded, interleaved Solana candidate list from boost, profile, and search feeds."""
+    global LAST_DISCOVERY_DIAGNOSTICS
     if limit <= 0:
         return []
     feeds = []
@@ -702,9 +704,9 @@ def fetch_candidate_mints(limit=40):
                     seen.add(mint)
                     found.append(mint)
                     if len(found) >= limit:
-                        log(f"[DISCOVERY] selected={len(found)} source_counts={source_counts}")
+                        LAST_DISCOVERY_DIAGNOSTICS = {"selected": len(found), "source_counts": source_counts}
                         return found
-    log(f"[DISCOVERY] selected={len(found)} source_counts={source_counts}")
+    LAST_DISCOVERY_DIAGNOSTICS = {"selected": len(found), "source_counts": source_counts}
     return found
 
 
@@ -851,7 +853,10 @@ def manage_shadow_positions(state):
 
 def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     """Collect labeled virtual-trade samples independently of account entry eligibility."""
+    fetched_here = candidates is None
     candidates = fetch_candidate_mints() if candidates is None else candidates
+    if fetched_here:
+        log(f"[DISCOVERY] selected={LAST_DISCOVERY_DIAGNOSTICS.get('selected', len(candidates))} source_counts={LAST_DISCOVERY_DIAGNOSTICS.get('source_counts', {})}")
     opened = []
     rejections = {}
     filter_passed = 0
@@ -1190,6 +1195,7 @@ def run_cycle(state=None):
         log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; account entries blocked; shadow_scanned={shadow['scanned']} shadow_opened={len(shadow['shadow_opened'])}")
         return {"scanned": shadow["scanned"], "opened": opened, "shadow_opened": shadow["shadow_opened"], "open_positions": len(state["positions"]), "shadow_positions": len(state["shadow_positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
     candidates = fetch_candidate_mints()
+    log(f"[DISCOVERY] selected={LAST_DISCOVERY_DIAGNOSTICS.get('selected', len(candidates))} source_counts={LAST_DISCOVERY_DIAGNOSTICS.get('source_counts', {})}")
     # Keep a research-only cohort running even while the paper account is healthy.
     # Without this, the independent account would produce no labeled outcomes until
     # a drawdown halt, leaving the active strategy without current-market evidence.
