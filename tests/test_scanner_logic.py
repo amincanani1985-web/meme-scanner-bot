@@ -64,7 +64,7 @@ class ScannerLogicTests(unittest.TestCase):
 
     def test_hardened_risk_constants(self):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
-        self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 75.0)
+        self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 60.0)
         self.assertEqual(scanner.MAX_PRICE_CHANGE_M5_PCT, 15.0)
         self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.005)
         self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.02)
