@@ -433,7 +433,7 @@ class ScannerLogicTests(unittest.TestCase):
         state = scanner.normalize_state({})
         with patch.object(scanner, "helius_configured", return_value=False), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(priceChange={"m5": 2.0, "h1": 10.0})), \
              patch.object(scanner, "save_state"), patch.object(scanner, "log"):
             result = scanner.run_cycle(state)
         self.assertEqual(result["open_positions"], 1)
