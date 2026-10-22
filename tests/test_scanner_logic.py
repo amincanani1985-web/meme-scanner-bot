@@ -183,7 +183,13 @@ class ScannerLogicTests(unittest.TestCase):
         profiles = Mock()
         profiles.raise_for_status.return_value = None
         profiles.json.return_value = [{"chainId": "base", "tokenAddress": "other-chain"}]
-        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles]):
+        empty_searches = []
+        for _ in range(8):
+            response = Mock()
+            response.raise_for_status.return_value = None
+            response.json.return_value = {"pairs": []}
+            empty_searches.append(response)
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, *empty_searches]):
             self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "top-mint"])
 
     def test_pair_lookup_never_selects_a_non_solana_pair(self):
@@ -589,6 +595,34 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(diagnostics["candidate_count"], 1)
         self.assertEqual(diagnostics["market_filter_passed"], 0)
         self.assertEqual(diagnostics["rejections"], {"low_liquidity:50000": 1})
+
+
+    def test_candidate_discovery_includes_established_meme_search_results(self):
+        empty_feed = Mock()
+        empty_feed.raise_for_status.return_value = None
+        empty_feed.json.return_value = []
+        search_result = Mock()
+        search_result.raise_for_status.return_value = None
+        search_result.json.return_value = {
+            "pairs": [{
+                "chainId": "solana",
+                "baseToken": {"address": "search-mint", "symbol": "BONK", "name": "Bonk"},
+                "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+            }]
+        }
+        empty_searches = []
+        for _ in range(7):
+            response = Mock()
+            response.raise_for_status.return_value = None
+            response.json.return_value = {"pairs": []}
+            empty_searches.append(response)
+        with patch.object(
+            scanner.requests, "get",
+            side_effect=[empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
+        ):
+            candidates = scanner.fetch_candidate_mints(limit=10)
+        self.assertIn("search-mint", candidates)
+        self.assertNotIn("usdc-mint", candidates)
 
 
 if __name__ == "__main__":
