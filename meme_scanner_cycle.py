@@ -46,8 +46,10 @@ MIN_PRICE_CHANGE_M5_PCT = -2.0
 MAX_PRICE_CHANGE_M5_PCT = 15.0
 MIN_PAIR_AGE_SECONDS = 1800               # 30 min; still excludes the newest launches
 
-# Entry scoring: experimental pullback threshold, paper account only.
-OPPORTUNITY_ENTRY_THRESHOLD = 75.0
+# Entry scoring: experimental low-score/pullback threshold, paper account only.
+# The 60-70 historical holdout bucket looked promising but had only four samples,
+# so this is forward-testing only and is not a validated profitability claim.
+OPPORTUNITY_ENTRY_THRESHOLD = 60.0
 LEGACY_BASELINE_ENTRY_THRESHOLD = 80.0
 MAX_CONCURRENT_POSITIONS = 4              # Was 8 → reduce correlation
 MAX_POSITION_EQUITY_FRACTION = 0.005      # 0.5% per trade (was 1%)
