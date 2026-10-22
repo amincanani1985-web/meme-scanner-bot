@@ -7,6 +7,7 @@ control-flow only, not strategy profitability or real execution quality.
 """
 import json
 import math
+import time
 
 import meme_scanner_cycle as scanner
 
@@ -154,7 +155,46 @@ def scenario_definitions():
     ]
 
 
+
+def run_entry_gate_scenarios():
+    """Exercise production market-entry filters with deterministic synthetic pairs."""
+    now_ms = int(time.time() * 1000)
+    baseline = {
+        "pairCreatedAt": now_ms - 3_600_000,
+        "liquidity": {"usd": 50_000},
+        "volume": {"h1": 50_000},
+        "marketCap": 200_000,
+        "txns": {"m5": {"buys": 30, "sells": 10}},
+        "priceChange": {"m5": 2.0, "h1": 8.0},
+    }
+    cases = [
+        ("healthy_baseline", {}, True, "ok"),
+        ("pair_too_new", {"pairCreatedAt": now_ms - 60_000}, False, "pair_too_new:"),
+        ("liquidity_below_floor", {"liquidity": {"usd": scanner.MIN_LIQUIDITY_USD - 1}}, False, "low_liquidity:"),
+        ("volume_below_floor", {"volume": {"h1": scanner.MIN_VOLUME_H1_USD - 1}}, False, "low_volume_h1:"),
+        ("liquidity_to_mcap_too_low", {"marketCap": 300_000}, False, "liq_mcap_ratio:"),
+        ("weak_buy_pressure", {"txns": {"m5": {"buys": 10, "sells": 10}}}, False, "weak_buy_pressure:"),
+        ("overextended_five_minute_move", {"priceChange": {"m5": 16.0, "h1": 8.0}}, False, "overextended_momentum_m5:"),
+        ("weak_hourly_momentum", {"priceChange": {"m5": 2.0, "h1": 1.0}}, False, "weak_momentum_h1:"),
+        ("missing_pair_age", {"pairCreatedAt": None}, False, "invalid_pair_age"),
+    ]
+    results = {}
+    for name, override, expected_pass, expected_reason in cases:
+        pair = dict(baseline)
+        pair.update(override)
+        passed, reason = scanner.passes_market_filter(pair)
+        expected = reason == expected_reason if expected_reason in ("ok", "invalid_pair_age") else reason.startswith(expected_reason)
+        if passed != expected_pass or not expected:
+            raise AssertionError(
+                f"entry {name}: expected pass={expected_pass}, reason={expected_reason}; "
+                f"got pass={passed}, reason={reason}"
+            )
+        results[name] = {"passed": passed, "reason": reason}
+    return results
+
+
 def run_scenarios():
+    entry_gate_results = run_entry_gate_scenarios()
     definitions = scenario_definitions()
     results = {}
     expectations = {}
@@ -175,6 +215,8 @@ def run_scenarios():
         "mode": "deterministic_simulation_not_live_or_historical_performance",
         "scenario_count": len(results),
         "scenarios": results,
+        "entry_gate_scenario_count": len(entry_gate_results),
+        "entry_gate_scenarios": entry_gate_results,
         "closed_scenarios": len(closed),
         "open_scenarios": sum(r["status"] == "open" for r in results.values()),
         "unresolved_scenarios": sum(r["status"] == "unresolved" for r in results.values()),
