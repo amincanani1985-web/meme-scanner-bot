@@ -16,6 +16,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 DEXSCREENER_TOKEN_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/latest/v1"
+DEXSCREENER_TOKEN_TOP_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/top/v1"
 DEXSCREENER_TOKEN_PROFILES_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
 DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/latest/dex/tokens/{}"
 ENTRY_SLIPPAGE_BPS = 150
@@ -623,7 +624,7 @@ def fetch_candidate_mints(limit=40):
     if limit <= 0:
         return []
     feeds = []
-    for url in (DEXSCREENER_TOKEN_BOOSTS_URL, DEXSCREENER_TOKEN_PROFILES_URL):
+    for url in (DEXSCREENER_TOKEN_BOOSTS_URL, DEXSCREENER_TOKEN_TOP_BOOSTS_URL, DEXSCREENER_TOKEN_PROFILES_URL):
         items_for_feed = []
         local_seen = set()
         try:
