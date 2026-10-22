@@ -48,6 +48,7 @@ MIN_PAIR_AGE_SECONDS = 1800               # 30 min; still excludes the newest la
 
 # Entry scoring: experimental pullback threshold, paper account only.
 OPPORTUNITY_ENTRY_THRESHOLD = 75.0
+LEGACY_BASELINE_ENTRY_THRESHOLD = 80.0
 MAX_CONCURRENT_POSITIONS = 4              # Was 8 → reduce correlation
 MAX_POSITION_EQUITY_FRACTION = 0.005      # 0.5% per trade (was 1%)
 MAX_PORTFOLIO_EXPOSURE_FRACTION = 0.02    # 2% total (was 5%)
@@ -161,9 +162,11 @@ def normalize_legacy_strategy_baseline(state):
     strategy = state.get("strategy", {})
     if strategy.get("status") == "waiting_for_history":
         old_threshold = float(strategy.get("active_threshold", 60.0))
-        if old_threshold < OPPORTUNITY_ENTRY_THRESHOLD:  # any untrained strategy below hardened baseline
-            state["strategy"]["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
-            state["strategy"]["rollback_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+        if old_threshold < LEGACY_BASELINE_ENTRY_THRESHOLD:
+            # Historical untrained accounts retain the original conservative baseline.
+            # The experimental threshold applies only to the isolated paper profile.
+            state["strategy"]["active_threshold"] = LEGACY_BASELINE_ENTRY_THRESHOLD
+            state["strategy"]["rollback_threshold"] = LEGACY_BASELINE_ENTRY_THRESHOLD
             state["strategy"]["baseline_migrated_from"] = old_threshold
             state["strategy"]["status"] = "baseline"
     return state
