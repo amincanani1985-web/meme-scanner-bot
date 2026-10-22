@@ -18,6 +18,8 @@ from datetime import datetime, timedelta
 DEXSCREENER_TOKEN_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/latest/v1"
 DEXSCREENER_TOKEN_TOP_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/top/v1"
 DEXSCREENER_TOKEN_PROFILES_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
+DEXSCREENER_SEARCH_URL = "https://api.dexscreener.com/latest/dex/search"
+DISCOVERY_SEARCH_TERMS = ("BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO")
 DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/latest/dex/tokens/{}"
 ENTRY_SLIPPAGE_BPS = 150
 EXIT_SLIPPAGE_BPS = 200
@@ -645,7 +647,35 @@ def fetch_candidate_mints(limit=40):
             items_for_feed = []
         feeds.append(items_for_feed)
 
-    # Interleave feeds so a large first response cannot starve the second feed.
+    # Latest boosts/profiles are heavily skewed toward newly surfaced tokens.
+    # Add pair-search results for established Solana meme assets so the age and
+    # liquidity filters have candidates they can realistically admit.
+    search_items = []
+    search_seen = set()
+    for term in DISCOVERY_SEARCH_TERMS:
+        try:
+            response = requests.get(DEXSCREENER_SEARCH_URL, params={"q": term}, timeout=HTTP_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            payload = response.json()
+            pairs = payload.get("pairs") or [] if isinstance(payload, dict) else []
+            if not isinstance(pairs, list):
+                continue
+            for pair in pairs:
+                if not isinstance(pair, dict) or pair.get("chainId") != "solana":
+                    continue
+                for token_key in ("baseToken", "quoteToken"):
+                    token = pair.get(token_key) or {}
+                    identity = f"{token.get('symbol', '')} {token.get('name', '')}".upper()
+                    mint = token.get("address")
+                    if term in identity and isinstance(mint, str) and mint and mint not in search_seen:
+                        search_seen.add(mint)
+                        search_items.append(mint)
+                        break
+        except (requests.RequestException, ValueError, TypeError, AttributeError):
+            continue
+    feeds.append(search_items)
+
+    # Interleave feeds so a large first response cannot starve any one source.
     found, seen = [], set()
     max_rows = max((len(feed) for feed in feeds), default=0)
     for index in range(max_rows):
