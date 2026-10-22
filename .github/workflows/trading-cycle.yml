@@ -64,7 +64,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile meme_scanner_cycle.py paper_scenario_lab.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -75,6 +75,25 @@ jobs:
             python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee /tmp/test.log
             grep -qE "Ran [0-9]+ tests" /tmp/test.log
           done
+
+      - name: Run isolated paper scenario lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          python paper_scenario_lab.py | tee /tmp/paper-scenario-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/paper-scenario-report.json").read_text(encoding="utf-8"))
+          print("## Isolated paper scenario lab")
+          print("- Mode: deterministic synthetic paths; not historical/live performance")
+          print(f"- Closed scenarios: {report['closed_scenarios']}")
+          print(f"- Unresolved scenarios: {report['unresolved_scenarios']}")
+          print(f"- Combined net PnL across closed scenarios: ${report['combined_net_pnl_usd_for_closed_scenarios']:.6f} on separate $5 test positions")
+          for name, result in report["scenarios"].items():
+              pnl = "unresolved" if result["net_pnl_pct"] is None else f"{result['net_pnl_pct']:+.2f}%"
+              print(f"- {name}: status={result['status']}, exit={result['reason'] or 'none'}, net={pnl}")
+          PY
 
       - name: Report walk-forward strategy validation status
         shell: bash
