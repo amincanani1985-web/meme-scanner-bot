@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import meme_scanner_cycle as scanner
+import paper_scenario_lab
 
 
 def pair(**overrides):
@@ -710,6 +711,34 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertAlmostEqual(trade.call_args.args[6], 5.0 * net_pct / 100, places=6)
         self.assertAlmostEqual(learning.call_args.args[1], gross_pct, places=6)
         self.assertAlmostEqual(state["equity"], 1000.0 + 5.0 * net_pct / 100, places=6)
+
+
+class PaperScenarioLabTests(unittest.TestCase):
+    def test_scenario_lab_exercises_exit_and_missing_quote_paths(self):
+        report = paper_scenario_lab.run_scenarios()
+        scenarios = report["scenarios"]
+        self.assertEqual(report["mode"], "deterministic_simulation_not_live_or_historical_performance")
+        self.assertEqual(report["closed_scenarios"], 4)
+        self.assertEqual(report["unresolved_scenarios"], 1)
+        self.assertEqual(scenarios["pump_then_reversal"]["reason"], "trailing_stop")
+        self.assertLess(scenarios["pump_then_reversal"]["net_pnl_pct"], 0.0)
+        self.assertEqual(scenarios["hard_stop"]["reason"], "hard_stop_loss")
+        self.assertLess(scenarios["hard_stop"]["net_pnl_usd"], 0.0)
+        self.assertEqual(scenarios["liquidity_drain_confirmed_twice"]["reason"], "liquidity_drained")
+        self.assertEqual(scenarios["max_hold_timeout"]["reason"], "max_hold_timeout")
+        self.assertEqual(scenarios["missing_quote"]["status"], "unresolved")
+        self.assertIsNone(scenarios["missing_quote"]["net_pnl_pct"])
+        self.assertEqual(scenarios["small_gain_no_exit_yet"]["status"], "open")
+        self.assertIsNone(scenarios["small_gain_no_exit_yet"]["exit_price_effective"])
+
+    def test_scenario_lab_rejects_invalid_and_non_monotonic_inputs(self):
+        with self.assertRaises(ValueError):
+            paper_scenario_lab.simulate_exit_path([], entry_price=0)
+        with self.assertRaises(ValueError):
+            paper_scenario_lab.simulate_exit_path([
+                {"seconds": 30, "price": 1.0, "liquidity": 1000},
+                {"seconds": 20, "price": 1.0, "liquidity": 1000},
+            ])
 
 
 if __name__ == "__main__":
