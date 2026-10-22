@@ -35,7 +35,7 @@ jobs:
           try:
               state = json.loads(Path("paper_account/state.json").read_text(encoding="utf-8"))
           except (OSError, ValueError, TypeError):
-              print("true state_invalid 0 0 0.000000")
+              print("true state_invalid 0 0 0.000000 999999")
               raise SystemExit(0)
 
           ledger = Path("paper_account/trades_log.csv")
@@ -61,14 +61,25 @@ jobs:
               stop, reason = True, "trade_cap"
           else:
               stop, reason = False, "continue"
-          print(f"{'true' if stop else 'false'} {reason} {len(pnls)} {wins} {net:.6f}")
+          age_seconds = 999999
+          raw = state.get("last_run")
+          if raw:
+              try:
+                  from datetime import datetime, timezone
+                  stamp = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+                  if stamp.tzinfo is None:
+                      stamp = stamp.replace(tzinfo=timezone.utc)
+                  age_seconds = max(0, int((datetime.now(timezone.utc) - stamp).total_seconds()))
+              except (ValueError, TypeError, OverflowError):
+                  age_seconds = 999999
+          print(f"{'true' if stop else 'false'} {reason} {len(pnls)} {wins} {net:.6f} {age_seconds}")
           PY
 
           check_target() {
             python /tmp/check-paper-target.py
           }
 
-          read -r stop reason trades wins net < <(check_target)
+          read -r stop reason trades wins net age_seconds < <(check_target)
           echo "Paper target check: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
           if [ "$stop" = "true" ]; then
             echo "Stopping paper loop at safety/result gate: $reason"
@@ -80,10 +91,15 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
 
-          read -r stop reason trades wins net < <(check_target)
+          read -r stop reason trades wins net age_seconds < <(check_target)
           echo "Paper target recheck: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
           if [ "$stop" = "true" ]; then
             echo "Stopping paper loop at safety/result gate: $reason"
+            exit 0
+          fi
+
+          if [ "$age_seconds" -lt 240 ]; then
+            echo "A paper cycle ran recently (${age_seconds}s ago); avoiding a duplicate dispatch."
             exit 0
           fi
 
