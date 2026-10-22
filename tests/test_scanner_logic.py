@@ -656,5 +656,29 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertTrue(reason.startswith("overextended_momentum_m5:"))
 
 
+    def test_active_scan_persists_near_miss_score_and_features(self):
+        state = scanner.normalize_state({})
+        components = {
+            "momentum_m5_pct": 3.0,
+            "momentum_h1_pct": 25.0,
+            "buy_sell_ratio": 1.8,
+            "liquidity_usd": 100000.0,
+            "volume_h1_usd": 50000.0,
+            "liquidity_to_mcap_ratio": 0.4,
+        }
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_market_opportunity", return_value=(72.0, components)), \
+             patch.object(scanner, "log"):
+            scanner.run_cycle(state)
+        near_miss = state["paper_scan_diagnostics"]["near_misses"][0]
+        self.assertEqual(near_miss["score"], 72.0)
+        self.assertEqual(near_miss["symbol"], "TEST")
+        self.assertEqual(near_miss["momentum_m5_pct"], 3.0)
+
+
 if __name__ == "__main__":
     unittest.main()
