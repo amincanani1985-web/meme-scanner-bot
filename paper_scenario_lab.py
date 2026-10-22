@@ -172,7 +172,7 @@ def run_entry_gate_scenarios():
         ("pair_too_new", {"pairCreatedAt": now_ms - 60_000}, False, "pair_too_new:"),
         ("liquidity_below_floor", {"liquidity": {"usd": scanner.MIN_LIQUIDITY_USD - 1}}, False, "low_liquidity:"),
         ("volume_below_floor", {"volume": {"h1": scanner.MIN_VOLUME_H1_USD - 1}}, False, "low_volume_h1:"),
-        ("liquidity_to_mcap_too_low", {"marketCap": 400_000}, False, "liq_mcap_ratio:"),
+        ("liquidity_to_mcap_too_low", {"marketCap": 2_000_000}, False, "liq_mcap_ratio:"),
         ("weak_buy_pressure", {"txns": {"m5": {"buys": 10, "sells": 10}}}, False, "weak_buy_pressure:"),
         ("overextended_five_minute_move", {"priceChange": {"m5": 16.0, "h1": 8.0}}, False, "overextended_momentum_m5:"),
         ("weak_hourly_momentum", {"priceChange": {"m5": 2.0, "h1": 1.0}}, False, "weak_momentum_h1:"),
