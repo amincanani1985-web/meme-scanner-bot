@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          read -r stale age_seconds < <(python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
@@ -51,9 +51,9 @@ jobs:
                   stale = age < -60 or age > 420
           except (OSError, ValueError, TypeError, json.JSONDecodeError):
               stale = True
-          print(f"stale={'true' if stale else 'false'}")
-          print(f"age_seconds={'' if age is None else int(age)}")
+          print("true" if stale else "false", "" if age is None else int(age))
           PY
+          )
 
           if [ "$stale" != "true" ]; then
             echo "Independent paper-account heartbeat is fresh (${age_seconds:-unknown}s)."
