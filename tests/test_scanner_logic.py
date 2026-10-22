@@ -685,5 +685,32 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertFalse(evaluated["eligible_by_score"])
 
 
+    def test_paper_trade_net_pnl_deducts_estimated_fees_after_slippage(self):
+        state = {
+            "equity": 1000.0,
+            "trade_count": 0,
+            "positions": {
+                "mint": {
+                    "symbol": "TEST",
+                    "entry_price": 1.015,
+                    "amount_usd": 5.0,
+                    "signal_score": 85,
+                    "entry_components": {"momentum_m5_pct": 3.0},
+                }
+            },
+            "blacklist": [],
+            "cooldowns": {},
+        }
+        with patch.object(scanner, "append_trade") as trade, \
+             patch.object(scanner, "append_learning_observation") as learning:
+            scanner.close_position(state, "mint", 1.2, "trailing_stop")
+        gross_pct = ((1.2 * (1 - scanner.EXIT_SLIPPAGE_BPS / 10000)) / 1.015 - 1) * 100
+        net_pct = gross_pct - scanner.PAPER_ROUND_TRIP_FEE_PCT
+        self.assertAlmostEqual(trade.call_args.args[5] * 100, net_pct, places=6)
+        self.assertAlmostEqual(trade.call_args.args[6], 5.0 * net_pct / 100, places=6)
+        self.assertAlmostEqual(learning.call_args.args[1], gross_pct, places=6)
+        self.assertAlmostEqual(state["equity"], 1000.0 + 5.0 * net_pct / 100, places=6)
+
+
 if __name__ == "__main__":
     unittest.main()
