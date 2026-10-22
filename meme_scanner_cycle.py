@@ -1145,37 +1145,73 @@ def run_cycle(state=None):
     # Without this, the independent account would produce no labeled outcomes until
     # a drawdown halt, leaving the active strategy without current-market evidence.
     scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
+    diagnostics = {
+        "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "candidate_count": len(candidates),
+        "market_filter_passed": 0,
+        "score_passed": 0,
+        "confirmation_pending": 0,
+        "opened": 0,
+        "rejections": {},
+    }
+
+    def reject(reason):
+        diagnostics["rejections"][reason] = diagnostics["rejections"].get(reason, 0) + 1
+
     for mint in candidates:
         if mint in state["positions"] or mint in state["blacklist"]:
+            reject("already_open_or_blacklisted")
             continue
         pair = fetch_dex_pair(mint)
-        if not pair or not passes_market_filter(pair)[0]:
+        if not pair:
+            reject("pair_data_unavailable")
             continue
+        market_ok, market_reason = passes_market_filter(pair)
+        if not market_ok:
+            reject(market_reason)
+            continue
+        diagnostics["market_filter_passed"] += 1
         score, components = score_market_opportunity(pair, state.get("learning"))
         threshold = float(state["strategy"].get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
         if score < threshold:
             state["candidate_observations"].pop(mint, None)
+            reject("score_below_threshold")
             continue
+        diagnostics["score_passed"] += 1
         whale_balances = {}
         if helius_configured():
             snapshot = fetch_whale_balances(mint)
             if not snapshot:
                 log(f"[WARN] skipping entry for {mint}: whale data unavailable")
+                reject("whale_data_unavailable")
                 continue
             previous_snapshot = state["whale_snapshots"].get(mint, {})
             if previous_snapshot and confirmed_whale_dump(previous_snapshot, snapshot, pair):
                 state["whale_snapshots"][mint] = snapshot
                 state["candidate_observations"].pop(mint, None)
                 log(f"[WHALE] entry blocked for {mint}: holder-balance drop plus market sell pressure")
+                reject("confirmed_whale_dump")
                 continue
             whale_balances = snapshot
             state["whale_snapshots"][mint] = snapshot
             while len(state["whale_snapshots"]) > 100:
                 state["whale_snapshots"].pop(next(iter(state["whale_snapshots"])))
         if not candidate_confirmation(state, mint, score):
+            diagnostics["confirmation_pending"] += 1
+            reject("confirmation_pending")
             continue
         if open_position(state, mint, pair, whale_balances, score, components):
             opened.append(mint)
+            diagnostics["opened"] += 1
+        else:
+            reject("position_or_risk_gate")
+    state["paper_scan_diagnostics"] = diagnostics
+    log(
+        f"[PAPER DIAGNOSTICS] candidates={diagnostics['candidate_count']} "
+        f"market_filter_passed={diagnostics['market_filter_passed']} "
+        f"score_passed={diagnostics['score_passed']} opened={diagnostics['opened']} "
+        f"rejections={diagnostics['rejections']}"
+    )
     state["scan_count"] += 1
     state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     save_state(state)
