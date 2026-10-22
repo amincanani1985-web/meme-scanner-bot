@@ -175,7 +175,7 @@ def run_entry_gate_scenarios():
         ("liquidity_to_mcap_too_low", {"marketCap": 2_000_000}, False, "liq_mcap_ratio:"),
         ("weak_buy_pressure", {"txns": {"m5": {"buys": 8, "sells": 10}}}, False, "weak_buy_pressure:"),
         ("overextended_five_minute_move", {"priceChange": {"m5": 16.0, "h1": 8.0}}, False, "overextended_momentum_m5:"),
-        ("weak_hourly_momentum", {"priceChange": {"m5": 2.0, "h1": 1.0}}, False, "weak_momentum_h1:"),
+        ("weak_hourly_momentum", {"priceChange": {"m5": 2.0, "h1": -1.0}}, False, "negative_momentum_h1:"),
         ("missing_pair_age", {"pairCreatedAt": None}, False, "invalid_pair_age"),
     ]
     results = {}
