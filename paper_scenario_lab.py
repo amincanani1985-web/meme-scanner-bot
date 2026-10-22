@@ -1,8 +1,9 @@
 """Deterministic paper-only scenario lab for the scanner's current exit rules.
 
 This does not mutate either account, call external APIs, or invent live trades.
-It replays explicitly defined price/liquidity paths through the same risk constants
-and liquidity-drain helper used by meme_scanner_cycle.py.
+It replays synthetic price/liquidity paths through the same risk constants and
+liquidity-drain helper used by meme_scanner_cycle.py. Passing scenarios validate
+control-flow only, not strategy profitability or real execution quality.
 """
 import json
 import math
@@ -29,7 +30,6 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
     trailing_armed = False
     position = {"entry_liquidity": entry_liquidity, "liquidity_drain_hits": 0}
     last_valid_price = None
-    last_reason = None
     last_seconds = 0.0
 
     for observation in observations:
@@ -45,7 +45,6 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
         except (TypeError, ValueError, OverflowError):
             continue
         if not math.isfinite(price) or price <= 0:
-            # Same principle as production: a missing quote is not an executable price.
             continue
         if not math.isfinite(liquidity) or liquidity < 0:
             liquidity = 0.0
@@ -65,7 +64,6 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
         if reason is None and seconds >= scanner.MAX_HOLD_SECONDS:
             reason = "max_hold_timeout"
         if reason:
-            last_reason = reason
             exit_price = price * (1.0 - scanner.EXIT_SLIPPAGE_BPS / 10_000.0)
             net_pnl_pct = ((exit_price - effective_entry) / effective_entry) * 100.0 - scanner.PAPER_ROUND_TRIP_FEE_PCT
             return {
@@ -82,7 +80,7 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
 
     return {
         "status": "unresolved" if last_valid_price is None else "open",
-        "reason": last_reason,
+        "reason": None,
         "entry_price_effective": round(effective_entry, 10),
         "exit_price_effective": None,
         "net_pnl_pct": None,
@@ -93,43 +91,95 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
     }
 
 
-def run_scenarios():
-    """Run a compact, deterministic set of adverse and favorable paper scenarios."""
-    definitions = [
+def scenario_definitions():
+    """Adverse, neutral, and favorable synthetic paths with expected control outcomes."""
+    return [
         ("pump_then_reversal", [
             {"seconds": 60, "price": 1.10, "liquidity": 100_000},
             {"seconds": 120, "price": 1.04, "liquidity": 98_000},
-        ]),
+        ], "closed", "trailing_stop"),
         ("hard_stop", [
             {"seconds": 60, "price": 0.88, "liquidity": 95_000},
-        ]),
+        ], "closed", "hard_stop_loss"),
         ("liquidity_drain_confirmed_twice", [
             {"seconds": 60, "price": 0.99, "liquidity": 20_000},
             {"seconds": 120, "price": 0.98, "liquidity": 18_000},
-        ]),
+        ], "closed", "liquidity_drained"),
         ("max_hold_timeout", [
             {"seconds": scanner.MAX_HOLD_SECONDS, "price": 1.03, "liquidity": 100_000},
-        ]),
+        ], "closed", "max_hold_timeout"),
         ("missing_quote", [
             {"seconds": 60, "price": None, "liquidity": None},
             {"seconds": 660, "price": None, "liquidity": None},
-        ]),
+        ], "unresolved", None),
         ("small_gain_no_exit_yet", [
             {"seconds": 60, "price": 1.03, "liquidity": 100_000},
-        ]),
+        ], "open", None),
+        ("strong_rally_then_trailing_exit", [
+            {"seconds": 30, "price": 1.10, "liquidity": 100_000},
+            {"seconds": 60, "price": 1.20, "liquidity": 100_000},
+            {"seconds": 90, "price": 1.14, "liquidity": 100_000},
+        ], "closed", "trailing_stop"),
+        ("trailing_pullback_below_threshold", [
+            {"seconds": 30, "price": 1.10, "liquidity": 100_000},
+            {"seconds": 60, "price": 1.0571, "liquidity": 100_000},
+        ], "open", None),
+        ("gap_through_hard_stop", [
+            {"seconds": 60, "price": 0.70, "liquidity": 80_000},
+            {"seconds": 120, "price": 1.20, "liquidity": 100_000},
+        ], "closed", "hard_stop_loss"),
+        ("critical_liquidity_drop_immediate", [
+            {"seconds": 60, "price": 0.99, "liquidity": 70_000},
+        ], "closed", "liquidity_drained"),
+        ("catastrophic_liquidity_drop_then_recovery", [
+            {"seconds": 60, "price": 1.00, "liquidity": 40_000},
+            {"seconds": 120, "price": 1.00, "liquidity": 100_000},
+            {"seconds": 180, "price": 1.00, "liquidity": 40_000},
+            {"seconds": 240, "price": 1.00, "liquidity": 100_000},
+        ], "open", None),
+        ("missing_then_valid_quote", [
+            {"seconds": 60, "price": None, "liquidity": None},
+            {"seconds": 120, "price": 1.02, "liquidity": 100_000},
+        ], "open", None),
+        ("max_hold_quote_arrives_late", [
+            {"seconds": scanner.MAX_HOLD_SECONDS + 1, "price": 1.00, "liquidity": 100_000},
+        ], "closed", "max_hold_timeout"),
+        ("loss_then_rebound_cannot_undo_exit", [
+            {"seconds": 60, "price": 0.88, "liquidity": 100_000},
+            {"seconds": 120, "price": 1.30, "liquidity": 100_000},
+        ], "closed", "hard_stop_loss"),
+        ("nan_quote_is_not_an_exit_price", [
+            {"seconds": 60, "price": float("nan"), "liquidity": 100_000},
+        ], "unresolved", None),
     ]
+
+
+def run_scenarios():
+    definitions = scenario_definitions()
     results = {}
-    for name, path in definitions:
+    expectations = {}
+    for name, path, expected_status, expected_reason in definitions:
         results[name] = simulate_exit_path(path)
+        expectations[name] = (expected_status, expected_reason)
+
+    # Fail the workflow if an exit-control regression changes a required outcome.
+    for name, result in results.items():
+        expected_status, expected_reason = expectations[name]
+        if result["status"] != expected_status or result["reason"] != expected_reason:
+            raise AssertionError(
+                f"{name}: expected ({expected_status}, {expected_reason}), "
+                f"got ({result['status']}, {result['reason']})"
+            )
     closed = [r for r in results.values() if r["status"] == "closed"]
-    total_net = round(sum(r["net_pnl_usd"] for r in closed), 6)
     return {
         "mode": "deterministic_simulation_not_live_or_historical_performance",
+        "scenario_count": len(results),
         "scenarios": results,
         "closed_scenarios": len(closed),
+        "open_scenarios": sum(r["status"] == "open" for r in results.values()),
         "unresolved_scenarios": sum(r["status"] == "unresolved" for r in results.values()),
-        "combined_net_pnl_usd_for_closed_scenarios": total_net,
-        "note": "Synthetic paths test code behavior only; they are not evidence of strategy profitability.",
+        "combined_net_pnl_usd_for_closed_scenarios": round(sum(r["net_pnl_usd"] for r in closed), 6),
+        "note": "Synthetic paths test exit control-flow only; they are not evidence of strategy profitability or live execution quality.",
     }
 
 
