@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 323,
+  "scan_count": 324,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-22T09:30:39Z",
+  "last_run": "2026-10-22T09:33:15Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -208,27 +208,6 @@
   },
   "peak_equity": 1055.98,
   "shadow_positions": {
-    "8Xg89xT8Ve34sKiYqYuMs46mycREsCA2F362UscRpump": {
-      "symbol": "GLITCH",
-      "entry_price": 0.0020482699999999996,
-      "entry_time": 1792660866.6328702,
-      "entry_liquidity": 124777.33,
-      "peak_price": 0.0020482699999999996,
-      "signal_score": 77.92,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 20.919999999999998,
-        "buy_pressure": 7.0,
-        "momentum_m5_pct": 5.14,
-        "momentum_h1_pct": 5.5,
-        "buy_sell_ratio": 2.0,
-        "liquidity_usd": 124777.33,
-        "volume_h1_usd": 8592.25,
-        "market_cap_usd": 1884716.0,
-        "liquidity_to_mcap_ratio": 0.06620484465564043
-      },
-      "liquidity_drain_hits": 0
-    },
     "EHPugw1ghE46BeySAa7cHvoZHwYometbp1aK1Q7jpump": {
       "symbol": "MONEYBIZ",
       "entry_price": 0.00035768599999999996,
@@ -318,7 +297,7 @@
       "entry_price": 0.00041665749999999997,
       "entry_time": 1792661135.495019,
       "entry_liquidity": 59523.57,
-      "peak_price": 0.00041665749999999997,
+      "peak_price": 0.0004452,
       "signal_score": 77.07741935483871,
       "trailing_armed": false,
       "components": {
@@ -360,9 +339,9 @@
       "entry_price": 6.554869999999998e-05,
       "entry_time": 1792661337.3958082,
       "entry_liquidity": 21918.55,
-      "peak_price": 6.727e-05,
+      "peak_price": 7.088e-05,
       "signal_score": 73.89473684210526,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": -1.1052631578947372,
@@ -423,7 +402,7 @@
       "entry_price": 1.5915199999999996e-05,
       "entry_time": 1792661383.7743373,
       "entry_liquidity": 9413.48,
-      "peak_price": 1.5915199999999996e-05,
+      "peak_price": 1.708e-05,
       "signal_score": 76.87263157894736,
       "trailing_armed": false,
       "components": {
@@ -444,9 +423,9 @@
       "entry_price": 3.58904e-05,
       "entry_time": 1792661437.930032,
       "entry_liquidity": 16346.1,
-      "peak_price": 3.58904e-05,
+      "peak_price": 3.941e-05,
       "signal_score": 80.53146853146853,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 5.531468531468532,
@@ -457,13 +436,34 @@
         "volume_h1_usd": 211509.34,
         "market_cap_usd": 35368.0,
         "liquidity_to_mcap_ratio": 0.4621720199049989
+      },
+      "liquidity_drain_hits": 0
+    },
+    "3Xq3nspu91fEzGbzi9kSJ4FYAnBeeiLHPoxQx6cPSQj1": {
+      "symbol": "BLACKTOBER",
+      "entry_price": 0.0001212925,
+      "entry_time": 1792661594.9291654,
+      "entry_liquidity": 28104.81,
+      "peak_price": 0.0001212925,
+      "signal_score": 75.0,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 25.0,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": 18.73,
+        "momentum_h1_pct": 6.29,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 28104.81,
+        "volume_h1_usd": 28709.85,
+        "market_cap_usd": 114429.0,
+        "liquidity_to_mcap_ratio": 0.24560915502189132
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:30:39Z",
+    "timestamp": "2026-10-22T09:33:15Z",
     "candidate_count": 40,
-    "filter_passed": 3,
+    "filter_passed": 4,
     "shadow_opened": 1,
     "rejections": {
       "pair_data_unavailable": 13,
@@ -473,10 +473,9 @@
       "shadow_low_volume_h1:0": 4,
       "shadow_low_volume_h1:164": 1,
       "shadow_low_volume_h1:15": 1,
-      "shadow_low_activity": 1,
-      "shadow_low_volume_h1:476": 1,
       "shadow_low_volume_h1:3": 1,
-      "shadow_low_volume_h1:318": 1
+      "shadow_low_volume_h1:476": 1,
+      "shadow_low_volume_h1:322": 1
     }
   }
 }
