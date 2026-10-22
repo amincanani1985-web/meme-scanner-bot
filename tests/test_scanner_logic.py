@@ -67,6 +67,8 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 60.0)
         self.assertEqual(scanner.MAX_PRICE_CHANGE_M5_PCT, 15.0)
+        self.assertEqual(scanner.MIN_BUY_SELL_RATIO_M5, 1.25)
+        self.assertEqual(scanner.MIN_LIQUIDITY_TO_MCAP_RATIO, 0.15)
         self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.005)
         self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.02)
 
@@ -302,7 +304,7 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(marketCap=600000))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 14, "sells": 10}}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 12, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(priceChange={"m5": 15, "h1": -0.1}))[0])
@@ -770,12 +772,12 @@ class PaperScenarioLabTests(unittest.TestCase):
             ])
 
 
-    def test_pullback_profile_accepts_liquidity_ratio_just_above_0_20(self):
+    def test_pullback_profile_accepts_liquidity_ratio_just_above_0_15(self):
         candidate = pair(
             liquidity={"usd": 50000},
             volume={"h1": 50000},
-            marketCap=217391,
-            txns={"m5": {"buys": 20, "sells": 10}},
+            marketCap=312500,
+            txns={"m5": {"buys": 13, "sells": 10}},
             priceChange={"m5": 2.0, "h1": 10.0},
         )
         self.assertEqual(scanner.passes_market_filter(candidate), (True, "ok"))
