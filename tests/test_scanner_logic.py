@@ -247,7 +247,7 @@ class ScannerLogicTests(unittest.TestCase):
             {"chainId": "solana", "tokenAddress": "shared"},
         ]
         empty_searches = []
-        for _ in range(8):
+        for _ in range(len(scanner.DISCOVERY_SEARCH_TERMS)):
             response = Mock()
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
