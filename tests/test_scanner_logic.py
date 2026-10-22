@@ -67,8 +67,8 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 60.0)
         self.assertEqual(scanner.MAX_PRICE_CHANGE_M5_PCT, 15.0)
-        self.assertEqual(scanner.MIN_BUY_SELL_RATIO_M5, 1.25)
-        self.assertEqual(scanner.MIN_LIQUIDITY_TO_MCAP_RATIO, 0.15)
+        self.assertEqual(scanner.MIN_BUY_SELL_RATIO_M5, 1.0)
+        self.assertEqual(scanner.MIN_LIQUIDITY_TO_MCAP_RATIO, 0.05)
         self.assertEqual(scanner.MAX_POSITION_EQUITY_FRACTION, 0.005)
         self.assertEqual(scanner.MAX_PORTFOLIO_EXPOSURE_FRACTION, 0.02)
 
@@ -315,10 +315,10 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertTrue(reason.startswith("pair_too_new:"))
 
     def test_low_liquidity_volume_ratio_and_buy_pressure_are_rejected(self):
-        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 9999}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 9999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(marketCap=2100000))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 12, "sells": 10}}))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 8, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(priceChange={"m5": 15, "h1": -0.1}))[0])
@@ -619,7 +619,7 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "manage_open_positions"), \
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 15000})), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(liquidity={"usd": 9000})), \
              patch.object(scanner, "score_market_opportunity", return_value=(90.0, {})), \
              patch.object(scanner, "log"):
             scanner.run_cycle(state)
