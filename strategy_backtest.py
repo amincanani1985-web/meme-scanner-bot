@@ -7,11 +7,11 @@ import math
 from pathlib import Path
 from statistics import median
 
-THRESHOLDS = (80.0, 82.5, 85.0, 87.5, 90.0)
+THRESHOLDS = (60.0, 65.0, 70.0, 75.0, 80.0, 82.5, 85.0, 87.5, 90.0)
 MIN_HISTORY_ROWS = 30
 MIN_VALIDATION_ROWS = 8
 MIN_THRESHOLD_VALIDATION_SAMPLES = 8
-ROUND_TRIP_COST_PCT = 2.0
+ROUND_TRIP_COST_PCT = 1.0  # Additional fees after entry/exit slippage already modeled in PnL
 OUTLIER_ABS_PNL_PCT = 100.0
 
 
@@ -151,7 +151,7 @@ def run(rows, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
         "thresholds": result,
         "cost_sensitivity": [
             {"assumed_round_trip_cost_pct": cost, **metrics(validation, 0.0, cost)}
-            for cost in (1.0, 2.0, 3.0, 5.0)
+            for cost in (0.5, 1.0, 1.5, 2.0)
         ],
     }
 
