@@ -301,7 +301,7 @@ class ScannerLogicTests(unittest.TestCase):
     def test_low_liquidity_volume_ratio_and_buy_pressure_are_rejected(self):
         self.assertFalse(scanner.passes_market_filter(pair(liquidity={"usd": 19999}))[0])
         self.assertFalse(scanner.passes_market_filter(pair(volume={"h1": 19999}))[0])
-        self.assertFalse(scanner.passes_market_filter(pair(marketCap=500000))[0])
+        self.assertFalse(scanner.passes_market_filter(pair(marketCap=600000))[0])
         self.assertFalse(scanner.passes_market_filter(pair(txns={"m5": {"buys": 14, "sells": 10}}))[0])
 
     def test_negative_hourly_momentum_is_rejected(self):
@@ -769,6 +769,16 @@ class PaperScenarioLabTests(unittest.TestCase):
                 {"seconds": 20, "price": 1.0, "liquidity": 1000},
             ])
 
+
+    def test_pullback_profile_accepts_liquidity_ratio_just_above_0_20(self):
+        candidate = pair(
+            liquidity={"usd": 50000},
+            volume={"h1": 50000},
+            marketCap=217391,
+            txns={"m5": {"buys": 20, "sells": 10}},
+            priceChange={"m5": 2.0, "h1": 10.0},
+        )
+        self.assertEqual(scanner.passes_market_filter(candidate), (True, "ok"))
 
     def test_pullback_profile_rejects_flat_hourly_trend(self):
         flat_trend = pair(priceChange={"m5": 0.5, "h1": 1.8})
