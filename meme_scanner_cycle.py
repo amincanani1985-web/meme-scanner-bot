@@ -630,7 +630,7 @@ def fetch_dex_pair(mint):
 
 
 def fetch_candidate_mints(limit=40):
-    """Fetch a bounded, interleaved Solana candidate list from both discovery feeds."""
+    """Fetch a bounded, interleaved Solana candidate list from boost, profile, and search feeds."""
     if limit <= 0:
         return []
     feeds = []
@@ -683,6 +683,12 @@ def fetch_candidate_mints(limit=40):
             continue
     feeds.append(search_items)
 
+    source_counts = {
+        "latest_boosts": len(feeds[0]),
+        "top_boosts": len(feeds[1]),
+        "profiles": len(feeds[2]),
+        "meme_search": len(feeds[3]),
+    }
     # Interleave feeds so a large first response cannot starve any one source.
     found, seen = [], set()
     max_rows = max((len(feed) for feed in feeds), default=0)
@@ -694,7 +700,9 @@ def fetch_candidate_mints(limit=40):
                     seen.add(mint)
                     found.append(mint)
                     if len(found) >= limit:
+                        log(f"[DISCOVERY] selected={len(found)} source_counts={source_counts}")
                         return found
+    log(f"[DISCOVERY] selected={len(found)} source_counts={source_counts}")
     return found
 
 
