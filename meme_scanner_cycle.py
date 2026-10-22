@@ -46,6 +46,7 @@ MIN_LIQUIDITY_TO_MCAP_RATIO = 0.25
 MIN_BUY_SELL_RATIO_M5 = 1.5
 MIN_PRICE_CHANGE_M5_PCT = -2.0
 MAX_PRICE_CHANGE_M5_PCT = 15.0
+MIN_PRICE_CHANGE_H1_PCT = 5.0
 MIN_PAIR_AGE_SECONDS = 1800               # 30 min; still excludes the newest launches
 
 # Entry scoring: experimental low-score/pullback threshold, paper account only.
@@ -182,8 +183,8 @@ def normalize_legacy_strategy_baseline(state):
 
 def passes_market_filter(pair_data):
     """
-    Returns: (bool, reason_str)
-    STRICT filters - only ELITE opportunities pass.
+    Returns: (bool, reason_str). Experimental paper profile favors sustained
+    hourly strength and a non-overextended 5-minute entry.
     """
     if not pair_data:
         return False, "missing_pair_data"
@@ -243,6 +244,8 @@ def passes_market_filter(pair_data):
     pc_h1 = pair_data.get("priceChange", {}).get("h1", 0) or 0
     if pc_h1 < 0:
         return False, f"negative_momentum_h1:{pc_h1:.1f}%"
+    if pc_h1 < MIN_PRICE_CHANGE_H1_PCT:
+        return False, f"weak_momentum_h1:{pc_h1:.1f}%"
     
     # No recent activity
     if buys == 0 and sells == 0:
