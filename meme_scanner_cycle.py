@@ -800,9 +800,9 @@ def manage_shadow_positions(state):
         log(f"[SHADOW CLOSE] {pos.get('symbol', '?')} {reason} pnl={net_pnl_pct:+.2f}% (isolated; account equity unchanged)")
 
 
-def scan_shadow_candidates(state):
-    """Collect labeled virtual-trade samples while the real paper-account circuit breaker is halted."""
-    candidates = fetch_candidate_mints()
+def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
+    """Collect labeled virtual-trade samples independently of account entry eligibility."""
+    candidates = fetch_candidate_mints() if candidates is None else candidates
     opened = []
     rejections = {}
     filter_passed = 0
@@ -848,7 +848,8 @@ def scan_shadow_candidates(state):
             "components": components,
         }
         opened.append(mint)
-    state["scan_count"] = int(state.get("scan_count", 0)) + 1
+    if increment_scan_count:
+        state["scan_count"] = int(state.get("scan_count", 0)) + 1
     state["shadow_scan_diagnostics"] = {
         "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "candidate_count": len(candidates),
@@ -1140,6 +1141,10 @@ def run_cycle(state=None):
         log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; account entries blocked; shadow_scanned={shadow['scanned']} shadow_opened={len(shadow['shadow_opened'])}")
         return {"scanned": shadow["scanned"], "opened": opened, "shadow_opened": shadow["shadow_opened"], "open_positions": len(state["positions"]), "shadow_positions": len(state["shadow_positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
     candidates = fetch_candidate_mints()
+    # Keep a research-only cohort running even while the paper account is healthy.
+    # Without this, the independent account would produce no labeled outcomes until
+    # a drawdown halt, leaving the active strategy without current-market evidence.
+    scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
     for mint in candidates:
         if mint in state["positions"] or mint in state["blacklist"]:
             continue
