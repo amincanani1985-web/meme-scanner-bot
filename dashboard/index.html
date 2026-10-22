@@ -38,7 +38,7 @@
  <div class="card"><div class="label">نرخ برد تاریخی</div><div class="value" id="winrate">—</div></div>
  <div class="card"><div class="label">بیشترین افت تاریخی</div><div class="value" id="dd">—</div></div>
 </section>
-<section class="card section"><div class="progrow"><b>پیشرفت ارزیابی ۲۰۰ معامله</b><span id="pct">—</span></div><div class="progress"><div class="fill" id="fill"></div></div><div class="small" id="missionNote">راهبرد در حالت آزمایشی است. تکمیل نمونه معاملات، سودآوری آینده را تضمین نمی‌کند.</div></section>
+<section class="card section"><div class="progrow"><b>پیشرفت ارزیابی ۲۰۰ معاملهٔ پیپر مستقل</b><span id="pct">—</span></div><div class="progress"><div class="fill" id="fill"></div></div><div class="small" id="missionNote">راهبرد در حالت آزمایشی است. تکمیل نمونه معاملات، سودآوری آینده را تضمین نمی‌کند.</div></section>
 <section class="layout section">
  <div class="card"><div class="cardhead"><b>نمودار تاریخی تغییرات سرمایه</b><span class="label">سرمایه آغازین ۱٬۰۰۰ دلار</span></div><div class="chart" id="chart"><div class="empty">در حال بارگذاری…</div></div><div class="small" id="curveNote"></div></div>
  <div class="card"><div class="cardhead"><b>عملکرد تاریخی حساب اصلی</b></div><div class="metrics">
@@ -137,7 +137,7 @@ const eq=Number(s.equity)||0,pnl=eq-1000,n=Number(s.trade_count)||rows.length,wi
 let peak=1000,maxDD=0;const curve=[1000,...rows.map(r=>r.eq||1000)];curve.forEach(v=>{peak=Math.max(peak,v);maxDD=Math.min(maxDD,(v-peak)/peak*100);});
 $('equity').textContent=money(eq);$('pnl').textContent=money(pnl);$('pnl').className='value '+(pnl>=0?'green':'red');$('ret').textContent=pct(pnl/1000*100);$('ret').className='value '+(pnl>=0?'green':'red');$('trades').textContent=n+'/200';$('winrate').textContent=(rows.length?wins.length/rows.length*100:0).toFixed(1)+'%';$('dd').textContent=maxDD.toFixed(2)+'%';$('dd').className='value '+(maxDD<0?'red':'green');
 $('pf').textContent=pf===Infinity?'∞':pf.toFixed(2);$('avg').textContent=avg.toFixed(2)+'%';$('aw').textContent=aw.toFixed(2)+'%';$('al').textContent=al.toFixed(2)+'%';$('wl').textContent=wins.length+' / '+losses.length;$('scans').textContent=Number(s.scan_count||0).toLocaleString('en-US');
-$('pct').textContent=Math.min(100,n/200*100).toFixed(1)+'% · '+n+'/200';$('fill').style.width=Math.min(100,n/200*100)+'%';$('missionNote').textContent=n>=200?'نمونه آزمایشی ۲۰۰ معامله تکمیل شده است؛ پیش از هر تصمیم برای استفاده واقعی، افت سرمایه و ریسک را بررسی کنید.':'نمونه معاملات آزمایشی در حال تکمیل است. برای رسیدن سریع‌تر به هدف، معامله ساختگی اضافه نمی‌شود.';
+/* The 200-trade progress is owned by the independent paper ledger below. */
 const lo=Math.min(...curve),hi=Math.max(...curve),span=Math.max(hi-lo,1);$('chart').innerHTML=rows.length?rows.map(r=>'<div class="bar" title="'+esc(r.time)+' · '+money(r.eq)+'" style="height:'+Math.max(8,((r.eq-lo)/span)*225)+'px"></div>').join(''):'<div class="empty">هنوز معامله بسته‌شده‌ای وجود ندارد</div>';$('curveNote').textContent=rows.length+' معامله بسته‌شده در گزارش ثبت شده است.';
 const ps=Object.values(s.positions||{});$('openCount').textContent=ps.length+' موقعیت فعال';$('open').innerHTML=ps.map(p=>'<div class="pos"><div class="posname">'+esc(p.symbol||'توکن ناشناس')+'</div><div class="posline"><span>ورود</span><b>'+price(p.entry_price)+'</b></div><div class="posline"><span>بیشترین قیمت</span><b>'+price(p.peak_price)+'</b></div><div class="posline"><span>نقدینگی هنگام ورود</span><b>'+money(p.entry_liquidity)+'</b></div><div class="posline"><span>حد ضرر متحرک</span><b class="'+(p.trailing_active?'green':'')+'">'+(p.trailing_active?'فعال':'—')+'</b></div></div>').join('')||'<div class="empty">موقعیت بازی وجود ندارد</div>';
 $('closed').innerHTML=rows.slice().reverse().map(r=>'<tr><td>'+esc(r.time)+'</td><td><b>'+esc(r.sym)+'</b></td><td>'+price(r.entry)+'</td><td>'+price(r.exit)+'</td><td class="'+(r.p>=0?'green':'red')+'">'+pct(r.p)+'</td><td class="'+(r.usd>=0?'green':'red')+'">'+money(r.usd)+'</td><td>'+esc(r.reason)+'</td></tr>').join('')||'<tr><td colspan="7" class="empty">معامله بسته‌شده‌ای ثبت نشده است</td></tr>';
@@ -190,12 +190,16 @@ async function loadPaperAccount(){
   const csv=tradesResponse.ok?await tradesResponse.text():String(window.PAPER_CSV||'');
   if(!s||typeof s!=='object')throw Error('paper_account/state.json HTTP '+stateResponse.status);
   const risk=s.risk_control||{}, positions=Object.entries(s.positions||{});
+  const allPaperTrades=parseCSV(csv).filter(t=>t.timestamp&&t.mint);
+  const paperTradeCount=allPaperTrades.length;
+  const paperWins=allPaperTrades.filter(t=>Number(t.pnl_usd)>0).length;
+  const paperNetPnl=allPaperTrades.reduce((sum,t)=>sum+(Number(t.pnl_usd)||0),0);
   const last=s.last_run?new Date(s.last_run):null;
   const initial=Number(s.initial_equity)||1000, equity=Number(s.equity)||0, pnl=equity-initial;
   $('overviewEquity').textContent=money(equity);
   $('overviewPnl').textContent=money(pnl);$('overviewPnl').className='value '+(pnl>=0?'green':'red');
   $('overviewReturn').textContent=pct(initial?pnl/initial*100:0);$('overviewReturn').className='value '+(pnl>=0?'green':'red');
-  $('overviewTrades').textContent=Number(s.trade_count||0).toLocaleString('fa-IR')+'/200';
+  $('overviewTrades').textContent=paperTradeCount.toLocaleString('fa-IR')+'/200';
   $('overviewPositions').textContent=positions.length.toLocaleString('fa-IR');
   $('overviewDrawdown').textContent=Number(risk.drawdown_pct||0).toFixed(2)+'٪';
   $('overviewDrawdown').className='value '+(risk.status==='halted'?'red':'green');
@@ -204,7 +208,11 @@ async function loadPaperAccount(){
   $('paperOverviewStatus').textContent=overviewStale?'چرخهٔ پیپر قدیمی است':risk.status==='halted'?'قفل ریسک پیپر فعال است':'حساب پیپر فعال است';
   $('paperOverviewStatus').style.color=overviewStale||risk.status==='halted'?'var(--red)':'var(--green)';
   const profile=s.strategy||{};
-  $('paperOverviewNote').textContent='آخرین چرخه: '+(overviewLast?overviewLast.toISOString():'ثبت نشده')+' · '+(overviewStale?'اجرای تازه تأیید نشده است.':'دادهٔ حساب پیپر تازه است.')+' · راهبرد: '+(profile.status||'baseline')+'، آستانه '+Number(profile.active_threshold||75).toLocaleString('fa-IR')+' · معاملات واقعی غیرفعال‌اند.';
+  $('paperOverviewNote').textContent='آخرین چرخه: '+(overviewLast?overviewLast.toISOString():'ثبت نشده')+' · '+(overviewStale?'اجرای تازه تأیید نشده است.':'دادهٔ حساب پیپر تازه است.')+' · راهبرد: '+(profile.status||'baseline')+'، آستانه '+Number(profile.active_threshold||60).toLocaleString('fa-IR')+' · معاملات واقعی غیرفعال‌اند.';
+  const progressPct=Math.min(100,paperTradeCount/200*100);
+  $('pct').textContent=progressPct.toFixed(1)+'% · '+paperTradeCount+'/200';
+  $('fill').style.width=progressPct+'%';
+  $('missionNote').textContent='دفترکل پیپر مستقل: '+paperTradeCount+' معاملهٔ بسته، '+paperWins+' سودده، سود و زیان خالص ثبت‌شده '+money(paperNetPnl)+'. نمونهٔ ۲۰۰ معامله ساختگی نمی‌شود و تکمیل نمونه به‌تنهایی سودآوری را ثابت نمی‌کند.';
   const scan=s.paper_scan_diagnostics||{}, rejects=Object.entries(scan.rejections||{}).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const rejectionText=rejects.map(([reason,count])=>reason+' × '+count).join('، ')||'ثبت نشده';
   const nearMisses=(scan.near_misses||[]).map(item=>(item.symbol||item.mint||'نامشخص')+' '+Number(item.score||0).toFixed(1)+' (۵دقیقه '+Number(item.momentum_m5_pct||0).toFixed(1)+'٪، یک‌ساعت '+Number(item.momentum_h1_pct||0).toFixed(1)+'٪)').join('؛ ')||'نامزد نزدیک به آستانه ثبت نشده';
