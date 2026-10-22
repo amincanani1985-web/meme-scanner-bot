@@ -81,7 +81,7 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
             }
 
     return {
-        "status": "unresolved" if last_valid_price is None or last_reason is None else "open",
+        "status": "unresolved" if last_valid_price is None else "open",
         "reason": last_reason,
         "entry_price_effective": round(effective_entry, 10),
         "exit_price_effective": None,
