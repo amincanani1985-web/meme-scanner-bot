@@ -268,6 +268,20 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertGreater(score, 0)
         self.assertIn("momentum", components)
 
+    def test_shadow_score_does_not_reward_extreme_short_term_pump_with_hourly_reversal(self):
+        healthy = pair(priceChange={"m5": 3.0, "h1": 12.0}, txns={"m5": {"buys": 30, "sells": 10}})
+        pump_reversal = pair(priceChange={"m5": 35.0, "h1": -14.0}, txns={"m5": {"buys": 30, "sells": 10}})
+        healthy_score, _ = scanner.score_shadow_opportunity(healthy)
+        reversal_score, _ = scanner.score_shadow_opportunity(pump_reversal)
+        self.assertGreater(healthy_score, reversal_score)
+
+    def test_shadow_score_penalizes_negative_hourly_trend(self):
+        healthy = pair(priceChange={"m5": 2.0, "h1": 10.0})
+        bearish = pair(priceChange={"m5": 2.0, "h1": -20.0})
+        healthy_score, _ = scanner.score_shadow_opportunity(healthy)
+        bearish_score, _ = scanner.score_shadow_opportunity(bearish)
+        self.assertGreater(healthy_score, bearish_score)
+
     def test_corrupt_state_recovery_reconstructs_ledger_and_halts_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
