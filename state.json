@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 306,
+  "scan_count": 307,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-22T09:02:36Z",
+  "last_run": "2026-10-22T09:04:17Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,7 +213,7 @@
       "entry_price": 0.000354032,
       "entry_time": 1792659642.9298987,
       "entry_liquidity": 52249.18,
-      "peak_price": 0.0003851,
+      "peak_price": 0.0003992,
       "signal_score": 76.18822170900692,
       "trailing_armed": true,
       "components": {
@@ -247,27 +247,6 @@
         "volume_h1_usd": 19263.7,
         "market_cap_usd": 485839.0,
         "liquidity_to_mcap_ratio": 0.1493349648751953
-      },
-      "liquidity_drain_hits": 0
-    },
-    "3Xq3nspu91fEzGbzi9kSJ4FYAnBeeiLHPoxQx6cPSQj1": {
-      "symbol": "BLACKTOBER",
-      "entry_price": 0.0001145935,
-      "entry_time": 1792659643.1505353,
-      "entry_liquidity": 27240.8,
-      "peak_price": 0.0001155,
-      "signal_score": 75.73684210526316,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 25.0,
-        "buy_pressure": 0.7368421052631586,
-        "momentum_m5_pct": 0.41,
-        "momentum_h1_pct": 91.6,
-        "buy_sell_ratio": 1.105263157894737,
-        "liquidity_usd": 27240.8,
-        "volume_h1_usd": 78520.19,
-        "market_cap_usd": 108112.0,
-        "liquidity_to_mcap_ratio": 0.25196832914015094
       },
       "liquidity_drain_hits": 0
     },
@@ -318,9 +297,9 @@
       "entry_price": 5.4891199999999994e-05,
       "entry_time": 1792659643.7775815,
       "entry_liquidity": 19825.33,
-      "peak_price": 5.778e-05,
+      "peak_price": 7.381e-05,
       "signal_score": 86.45454545454545,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 11.454545454545453,
@@ -381,9 +360,9 @@
       "entry_price": 7.15575e-05,
       "entry_time": 1792659644.0269556,
       "entry_liquidity": 21783.71,
-      "peak_price": 7.269e-05,
+      "peak_price": 8.827e-05,
       "signal_score": 78.64848484848486,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 25.0,
         "buy_pressure": 3.6484848484848484,
@@ -444,7 +423,7 @@
       "entry_price": 0.00020716149999999998,
       "entry_time": 1792659644.4558296,
       "entry_liquidity": 37057.0,
-      "peak_price": 0.00020716149999999998,
+      "peak_price": 0.0002139,
       "signal_score": 23.77,
       "trailing_armed": false,
       "components": {
@@ -480,20 +459,39 @@
         "liquidity_to_mcap_ratio": 0.8059068047337279
       },
       "liquidity_drain_hits": 0
+    },
+    "3Xq3nspu91fEzGbzi9kSJ4FYAnBeeiLHPoxQx6cPSQj1": {
+      "symbol": "BLACKTOBER",
+      "entry_price": 0.00010018049999999999,
+      "entry_time": 1792659856.6416965,
+      "entry_liquidity": 25364.13,
+      "peak_price": 0.00010018049999999999,
+      "signal_score": 57.01263157894738,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 9.960000000000008,
+        "buy_pressure": -2.9473684210526314,
+        "momentum_m5_pct": -18.59,
+        "momentum_h1_pct": 65.73,
+        "buy_sell_ratio": 0.5789473684210527,
+        "liquidity_usd": 25364.13,
+        "volume_h1_usd": 77969.46,
+        "market_cap_usd": 94478.0,
+        "liquidity_to_mcap_ratio": 0.26846599208281297
+      }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-22T09:02:36Z",
+    "timestamp": "2026-10-22T09:04:17Z",
     "candidate_count": 40,
-    "filter_passed": 3,
-    "shadow_opened": 0,
+    "filter_passed": 6,
+    "shadow_opened": 1,
     "rejections": {
       "pair_data_unavailable": 15,
-      "shadow_pair_too_new:226s": 1,
       "shadow_low_volume_h1:268": 1,
-      "shadow_low_volume_h1:415": 1,
-      "shadow_low_volume_h1:6": 2,
-      "shadow_low_activity": 1,
+      "shadow_low_volume_h1:432": 1,
+      "shadow_low_volume_h1:3": 1,
+      "shadow_low_volume_h1:6": 1,
       "shadow_low_volume_h1:0": 3
     }
   }
