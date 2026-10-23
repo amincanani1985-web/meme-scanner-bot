@@ -113,7 +113,8 @@ class AdaptiveTests(unittest.TestCase):
         ]
         result = la.walk_forward(rows, 90.0)
         self.assertFalse(result["eligible"])
-        self.assertLess(result["validation"]["net_avg_pnl"], 0.0)
+        # A 1% gross return exactly breaks even after the shared 1% fee reserve.
+        self.assertLessEqual(result["validation"]["net_avg_pnl"], 0.0)
 
     def test_rollback_uses_net_results_after_assumed_costs(self):
         rows = [
