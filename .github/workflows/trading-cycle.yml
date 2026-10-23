@@ -195,9 +195,9 @@ jobs:
           print("The 200-trade target uses only the isolated paper account; no synthetic trades are generated.")
           PY
 
-      - name: Apply bounded adaptive strategy update
+      - name: Apply bounded adaptive strategy update to isolated paper account
         if: github.event_name != 'pull_request'
-        run: python learn_agent.py --state state.json --observations strategy_observations.csv --apply
+        run: python learn_agent.py --state paper_account/state.json --observations paper_account/strategy_observations.csv --apply
 
       - name: Run one trading cycle
         if: github.event_name != 'pull_request'
