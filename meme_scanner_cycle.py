@@ -18,6 +18,9 @@ from datetime import datetime, timedelta
 DEXSCREENER_TOKEN_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/latest/v1"
 DEXSCREENER_TOKEN_TOP_BOOSTS_URL = "https://api.dexscreener.com/token-boosts/top/v1"
 DEXSCREENER_TOKEN_PROFILES_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
+DEXSCREENER_RECENT_PROFILES_URL = "https://api.dexscreener.com/token-profiles/recent-updates/v1"
+DEXSCREENER_TOKEN_BATCH_URL = "https://api.dexscreener.com/tokens/v1/solana/{}"
+PAIR_CACHE = {}
 DEXSCREENER_SEARCH_URL = "https://api.dexscreener.com/latest/dex/search"
 DISCOVERY_SEARCH_TERMS = ("BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO", "FARTCOIN", "GOAT", "PNUT", "GIGA", "FWOG", "MOTHER", "WEN", "SLERF", "TURBO", "NEIRO", "PENGU")
 LAST_DISCOVERY_DIAGNOSTICS = {"selected": 0, "source_counts": {}}
@@ -632,31 +635,79 @@ def close_position(state, mint, exit_price, reason):
     log(f"[CLOSE] {symbol:8s} {reason:20s} | entry=${entry_price:.8f} exit=${effective_exit_price:.8f} | pnl={pnl_pct*100:+6.2f}% | equity=${state['equity']:.2f}")
 
 
+def _valid_solana_pair(pair):
+    """Validate a DEX Screener Solana pair before it can feed scoring or exits."""
+    if not isinstance(pair, dict) or pair.get("chainId") != "solana":
+        return False
+    try:
+        liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
+        price = float(pair.get("priceUsd") or 0)
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return False
+    return math.isfinite(liquidity) and liquidity > 0 and math.isfinite(price) and price > 0
+
+
 def fetch_dex_pair(mint):
     """Fetch the most liquid current DexScreener pair for a token mint."""
     if not mint:
         return None
+    if mint in PAIR_CACHE:
+        return PAIR_CACHE[mint]
     try:
         response = requests.get(DEXSCREENER_TOKEN_PAIRS_URL.format(mint), timeout=HTTP_TIMEOUT_SECONDS)
         response.raise_for_status()
         payload = response.json()
         pairs = payload.get("pairs") or []
         if not isinstance(pairs, list):
+            PAIR_CACHE[mint] = None
             return None
-        valid = []
-        for pair in pairs:
-            if not isinstance(pair, dict) or pair.get("chainId") != "solana":
-                continue
-            try:
-                liquidity = float((pair.get("liquidity") or {}).get("usd") or 0)
-                price = float(pair.get("priceUsd") or 0)
-            except (TypeError, ValueError, AttributeError):
-                continue
-            if liquidity > 0 and price > 0 and math.isfinite(liquidity) and math.isfinite(price):
-                valid.append(pair)
-        return max(valid, key=lambda p: float(p["liquidity"]["usd"])) if valid else None
+        valid = [pair for pair in pairs if _valid_solana_pair(pair)]
+        result = max(valid, key=lambda p: float(p["liquidity"]["usd"])) if valid else None
+        PAIR_CACHE[mint] = result
+        return result
     except (requests.RequestException, ValueError, TypeError, AttributeError):
         return None
+
+
+def fetch_dex_pairs(mints):
+    """Batch-fetch up to 30 Solana mints per documented DEX Screener request.
+
+    The API returns pools, not one row per mint, so choose the most liquid valid
+    pool for each requested mint. Missing tokens from a successful batch are cached
+    as unavailable for this cycle; a failed batch leaves them eligible for fallback.
+    """
+    unique = list(dict.fromkeys(mint for mint in mints if isinstance(mint, str) and mint))
+    missing = [mint for mint in unique if mint not in PAIR_CACHE]
+    for offset in range(0, len(missing), 30):
+        chunk = missing[offset:offset + 30]
+        try:
+            url = DEXSCREENER_TOKEN_BATCH_URL.format(",".join(chunk))
+            response = requests.get(url, timeout=HTTP_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, list):
+                continue
+        except (requests.RequestException, ValueError, TypeError, AttributeError):
+            continue
+
+        best = {}
+        requested = set(chunk)
+        for pair in payload:
+            if not _valid_solana_pair(pair):
+                continue
+            liquidity = float(pair["liquidity"]["usd"])
+            for token_key in ("baseToken", "quoteToken"):
+                token = pair.get(token_key) or {}
+                address = token.get("address")
+                if address not in requested:
+                    continue
+                previous = best.get(address)
+                if previous is None or liquidity > float(previous["liquidity"]["usd"]):
+                    best[address] = pair
+        for mint in chunk:
+            PAIR_CACHE[mint] = best.get(mint)
+
+    return {mint: PAIR_CACHE.get(mint) for mint in unique}
 
 
 def fetch_candidate_mints(limit=40):
@@ -665,7 +716,7 @@ def fetch_candidate_mints(limit=40):
     if limit <= 0:
         return []
     feeds = []
-    for url in (DEXSCREENER_TOKEN_BOOSTS_URL, DEXSCREENER_TOKEN_TOP_BOOSTS_URL, DEXSCREENER_TOKEN_PROFILES_URL):
+    for url in (DEXSCREENER_TOKEN_BOOSTS_URL, DEXSCREENER_TOKEN_TOP_BOOSTS_URL, DEXSCREENER_TOKEN_PROFILES_URL, DEXSCREENER_RECENT_PROFILES_URL):
         items_for_feed = []
         local_seen = set()
         try:
@@ -734,7 +785,8 @@ def fetch_candidate_mints(limit=40):
         "meme_search": len(feeds[0]),
         "latest_boosts": len(feeds[1]),
         "top_boosts": len(feeds[2]),
-        "profiles": len(feeds[3]),
+        "latest_profiles": len(feeds[3]),
+        "recent_profile_updates": len(feeds[4]),
     }
     # Interleave feeds so a large first response cannot starve any one source.
     found, seen = [], set()
@@ -898,6 +950,7 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     """Collect labeled virtual-trade samples independently of account entry eligibility."""
     fetched_here = candidates is None
     candidates = fetch_candidate_mints() if candidates is None else candidates
+    fetch_dex_pairs(candidates)
     if fetched_here:
         log(f"[DISCOVERY] selected={LAST_DISCOVERY_DIAGNOSTICS.get('selected', len(candidates))} source_counts={LAST_DISCOVERY_DIAGNOSTICS.get('source_counts', {})}")
     opened = []
@@ -1175,6 +1228,7 @@ __all__ = [
     "normalize_state",
     "normalize_legacy_strategy_baseline",
     "fetch_dex_pair",
+    "fetch_dex_pairs",
     "fetch_candidate_mints",
     "append_trade",
     "append_learning_observation",
@@ -1217,6 +1271,10 @@ __all__ = [
 
 def run_cycle(state=None):
     """Run one paper-trading scan cycle using current DexScreener data."""
+    # The process runs the historical and isolated paper accounts sequentially.
+    # Clear between cycles, then share each fresh pair response between shadow and
+    # strategy evaluation so the same token is not fetched/scored twice inconsistently.
+    PAIR_CACHE.clear()
     state = normalize_state(state if state is not None else load_state())
     state = normalize_legacy_strategy_baseline(state)
     reconcile_learning_from_trade_log(state)
@@ -1238,6 +1296,7 @@ def run_cycle(state=None):
         log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; account entries blocked; shadow_scanned={shadow['scanned']} shadow_opened={len(shadow['shadow_opened'])}")
         return {"scanned": shadow["scanned"], "opened": opened, "shadow_opened": shadow["shadow_opened"], "open_positions": len(state["positions"]), "shadow_positions": len(state["shadow_positions"]), "equity": state["equity"], "risk_halted": True, "risk_control": risk}
     candidates = fetch_candidate_mints()
+    fetch_dex_pairs(candidates)
     log(f"[DISCOVERY] selected={LAST_DISCOVERY_DIAGNOSTICS.get('selected', len(candidates))} source_counts={LAST_DISCOVERY_DIAGNOSTICS.get('source_counts', {})}")
     # Keep a research-only cohort running even while the paper account is healthy.
     # Without this, the independent account would produce no labeled outcomes until
