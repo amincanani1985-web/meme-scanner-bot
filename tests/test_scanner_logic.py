@@ -849,6 +849,7 @@ class DexScreenerMintAttributionTests(unittest.TestCase):
             selected = scanner.fetch_dex_pair(requested)
         self.assertEqual(selected["baseToken"]["address"], requested)
         self.assertEqual(selected["priceUsd"], "0.0004")
+        self.assertEqual(scanner.DEXSCREENER_TOKEN_PAIRS_URL, "https://api.dexscreener.com/token-pairs/v1/solana/{}")
 
     def test_batch_lookup_maps_requested_base_mint_only(self):
         requested = "target-mint"
