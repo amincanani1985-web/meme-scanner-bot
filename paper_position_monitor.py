@@ -21,6 +21,13 @@ def run(root_dir=None):
         state = scanner.load_state()
         scanner.reconcile_learning_from_trade_log(state)
         trades_before = int(state.get("trade_count", 0))
+        # Prefetch every current position in documented batches to avoid one HTTP
+        # request per token during the high-frequency exit-monitor pass.
+        monitored_mints = list(dict.fromkeys([
+            *state.get("positions", {}).keys(),
+            *state.get("shadow_positions", {}).keys(),
+        ]))
+        scanner.fetch_dex_pairs(monitored_mints)
         scanner.manage_open_positions(state)
         scanner.manage_shadow_positions(state)
         risk = scanner.update_risk_control(state)
