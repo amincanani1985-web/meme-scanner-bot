@@ -661,7 +661,13 @@ def fetch_dex_pair(mint):
         if not isinstance(pairs, list):
             PAIR_CACHE[mint] = None
             return None
-        valid = [pair for pair in pairs if _valid_solana_pair(pair)]
+        # DEX Screener's priceUsd/priceChange fields describe baseToken.
+        # Never treat a quote-side mint as if those fields belonged to it.
+        valid = [
+            pair for pair in pairs
+            if _valid_solana_pair(pair)
+            and (pair.get("baseToken") or {}).get("address") == mint
+        ]
         result = max(valid, key=lambda p: float(p["liquidity"]["usd"])) if valid else None
         PAIR_CACHE[mint] = result
         return result
@@ -696,14 +702,15 @@ def fetch_dex_pairs(mints):
             if not _valid_solana_pair(pair):
                 continue
             liquidity = float(pair["liquidity"]["usd"])
-            for token_key in ("baseToken", "quoteToken"):
-                token = pair.get(token_key) or {}
-                address = token.get("address")
-                if address not in requested:
-                    continue
-                previous = best.get(address)
-                if previous is None or liquidity > float(previous["liquidity"]["usd"]):
-                    best[address] = pair
+            # Pair priceUsd and priceChange refer to baseToken. Mapping a
+            # requested quoteToken mint to this pair silently trades the wrong asset.
+            token = pair.get("baseToken") or {}
+            address = token.get("address")
+            if address not in requested:
+                continue
+            previous = best.get(address)
+            if previous is None or liquidity > float(previous["liquidity"]["usd"]):
+                best[address] = pair
         for mint in chunk:
             PAIR_CACHE[mint] = best.get(mint)
 
@@ -766,17 +773,18 @@ def fetch_candidate_mints(limit=40):
                     or pair_age_seconds < MIN_PAIR_AGE_SECONDS
                 ):
                     continue
-                for token_key in ("baseToken", "quoteToken"):
-                    token = pair.get(token_key) or {}
-                    symbol = str(token.get("symbol", "")).strip().upper()
-                    name = str(token.get("name", "")).strip().upper()
-                    mint = token.get("address")
-                    # Exact ticker/name matching avoids flooding the feed with clones
-                    # such as BONK2, WIFINU, or "POPCAT 2.0".
-                    if (symbol == term or name == term) and isinstance(mint, str) and mint and mint not in search_seen:
-                        search_seen.add(mint)
-                        search_items.append(mint)
-                        break
+                # DEX Screener's price/volume/momentum metrics describe baseToken.
+                # Discover only the base mint so later scoring cannot be assigned
+                # to a different quote-side asset.
+                token = pair.get("baseToken") or {}
+                symbol = str(token.get("symbol", "")).strip().upper()
+                name = str(token.get("name", "")).strip().upper()
+                mint = token.get("address")
+                # Exact ticker/name matching avoids flooding the feed with clones
+                # such as BONK2, WIFINU, or "POPCAT 2.0".
+                if (symbol == term or name == term) and isinstance(mint, str) and mint and mint not in search_seen:
+                    search_seen.add(mint)
+                    search_items.append(mint)
         except (requests.RequestException, ValueError, TypeError, AttributeError):
             continue
     # Prioritize established, liquid search results before the noisy launch feeds.
