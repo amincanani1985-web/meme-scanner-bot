@@ -18,6 +18,12 @@ class WorkflowSafetyTests(unittest.TestCase):
             workflow,
         )
 
+    def test_paper_positions_are_rechecked_multiple_times_per_workflow_run(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn("- name: Run three paper-monitoring cycles with 60-second gaps", workflow)
+        self.assertIn("for cycle in 1 2 3", workflow)
+        self.assertIn("sleep 60", workflow)
+
     def test_trading_cycle_cannot_recursively_start_the_validation_loop(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertNotIn("gh workflow run paper-profit-loop.yml", workflow)
