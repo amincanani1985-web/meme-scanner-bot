@@ -811,5 +811,56 @@ class PaperScenarioLabTests(unittest.TestCase):
         self.assertTrue(reason.startswith("negative_momentum_h1:"))
 
 
+
+
+class DexScreenerMintAttributionTests(unittest.TestCase):
+    def _pair(self, base_mint, quote_mint, liquidity, price):
+        return {
+            "chainId": "solana",
+            "pairAddress": f"pool-{base_mint}-{quote_mint}",
+            "baseToken": {"address": base_mint, "symbol": "BASE"},
+            "quoteToken": {"address": quote_mint, "symbol": "QUOTE"},
+            "liquidity": {"usd": liquidity},
+            "priceUsd": str(price),
+            "priceChange": {"m5": 2.0, "h1": 10.0},
+            "volume": {"h1": 50000},
+            "txns": {"m5": {"buys": 20, "sells": 10}},
+        }
+
+    def test_single_mint_lookup_never_returns_quote_side_price(self):
+        requested = "target-mint"
+        wrong_but_more_liquid = self._pair("other-token", requested, 900000, 42.0)
+        correct = self._pair(requested, "wrapped-sol", 20000, 0.0004)
+        response = Mock()
+        response.json.return_value = {"pairs": [wrong_but_more_liquid, correct]}
+        response.raise_for_status.return_value = None
+        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(scanner.requests, "get", return_value=response):
+            selected = scanner.fetch_dex_pair(requested)
+        self.assertEqual(selected["baseToken"]["address"], requested)
+        self.assertEqual(selected["priceUsd"], "0.0004")
+
+    def test_batch_lookup_maps_requested_base_mint_only(self):
+        requested = "target-mint"
+        wrong_quote_pair = self._pair("other-token", requested, 900000, 42.0)
+        correct_base_pair = self._pair(requested, "wrapped-sol", 20000, 0.0004)
+        response = Mock()
+        response.json.return_value = [wrong_quote_pair, correct_base_pair]
+        response.raise_for_status.return_value = None
+        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(scanner.requests, "get", return_value=response):
+            selected = scanner.fetch_dex_pairs([requested])[requested]
+        self.assertEqual(selected["baseToken"]["address"], requested)
+        self.assertEqual(selected["priceUsd"], "0.0004")
+
+    def test_batch_lookup_does_not_fabricate_pair_for_quote_only_mint(self):
+        requested = "target-mint"
+        quote_only_pair = self._pair("other-token", requested, 900000, 42.0)
+        response = Mock()
+        response.json.return_value = [quote_only_pair]
+        response.raise_for_status.return_value = None
+        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(scanner.requests, "get", return_value=response):
+            selected = scanner.fetch_dex_pairs([requested])[requested]
+        self.assertIsNone(selected)
+
+
 if __name__ == "__main__":
     unittest.main()
