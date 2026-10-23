@@ -197,7 +197,7 @@ class ScannerLogicTests(unittest.TestCase):
             response.json.return_value = {"pairs": []}
             empty_searches.append(response)
         with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, recent_profiles, *empty_searches]):
-            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "recent-mint", "top-mint"])
+            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "top-mint", "recent-mint"])
 
     def test_pair_lookup_never_selects_a_non_solana_pair(self):
         scanner.PAIR_CACHE.clear()
@@ -205,7 +205,7 @@ class ScannerLogicTests(unittest.TestCase):
         response.raise_for_status.return_value = None
         response.json.return_value = {"pairs": [
             {**pair(), "chainId": "ethereum", "liquidity": {"usd": 999999}},
-            {**pair(), "chainId": "solana", "liquidity": {"usd": 100000}},
+            {**pair(), "chainId": "solana", "baseToken": {"address": "mint", "symbol": "TEST"}, "liquidity": {"usd": 100000}},
         ]}
         with patch.object(scanner.requests, "get", return_value=response):
             found = scanner.fetch_dex_pair("mint")
