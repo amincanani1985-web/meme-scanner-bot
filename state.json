@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 363,
+  "scan_count": 364,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-23T15:20:16Z",
+  "last_run": "2026-10-23T15:23:52Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -208,29 +208,6 @@
   },
   "peak_equity": 1055.98,
   "shadow_positions": {
-    "4ec7Lf7JuCYQVQnUJCzpW5YvaPMNEAeqDRwGcU5n9GGJ": {
-      "symbol": "SATOSHI",
-      "entry_price": 0.000196098,
-      "entry_time": 1792768382.4958694,
-      "entry_liquidity": 40564.86,
-      "peak_price": 0.000196098,
-      "signal_score": 57.775999999999996,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 13.776,
-        "hourly_bonus": 5.34,
-        "short_term_bonus": 8.436,
-        "buy_pressure": -6.0,
-        "momentum_m5_pct": 0.03,
-        "momentum_h1_pct": 13.35,
-        "buy_sell_ratio": 0.0,
-        "liquidity_usd": 40564.86,
-        "volume_h1_usd": 1344.11,
-        "market_cap_usd": 193294.0,
-        "liquidity_to_mcap_ratio": 0.2098609372251596
-      },
-      "liquidity_drain_hits": 0
-    },
     "9g4Pib6AM3oVdP9YA7ZcssAXAuhoUzkjR8w27doYpump": {
       "symbol": "Pepper",
       "entry_price": 0.0005620054999999999,
@@ -254,35 +231,12 @@
       },
       "liquidity_drain_hits": 0
     },
-    "7rN6DLfo2bo8T5JFzy9P7iSNvUiqydwVXsqVNub6pump": {
-      "symbol": "CHUNKEE",
-      "entry_price": 0.000151032,
-      "entry_time": 1792768596.940544,
-      "entry_liquidity": 31806.34,
-      "peak_price": 0.000151032,
-      "signal_score": 54.31991902834009,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 4.660000000000004,
-        "hourly_bonus": 20.0,
-        "short_term_bonus": -15.339999999999996,
-        "buy_pressure": -0.3400809716599189,
-        "momentum_m5_pct": -17.56,
-        "momentum_h1_pct": 227.0,
-        "buy_sell_ratio": 0.9433198380566802,
-        "liquidity_usd": 31806.34,
-        "volume_h1_usd": 330330.59,
-        "market_cap_usd": 147001.0,
-        "liquidity_to_mcap_ratio": 0.2163681879715104
-      },
-      "liquidity_drain_hits": 0
-    },
     "Cbkg5w7V7W2J2sUmecnyN825CbvwvXwasfhduVtNpump": {
       "symbol": "PHP",
       "entry_price": 0.000363167,
       "entry_time": 1792768687.3764846,
       "entry_liquidity": 64340.44,
-      "peak_price": 0.0003677,
+      "peak_price": 0.0003713,
       "signal_score": 58.80133333333334,
       "trailing_armed": false,
       "components": {
@@ -305,7 +259,7 @@
       "entry_price": 0.0034093849999999996,
       "entry_time": 1792768687.3765004,
       "entry_liquidity": 172132.52,
-      "peak_price": 0.003844,
+      "peak_price": 0.004076,
       "signal_score": 80.49676691729323,
       "trailing_armed": true,
       "components": {
@@ -420,7 +374,7 @@
       "entry_price": 2.5923099999999996e-05,
       "entry_time": 1792768687.376609,
       "entry_liquidity": 12747.76,
-      "peak_price": 2.5923099999999996e-05,
+      "peak_price": 2.767e-05,
       "signal_score": 70.283,
       "trailing_armed": false,
       "components": {
@@ -489,9 +443,9 @@
       "entry_price": 0.0005386605,
       "entry_time": 1792768752.6640296,
       "entry_liquidity": 63336.12,
-      "peak_price": 0.0005386605,
+      "peak_price": 0.00125,
       "signal_score": 53.54130052724078,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -5.0,
         "hourly_bonus": 20.0,
@@ -506,22 +460,87 @@
         "liquidity_to_mcap_ratio": 0.11934066555245075
       },
       "liquidity_drain_hits": 0
+    },
+    "4ec7Lf7JuCYQVQnUJCzpW5YvaPMNEAeqDRwGcU5n9GGJ": {
+      "symbol": "SATOSHI",
+      "entry_price": 0.00019782349999999997,
+      "entry_time": 1792769032.6726525,
+      "entry_liquidity": 40665.38,
+      "peak_price": 0.00019782349999999997,
+      "signal_score": 65.712,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 15.712,
+        "hourly_bonus": 6.304,
+        "short_term_bonus": 9.408,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": 0.84,
+        "momentum_h1_pct": 15.76,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 40665.38,
+        "volume_h1_usd": 1451.56,
+        "market_cap_usd": 194916.0,
+        "liquidity_to_mcap_ratio": 0.2086302817624002
+      }
+    },
+    "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump": {
+      "symbol": "Fartcoin ",
+      "entry_price": 0.147987,
+      "entry_time": 1792769032.6726804,
+      "entry_liquidity": 7532557.91,
+      "peak_price": 0.147987,
+      "signal_score": 51.092,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 7.0920000000000005,
+        "hourly_bonus": 0.06,
+        "short_term_bonus": 7.032000000000001,
+        "buy_pressure": -6.0,
+        "momentum_m5_pct": -1.14,
+        "momentum_h1_pct": 0.15,
+        "buy_sell_ratio": 0.0,
+        "liquidity_usd": 7532557.91,
+        "volume_h1_usd": 12578.47,
+        "market_cap_usd": 145896115.0,
+        "liquidity_to_mcap_ratio": 0.05162959897869796
+      }
+    },
+    "A75Xx6SeftAmWduv9KGwb2GCjXUAhxozcCUCys9jpump": {
+      "symbol": "HELL",
+      "entry_price": 0.0021325149999999998,
+      "entry_time": 1792769032.6726933,
+      "entry_liquidity": 122128.17,
+      "peak_price": 0.0021325149999999998,
+      "signal_score": 62.66884210526316,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 12.432,
+        "hourly_bonus": 5.332000000000001,
+        "short_term_bonus": 7.1,
+        "buy_pressure": 0.23684210526315796,
+        "momentum_m5_pct": -2.6,
+        "momentum_h1_pct": 13.33,
+        "buy_sell_ratio": 1.0394736842105263,
+        "liquidity_usd": 122128.17,
+        "volume_h1_usd": 6979.69,
+        "market_cap_usd": 2004135.0,
+        "liquidity_to_mcap_ratio": 0.060938095487579426
+      }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-23T15:20:16Z",
+    "timestamp": "2026-10-23T15:23:52Z",
     "candidate_count": 40,
-    "filter_passed": 3,
-    "shadow_opened": 0,
+    "filter_passed": 6,
+    "shadow_opened": 3,
     "rejections": {
       "shadow_liq_mcap_ratio:0.00": 1,
       "pair_data_unavailable": 16,
-      "shadow_low_volume_h1:316": 1,
-      "shadow_low_activity": 1,
+      "shadow_low_volume_h1:326": 1,
       "shadow_liq_mcap_ratio:0.01": 1,
       "shadow_low_volume_h1:0": 2,
       "shadow_low_volume_h1:18": 1,
-      "shadow_low_volume_h1:362": 1
+      "shadow_low_volume_h1:343": 1
     }
   }
 }
