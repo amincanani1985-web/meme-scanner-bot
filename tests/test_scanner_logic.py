@@ -187,16 +187,20 @@ class ScannerLogicTests(unittest.TestCase):
         profiles = Mock()
         profiles.raise_for_status.return_value = None
         profiles.json.return_value = [{"chainId": "base", "tokenAddress": "other-chain"}]
+        recent_profiles = Mock()
+        recent_profiles.raise_for_status.return_value = None
+        recent_profiles.json.return_value = [{"chainId": "solana", "tokenAddress": "recent-mint"}]
         empty_searches = []
         for _ in range(len(scanner.DISCOVERY_SEARCH_TERMS)):
             response = Mock()
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
             empty_searches.append(response)
-        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, *empty_searches]):
-            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "top-mint"])
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, recent_profiles, *empty_searches]):
+            self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "recent-mint", "top-mint"])
 
     def test_pair_lookup_never_selects_a_non_solana_pair(self):
+        scanner.PAIR_CACHE.clear()
         response = Mock()
         response.raise_for_status.return_value = None
         response.json.return_value = {"pairs": [
@@ -254,7 +258,7 @@ class ScannerLogicTests(unittest.TestCase):
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
             empty_searches.append(response)
-        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, *empty_searches]):
+        with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, Mock(), *empty_searches]):
             self.assertEqual(
                 scanner.fetch_candidate_mints(limit=10),
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
@@ -667,7 +671,7 @@ class ScannerLogicTests(unittest.TestCase):
             empty_searches.append(response)
         with patch.object(
             scanner.requests, "get",
-            side_effect=[empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
+            side_effect=[empty_feed, empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
         ):
             candidates = scanner.fetch_candidate_mints(limit=10)
         self.assertIn("search-mint", candidates)
