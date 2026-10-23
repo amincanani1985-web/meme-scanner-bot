@@ -1,6 +1,10 @@
 name: paper profit target loop
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/paper-profit-loop.yml"
   workflow_dispatch:
 
 permissions:
