@@ -199,9 +199,18 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python learn_agent.py --state paper_account/state.json --observations paper_account/strategy_observations.csv --apply
 
-      - name: Run one trading cycle
+      - name: Run three paper-monitoring cycles with 60-second gaps
         if: github.event_name != 'pull_request'
-        run: python meme_scanner_cycle.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cycle in 1 2 3; do
+            echo "Paper monitoring cycle $cycle/3"
+            python meme_scanner_cycle.py
+            if [ "$cycle" -lt 3 ]; then
+              sleep 60
+            fi
+          done
 
       # Recompute after the scan so the dashboard includes outcomes closed in this same cycle.
       - name: Refresh learning reports after the latest outcomes
