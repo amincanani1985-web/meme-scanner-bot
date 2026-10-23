@@ -2,8 +2,13 @@ import unittest
 from unittest.mock import patch
 import learn_agent as la
 import meme_scanner_cycle as scanner
+import strategy_backtest as backtest
 
 class AdaptiveTests(unittest.TestCase):
+    def test_adaptive_cost_assumption_matches_paper_ledger_and_backtest(self):
+        self.assertEqual(la.ROUND_TRIP_COST_PCT, scanner.PAPER_ROUND_TRIP_FEE_PCT)
+        self.assertEqual(la.ROUND_TRIP_COST_PCT, backtest.ROUND_TRIP_COST_PCT)
+
     def test_walk_forward_needs_history(self):
         self.assertFalse(la.walk_forward([],60)["eligible"])
 
