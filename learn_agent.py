@@ -12,7 +12,7 @@ ROLLBACK_WIN_RATE=0.30
 ROLLBACK_AVG_PNL=-2.0
 MIN_VALIDATION_EDGE=0.25
 BASELINE_THRESHOLD=80.0
-ROUND_TRIP_COST_PCT=2.0
+ROUND_TRIP_COST_PCT=1.0  # Match the ledger/backtest fee reserve; slippage is already modeled in observations
 OUTLIER_ABS_PNL_PCT=100.0
 
 def load_observations(path="strategy_observations.csv"):

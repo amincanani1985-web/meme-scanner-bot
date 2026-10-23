@@ -18,11 +18,14 @@ class WorkflowSafetyTests(unittest.TestCase):
             workflow,
         )
 
-    def test_paper_positions_are_rechecked_multiple_times_per_workflow_run(self):
+    def test_exit_monitoring_does_not_repeat_candidate_discovery(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
-        self.assertIn("- name: Run three paper-monitoring cycles with 60-second gaps", workflow)
-        self.assertIn("for cycle in 1 2 3", workflow)
+        self.assertIn("- name: Run one discovery and entry cycle", workflow)
+        self.assertIn("- name: Monitor existing paper positions with 60-second gaps", workflow)
+        self.assertIn("for check in 1 2", workflow)
+        self.assertIn("python paper_position_monitor.py", workflow)
         self.assertIn("sleep 60", workflow)
+        self.assertNotIn("for cycle in 1 2 3", workflow)
 
     def test_trading_cycle_cannot_recursively_start_the_validation_loop(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")

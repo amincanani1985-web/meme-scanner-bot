@@ -67,7 +67,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py paper_scenario_lab.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile meme_scanner_cycle.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -199,17 +199,19 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python learn_agent.py --state paper_account/state.json --observations paper_account/strategy_observations.csv --apply
 
-      - name: Run three paper-monitoring cycles with 60-second gaps
+      - name: Run one discovery and entry cycle
+        if: github.event_name != 'pull_request'
+        run: python meme_scanner_cycle.py
+
+      - name: Monitor existing paper positions with 60-second gaps
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          for cycle in 1 2 3; do
-            echo "Paper monitoring cycle $cycle/3"
-            python meme_scanner_cycle.py
-            if [ "$cycle" -lt 3 ]; then
-              sleep 60
-            fi
+          for check in 1 2; do
+            sleep 60
+            echo "Monitor-only check $check/2"
+            python paper_position_monitor.py
           done
 
       # Recompute after the scan so the dashboard includes outcomes closed in this same cycle.

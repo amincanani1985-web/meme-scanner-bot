@@ -421,7 +421,7 @@ def score_shadow_opportunity(pair_data, learning=None):
 
 
 # ============================================================================
-# CANDIDATE CONFIRMATION: 3 consecutive observations required
+# CANDIDATE CONFIRMATION: configurable consecutive observations; paper profile uses one hit
 # ============================================================================
 
 def candidate_confirmation(state, mint, signal_score):
