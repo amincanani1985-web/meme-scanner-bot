@@ -24,7 +24,7 @@ PAIR_CACHE = {}
 DEXSCREENER_SEARCH_URL = "https://api.dexscreener.com/latest/dex/search"
 DISCOVERY_SEARCH_TERMS = ("BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO", "FARTCOIN", "GOAT", "PNUT", "GIGA", "FWOG", "MOTHER", "WEN", "SLERF", "TURBO", "NEIRO", "PENGU")
 LAST_DISCOVERY_DIAGNOSTICS = {"selected": 0, "source_counts": {}}
-DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/latest/dex/tokens/{}"
+DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/token-pairs/v1/solana/{}"
 ENTRY_SLIPPAGE_BPS = 150
 EXIT_SLIPPAGE_BPS = 200
 PAPER_ROUND_TRIP_FEE_PCT = 1.0  # Additional fee reserve; entry/exit slippage is modeled separately
@@ -657,7 +657,14 @@ def fetch_dex_pair(mint):
         response = requests.get(DEXSCREENER_TOKEN_PAIRS_URL.format(mint), timeout=HTTP_TIMEOUT_SECONDS)
         response.raise_for_status()
         payload = response.json()
-        pairs = payload.get("pairs") or []
+        # The documented token-pairs endpoint returns a JSON array.
+        # Keep dict support for compatibility, and reject unknown response shapes.
+        if isinstance(payload, list):
+            pairs = payload
+        elif isinstance(payload, dict):
+            pairs = payload.get("pairs") or []
+        else:
+            pairs = []
         if not isinstance(pairs, list):
             PAIR_CACHE[mint] = None
             return None
