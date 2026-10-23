@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 356,
+  "scan_count": 357,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-23T15:11:29Z",
+  "last_run": "2026-10-23T15:13:02Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -213,7 +213,7 @@
       "entry_price": 0.0034388199999999996,
       "entry_time": 1792768076.7987018,
       "entry_liquidity": 172951.13,
-      "peak_price": 0.0034388199999999996,
+      "peak_price": 0.003448,
       "signal_score": 88.66711312217195,
       "trailing_armed": false,
       "components": {
@@ -282,7 +282,7 @@
       "entry_price": 8.641709999999999e-05,
       "entry_time": 1792768076.7987792,
       "entry_liquidity": 23551.48,
-      "peak_price": 8.641709999999999e-05,
+      "peak_price": 8.844e-05,
       "signal_score": 51.496,
       "trailing_armed": false,
       "components": {
@@ -351,7 +351,7 @@
       "entry_price": 0.00037473799999999995,
       "entry_time": 1792768076.79885,
       "entry_liquidity": 65445.07,
-      "peak_price": 0.00037473799999999995,
+      "peak_price": 0.0003782,
       "signal_score": 56.231,
       "trailing_armed": false,
       "components": {
@@ -466,7 +466,7 @@
       "entry_price": 0.0021111999999999997,
       "entry_time": 1792768127.9040368,
       "entry_liquidity": 121572.85,
-      "peak_price": 0.0021111999999999997,
+      "peak_price": 0.002129,
       "signal_score": 51.72439024390244,
       "trailing_armed": false,
       "components": {
@@ -489,7 +489,7 @@
       "entry_price": 0.00018909449999999998,
       "entry_time": 1792768289.4126916,
       "entry_liquidity": 35790.52,
-      "peak_price": 0.00018909449999999998,
+      "peak_price": 0.0001999,
       "signal_score": 56.101451612903226,
       "trailing_armed": false,
       "components": {
@@ -504,7 +504,8 @@
         "volume_h1_usd": 316656.96,
         "market_cap_usd": 184028.0,
         "liquidity_to_mcap_ratio": 0.19448410024561477
-      }
+      },
+      "liquidity_drain_hits": 0
     },
     "HYLhzvLHmC4gqckEyACvy2jDMoCizE2hS1qcJ1Q7pump": {
       "symbol": "McSauce",
@@ -526,24 +527,46 @@
         "volume_h1_usd": 973946.3,
         "market_cap_usd": 652225.0,
         "liquidity_to_mcap_ratio": 0.10704053049177814
+      },
+      "liquidity_drain_hits": 0
+    },
+    "4ec7Lf7JuCYQVQnUJCzpW5YvaPMNEAeqDRwGcU5n9GGJ": {
+      "symbol": "SATOSHI",
+      "entry_price": 0.000196098,
+      "entry_time": 1792768382.4958694,
+      "entry_liquidity": 40564.86,
+      "peak_price": 0.000196098,
+      "signal_score": 57.775999999999996,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 13.776,
+        "hourly_bonus": 5.34,
+        "short_term_bonus": 8.436,
+        "buy_pressure": -6.0,
+        "momentum_m5_pct": 0.03,
+        "momentum_h1_pct": 13.35,
+        "buy_sell_ratio": 0.0,
+        "liquidity_usd": 40564.86,
+        "volume_h1_usd": 1344.11,
+        "market_cap_usd": 193294.0,
+        "liquidity_to_mcap_ratio": 0.2098609372251596
       }
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-23T15:11:29Z",
+    "timestamp": "2026-10-23T15:13:02Z",
     "candidate_count": 40,
     "filter_passed": 3,
-    "shadow_opened": 2,
+    "shadow_opened": 1,
     "rejections": {
       "shadow_liq_mcap_ratio:0.00": 1,
-      "shadow_low_activity": 2,
-      "shadow_pair_too_new:244s": 1,
       "pair_data_unavailable": 16,
-      "shadow_low_volume_h1:344": 1,
+      "shadow_low_volume_h1:343": 1,
+      "shadow_low_activity": 1,
       "shadow_low_volume_h1:0": 2,
       "shadow_low_volume_h1:14": 1,
       "shadow_liq_mcap_ratio:0.01": 1,
-      "shadow_low_volume_h1:211": 1
+      "shadow_low_volume_h1:212": 1
     }
   }
 }
