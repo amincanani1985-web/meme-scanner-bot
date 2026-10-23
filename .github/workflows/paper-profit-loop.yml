@@ -14,14 +14,14 @@ concurrency:
 jobs:
   continue-until-profitable:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 55
     steps:
       - name: Checkout latest paper state
         uses: actions/checkout@v5
         with:
           ref: main
 
-      - name: Continue scans until a net-profitable paper trade or safety stop
+      - name: Continue isolated paper cycles until cumulative net profit or safety stop
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -53,8 +53,8 @@ jobs:
           wins = sum(pnl > 0 for pnl in pnls)
           net = sum(pnls)
           risk_status = (state.get("risk_control") or {}).get("status", "unknown")
-          if wins > 0:
-              stop, reason = True, "profit"
+          if net > 0:
+              stop, reason = True, "cumulative_net_profit"
           elif risk_status == "halted":
               stop, reason = True, "risk_halt"
           elif len(pnls) >= 200:
@@ -79,35 +79,57 @@ jobs:
             python /tmp/check-paper-target.py
           }
 
-          read -r stop reason trades wins net age_seconds < <(check_target)
-          echo "Paper target check: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
-          if [ "$stop" = "true" ]; then
-            echo "Stopping paper loop at safety/result gate: $reason"
-            exit 0
-          fi
+          wait_for_cycle() {
+            local previous_id="$1"
+            local run_id=""
+            for _ in $(seq 1 30); do
+              run_id=$(gh run list --workflow trading-cycle.yml --branch main --limit 5 --json databaseId --jq '.[0].databaseId // empty')
+              if [ -n "$run_id" ] && [ "$run_id" != "$previous_id" ]; then
+                break
+              fi
+              sleep 2
+            done
+            if [ -z "$run_id" ] || [ "$run_id" = "$previous_id" ]; then
+              echo "Could not identify the newly dispatched trading cycle; stopping safely."
+              return 1
+            fi
+            echo "Watching trading cycle run $run_id"
+            gh run watch "$run_id" --interval 10 --exit-status
+          }
 
-          # Preserve the intended five-minute cadence even when GitHub cron is delayed.
-          sleep 240
-          git fetch origin main
-          git reset --hard origin/main
+          for cycle in $(seq 1 10); do
+            read -r stop reason trades wins net age_seconds < <(check_target)
+            echo "Target check $cycle/10: reason=$reason closed=$trades wins=$wins cumulative_net_pnl=$net"
+            if [ "$stop" = "true" ]; then
+              echo "Stopping at safety/result gate: $reason"
+              exit 0
+            fi
 
-          read -r stop reason trades wins net age_seconds < <(check_target)
-          echo "Paper target recheck: reason=$reason closed=$trades profitable=$wins net_pnl=$net"
-          if [ "$stop" = "true" ]; then
-            echo "Stopping paper loop at safety/result gate: $reason"
-            exit 0
-          fi
+            active_id=$(gh run list --workflow trading-cycle.yml --branch main --limit 20 --json databaseId,status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | .[0].databaseId // empty')
+            if [ -n "$active_id" ]; then
+              echo "Waiting for already-active trading cycle $active_id"
+              gh run watch "$active_id" --interval 10 --exit-status
+            else
+              previous_id=$(gh run list --workflow trading-cycle.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+              echo "Dispatching isolated paper cycle $cycle/10"
+              gh workflow run trading-cycle.yml --ref main
+              wait_for_cycle "$previous_id"
+            fi
 
-          if [ "$age_seconds" -lt 240 ]; then
-            echo "A paper cycle ran recently (${age_seconds}s ago); avoiding a duplicate dispatch."
-            exit 0
-          fi
+            git fetch origin main
+            git reset --hard origin/main
+            read -r stop reason trades wins net age_seconds < <(check_target)
+            echo "After cycle $cycle/10: reason=$reason closed=$trades wins=$wins cumulative_net_pnl=$net"
+            if [ "$stop" = "true" ]; then
+              echo "Stopping at safety/result gate: $reason"
+              exit 0
+            fi
 
-          active=$(gh run list --workflow trading-cycle.yml --branch main --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
-          if [ "$active" -gt 0 ]; then
-            echo "A trading cycle is already queued or running; it will trigger the next target check."
-            exit 0
-          fi
+            if [ "$cycle" -lt 10 ]; then
+              sleep 240
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+          done
 
-          echo "No net-profitable closed paper trade yet; dispatching the next isolated paper cycle."
-          gh workflow run trading-cycle.yml --ref main
+          echo "Reached 10-cycle test limit without cumulative net profit. Paper trading only; no live orders were sent."
