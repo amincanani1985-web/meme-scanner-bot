@@ -839,6 +839,17 @@ class DexScreenerMintAttributionTests(unittest.TestCase):
         self.assertEqual(selected["baseToken"]["address"], requested)
         self.assertEqual(selected["priceUsd"], "0.0004")
 
+    def test_single_mint_lookup_accepts_documented_token_pairs_array(self):
+        requested = "target-mint"
+        correct = self._pair(requested, "wrapped-sol", 20000, 0.0004)
+        response = Mock()
+        response.json.return_value = [correct]
+        response.raise_for_status.return_value = None
+        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(scanner.requests, "get", return_value=response):
+            selected = scanner.fetch_dex_pair(requested)
+        self.assertEqual(selected["baseToken"]["address"], requested)
+        self.assertEqual(selected["priceUsd"], "0.0004")
+
     def test_batch_lookup_maps_requested_base_mint_only(self):
         requested = "target-mint"
         wrong_quote_pair = self._pair("other-token", requested, 900000, 42.0)
