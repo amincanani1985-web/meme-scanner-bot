@@ -1,10 +1,7 @@
-name: paper profit target loop
+name: bounded paper validation loop
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/paper-profit-loop.yml"
+  # Manual only: never self-start or recursively queue more validation loops.
   workflow_dispatch:
 
 permissions:
@@ -25,7 +22,7 @@ jobs:
         with:
           ref: main
 
-      - name: Continue isolated paper cycles until cumulative net profit or safety stop
+      - name: Run bounded paper cycles; report profit without using it as a stop condition
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -57,9 +54,7 @@ jobs:
           wins = sum(pnl > 0 for pnl in pnls)
           net = sum(pnls)
           risk_status = (state.get("risk_control") or {}).get("status", "unknown")
-          if net > 0:
-              stop, reason = True, "cumulative_net_profit"
-          elif risk_status == "halted":
+          if risk_status == "halted":
               stop, reason = True, "risk_halt"
           elif len(pnls) >= 200:
               stop, reason = True, "trade_cap"
@@ -136,4 +131,4 @@ jobs:
             fi
           done
 
-          echo "Reached 10-cycle test limit without cumulative net profit. Paper trading only; no live orders were sent."
+          echo "Reached the 10-cycle validation limit. Net PnL is an outcome, not an early-stop target. Paper trading only; no live orders were sent."
