@@ -11,7 +11,7 @@ import io
 import json
 import os
 import requests
-from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump
+from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump, whale_accumulation_confirmed
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -886,6 +886,11 @@ def manage_open_positions(state):
                 log(f"[WARN] whale snapshot unavailable for open position {mint}; price/risk exits remain active")
         pos["peak_price"] = max(peak_price, current_price)
         pnl_pct = (current_price - entry_price) / entry_price if entry_price > 0 else 0.0
+        # A gap through the hard-stop level must be classified as a hard stop,
+        # even if a trailing stop was previously armed at a higher price.
+        if pnl_pct <= -HARD_STOP_LOSS_PCT:
+            close_position(state, mint, current_price, "hard_stop_loss")
+            continue
         if pnl_pct >= 0.08:
             pos["trailing_armed"] = True
         if pos.get("trailing_armed") and pos["peak_price"] > 0:
@@ -893,9 +898,6 @@ def manage_open_positions(state):
             if drop_from_peak >= TRAILING_STOP_PCT:
                 close_position(state, mint, current_price, "trailing_stop")
                 continue
-        if pnl_pct <= -HARD_STOP_LOSS_PCT:
-            close_position(state, mint, current_price, "hard_stop_loss")
-            continue
         if current_liquidity > 0 and liquidity_drain_detected(pos, current_liquidity):
             close_position(state, mint, current_price, "liquidity_drained")
             continue
@@ -940,14 +942,12 @@ def manage_shadow_positions(state):
             continue
         pos["peak_price"] = max(peak_price, price)
         pnl = (price - entry_price) / entry_price
-        reason = None
-        if pnl >= 0.08:
+        reason = "hard_stop_loss" if pnl <= -HARD_STOP_LOSS_PCT else None
+        if reason is None and pnl >= 0.08:
             pos["trailing_armed"] = True
-        if pos.get("trailing_armed") and pos["peak_price"] > 0:
+        if reason is None and pos.get("trailing_armed") and pos["peak_price"] > 0:
             if (pos["peak_price"] - price) / pos["peak_price"] >= TRAILING_STOP_PCT:
                 reason = "trailing_stop"
-        if reason is None and pnl <= -HARD_STOP_LOSS_PCT:
-            reason = "hard_stop_loss"
         if reason is None and liquidity > 0 and liquidity_drain_detected(pos, liquidity):
             reason = "liquidity_drained"
         if reason is None and time.time() - entry_time >= MAX_HOLD_SECONDS:
@@ -1284,8 +1284,8 @@ __all__ = [
 ]
 
 
-def run_cycle(state=None):
-    """Run one paper-trading scan cycle using current DexScreener data."""
+def run_cycle(state=None, require_whale_accumulation=False):
+    """Run a scan cycle; the isolated paper account can require whale-accumulation evidence."""
     # The process runs the historical and isolated paper accounts sequentially.
     # Clear between cycles, then share each fresh pair response between shadow and
     # strategy evaluation so the same token is not fetched/scored twice inconsistently.
@@ -1371,7 +1371,11 @@ def run_cycle(state=None):
             continue
         diagnostics["score_passed"] += 1
         whale_balances = {}
-        if helius_configured():
+        has_whale_provider = helius_configured()
+        if require_whale_accumulation and not has_whale_provider:
+            reject("whale_data_unavailable")
+            continue
+        if has_whale_provider:
             snapshot = fetch_whale_balances(mint)
             if not snapshot:
                 log(f"[WARN] skipping entry for {mint}: whale data unavailable")
@@ -1384,6 +1388,15 @@ def run_cycle(state=None):
                 log(f"[WHALE] entry blocked for {mint}: holder-balance drop plus market sell pressure")
                 reject("confirmed_whale_dump")
                 continue
+            if require_whale_accumulation:
+                if not previous_snapshot:
+                    state["whale_snapshots"][mint] = snapshot
+                    reject("whale_baseline_pending")
+                    continue
+                if not whale_accumulation_confirmed(previous_snapshot, snapshot, pair):
+                    state["whale_snapshots"][mint] = snapshot
+                    reject("whale_accumulation_not_confirmed")
+                    continue
             whale_balances = snapshot
             state["whale_snapshots"][mint] = snapshot
             while len(state["whale_snapshots"]) > 100:
@@ -1421,7 +1434,7 @@ def run_isolated_paper_cycle(root_dir=None):
     previous_cwd = Path.cwd()
     try:
         os.chdir(paper_dir)
-        return run_cycle()
+        return run_cycle(require_whale_accumulation=True)
     finally:
         os.chdir(previous_cwd)
 
