@@ -52,14 +52,12 @@ def simulate_exit_path(observations, entry_price=1.0, entry_liquidity=100_000.0,
         last_valid_price = price
         peak_price = max(peak_price, price)
         pnl = (price - effective_entry) / effective_entry
-        reason = None
-        if pnl >= 0.08:
+        reason = "hard_stop_loss" if pnl <= -scanner.HARD_STOP_LOSS_PCT else None
+        if reason is None and pnl >= 0.08:
             trailing_armed = True
-        if trailing_armed and peak_price > 0:
+        if reason is None and trailing_armed and peak_price > 0:
             if (peak_price - price) / peak_price >= scanner.TRAILING_STOP_PCT:
                 reason = "trailing_stop"
-        if reason is None and pnl <= -scanner.HARD_STOP_LOSS_PCT:
-            reason = "hard_stop_loss"
         if reason is None and liquidity > 0 and scanner.liquidity_drain_detected(position, liquidity):
             reason = "liquidity_drained"
         if reason is None and seconds >= scanner.MAX_HOLD_SECONDS:
@@ -128,6 +126,10 @@ def scenario_definitions():
         ("gap_through_hard_stop", [
             {"seconds": 60, "price": 0.70, "liquidity": 80_000},
             {"seconds": 120, "price": 1.20, "liquidity": 100_000},
+        ], "closed", "hard_stop_loss"),
+        ("trailing_armed_then_gap_through_hard_stop", [
+            {"seconds": 30, "price": 1.10, "liquidity": 100_000},
+            {"seconds": 60, "price": 0.70, "liquidity": 100_000},
         ], "closed", "hard_stop_loss"),
         ("critical_liquidity_drop_immediate", [
             {"seconds": 60, "price": 0.99, "liquidity": 70_000},
