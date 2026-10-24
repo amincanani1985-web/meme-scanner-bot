@@ -598,7 +598,7 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "save_state"), \
              patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
-             patch.object(scanner, "score_market_opportunity", return_value=(70.0, {})), \
+             patch.object(scanner, "score_market_opportunity", return_value=(50.0, {})), \
              patch.object(scanner, "log"):
             scanner.run_cycle(state)
         self.assertIn("mint", state["shadow_positions"])
