@@ -1419,29 +1419,34 @@ def run_cycle(state=None, require_whale_accumulation=False):
         if has_whale_provider:
             snapshot = fetch_whale_balances(mint)
             if not snapshot:
-                log(f"[WARN] skipping entry for {mint}: whale data unavailable")
-                reject("whale_data_unavailable")
-                continue
-            previous_snapshot = state["whale_snapshots"].get(mint, {})
-            if previous_snapshot and confirmed_whale_dump(previous_snapshot, snapshot, pair):
+                if require_whale_accumulation:
+                    log(f"[WARN] skipping entry for {mint}: required whale data unavailable")
+                    reject("whale_data_unavailable")
+                    continue
+                # Whale snapshots are optional in the exploratory paper profile.
+                # A configured but flaky RPC must not silently disable every entry.
+                log(f"[WARN] whale snapshot unavailable for {mint}; continuing paper-only without holder confirmation")
+            else:
+                previous_snapshot = state["whale_snapshots"].get(mint, {})
+                if previous_snapshot and confirmed_whale_dump(previous_snapshot, snapshot, pair):
+                    state["whale_snapshots"][mint] = snapshot
+                    state["candidate_observations"].pop(mint, None)
+                    log(f"[WHALE] entry blocked for {mint}: holder-balance drop plus market sell pressure")
+                    reject("confirmed_whale_dump")
+                    continue
+                if require_whale_accumulation:
+                    if not previous_snapshot:
+                        state["whale_snapshots"][mint] = snapshot
+                        reject("whale_baseline_pending")
+                        continue
+                    if not whale_accumulation_confirmed(previous_snapshot, snapshot, pair):
+                        state["whale_snapshots"][mint] = snapshot
+                        reject("whale_accumulation_not_confirmed")
+                        continue
+                whale_balances = snapshot
                 state["whale_snapshots"][mint] = snapshot
-                state["candidate_observations"].pop(mint, None)
-                log(f"[WHALE] entry blocked for {mint}: holder-balance drop plus market sell pressure")
-                reject("confirmed_whale_dump")
-                continue
-            if require_whale_accumulation:
-                if not previous_snapshot:
-                    state["whale_snapshots"][mint] = snapshot
-                    reject("whale_baseline_pending")
-                    continue
-                if not whale_accumulation_confirmed(previous_snapshot, snapshot, pair):
-                    state["whale_snapshots"][mint] = snapshot
-                    reject("whale_accumulation_not_confirmed")
-                    continue
-            whale_balances = snapshot
-            state["whale_snapshots"][mint] = snapshot
-            while len(state["whale_snapshots"]) > 100:
-                state["whale_snapshots"].pop(next(iter(state["whale_snapshots"])))
+                while len(state["whale_snapshots"]) > 100:
+                    state["whale_snapshots"].pop(next(iter(state["whale_snapshots"])))
         if not candidate_confirmation(state, mint, score):
             diagnostics["confirmation_pending"] += 1
             reject("confirmation_pending")
