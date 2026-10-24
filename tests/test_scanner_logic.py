@@ -444,6 +444,16 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertIn("mint", state["positions"])
         self.assertTrue(state.get("last_run"))
 
+    def test_whale_gated_paper_cycle_fails_closed_without_helius(self):
+        state = scanner.normalize_state({})
+        with patch.object(scanner, "helius_configured", return_value=False), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(priceChange={"m5": 2.0, "h1": 10.0})), \
+             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+            scanner.run_cycle(state, require_whale_accumulation=True)
+        self.assertNotIn("mint", state["positions"])
+        self.assertEqual(state["paper_scan_diagnostics"]["rejections"]["whale_data_unavailable"], 1)
+
     def test_confirmed_whale_dump_closes_open_position(self):
         state = {
             "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
@@ -765,7 +775,7 @@ class PaperScenarioLabTests(unittest.TestCase):
         report = paper_scenario_lab.run_scenarios()
         scenarios = report["scenarios"]
         self.assertEqual(report["mode"], "deterministic_simulation_not_live_or_historical_performance")
-        self.assertEqual(report["scenario_count"], 15)
+        self.assertEqual(report["scenario_count"], 16)
         self.assertEqual(report["closed_scenarios"], sum(item.get("status") == "closed" for item in scenarios.values()))
         self.assertEqual(report["open_scenarios"], 4)
         self.assertEqual(report["unresolved_scenarios"], 2)
@@ -776,6 +786,7 @@ class PaperScenarioLabTests(unittest.TestCase):
         self.assertEqual(scenarios["pump_then_reversal"]["reason"], "trailing_stop")
         self.assertLess(scenarios["pump_then_reversal"]["net_pnl_pct"], 0.0)
         self.assertEqual(scenarios["hard_stop"]["reason"], "hard_stop_loss")
+        self.assertEqual(scenarios["trailing_armed_then_gap_through_hard_stop"]["reason"], "hard_stop_loss")
         self.assertLess(scenarios["hard_stop"]["net_pnl_usd"], 0.0)
         self.assertEqual(scenarios["liquidity_drain_confirmed_twice"]["reason"], "liquidity_drained")
         self.assertEqual(scenarios["max_hold_timeout"]["reason"], "max_hold_timeout")
