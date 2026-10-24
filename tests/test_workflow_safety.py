@@ -10,11 +10,16 @@ class WorkflowSafetyTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         expected = (
             "python learn_agent.py --state paper_account/state.json "
-            "--observations paper_account/strategy_observations.csv --apply"
+            "--observations paper_account/whale_strategy_observations.csv --apply"
         )
         self.assertIn(expected, workflow)
         self.assertNotIn(
             "python learn_agent.py --state state.json --observations strategy_observations.csv --apply",
+            workflow,
+        )
+        self.assertNotIn(
+            "python learn_agent.py --state paper_account/state.json "
+            "--observations paper_account/strategy_observations.csv --apply",
             workflow,
         )
 
