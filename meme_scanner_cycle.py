@@ -165,6 +165,26 @@ def update_risk_control(state):
     return risk
 
 
+def should_lock_paper_profit(state):
+    """Lock new paper entries only after the whale cohort is validated and net profitable."""
+    if not isinstance(state, dict):
+        return False
+    strategy = state.get("strategy") if isinstance(state.get("strategy"), dict) else {}
+    try:
+        initial = float(state.get("initial_equity", 1000.0))
+        equity = float(state.get("equity", initial))
+        history_rows = int(strategy.get("history_rows", 0) or 0)
+    except (TypeError, ValueError, OverflowError):
+        return False
+    if not all(math.isfinite(value) for value in (initial, equity)) or initial <= 0:
+        return False
+    return (
+        strategy.get("validation_status") == "validated"
+        and history_rows >= 30
+        and equity > initial
+    )
+
+
 def normalize_legacy_strategy_baseline(state):
     """Migrate old state files to hardened thresholds."""
     strategy = state.get("strategy", {})
@@ -1362,6 +1382,18 @@ def run_cycle(state=None, require_whale_accumulation=False):
     manage_open_positions(state)
     manage_shadow_positions(state)
     opened = []
+    if state.get("profit_lock_active"):
+        state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        save_state(state)
+        log("[PROFIT LOCK] validated whale strategy is net profitable; new paper entries disabled")
+        return {
+            "scanned": 0,
+            "opened": opened,
+            "open_positions": len(state["positions"]),
+            "shadow_positions": len(state["shadow_positions"]),
+            "equity": state["equity"],
+            "profit_locked": True,
+        }
     if int(state.get("trade_count", 0)) >= TARGET_TRADES:
         state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         save_state(state)
@@ -1521,6 +1553,13 @@ def run_isolated_paper_cycle(root_dir=None):
         os.chdir(paper_dir)
         paper_state = load_state()
         strategy = paper_state.setdefault("strategy", {})
+        if should_lock_paper_profit(paper_state):
+            paper_state["profit_lock_active"] = True
+            paper_state.setdefault(
+                "profit_lock_activated_at",
+                datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            )
+            save_state(paper_state)
         validation_status = strategy.get("validation_status")
         strategy_status = strategy.get("status")
         # The independent paper account must explore the configured 60-point
