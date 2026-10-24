@@ -49,6 +49,16 @@ class ScannerLogicTests(unittest.TestCase):
         )
         self.assertEqual(scanner.passes_whale_follow_market_filter(candidate), (True, "ok"))
 
+    def test_whale_follow_filter_accepts_fifteen_thousand_hourly_volume(self):
+        candidate = pair(
+            **{"priceChange": {"m5": 3.0, "h1": 10.0},
+               "marketCap": 2_000_000,
+               "liquidity": {"usd": 60_000},
+               "volume": {"h1": 15_000},
+               "txns": {"m5": {"buys": 30, "sells": 10}}}
+        )
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate), (True, "ok"))
+
     def test_whale_follow_filter_rejects_liquidity_ratio_below_two_percent(self):
         candidate = pair(
             **{"priceChange": {"m5": 3.0, "h1": 10.0},
