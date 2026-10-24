@@ -470,6 +470,19 @@ class ScannerLogicTests(unittest.TestCase):
         )
         self.assertNotIn("learning_bonus", components)
 
+    def test_shadow_score_uses_the_same_net_profitable_learning_gate(self):
+        candidate = pair(priceChange={"m5": 2.0, "h1": 10.0})
+        _, no_edge = scanner.score_shadow_opportunity(
+            candidate, {"trades": 100, "wins": 90,
+                        "buckets": {"70": {"n": 10, "wins": 8, "avg_pnl": -3.0}}}
+        )
+        _, positive_edge = scanner.score_shadow_opportunity(
+            candidate, {"trades": 100, "wins": 90,
+                        "buckets": {"70": {"n": 10, "wins": 8, "avg_pnl": 3.0}}}
+        )
+        self.assertNotIn("learning_bonus", no_edge)
+        self.assertEqual(positive_edge["learning_bonus"], 10.0)
+
     def test_candidate_confirmation_requires_three_consecutive_hits(self):
         state = {"strategy": {"active_threshold": 80}, "candidate_observations": {}}
         with patch.object(scanner, "CANDIDATE_CONFIRMATION_HITS", 3):
