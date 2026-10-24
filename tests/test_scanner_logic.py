@@ -531,6 +531,36 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertNotIn("mint", state["positions"])
         self.assertEqual(state["trade_count"], 1)
 
+    def test_profit_lock_requires_validated_whale_cohort_and_positive_realized_equity(self):
+        valid = {
+            "initial_equity": 1000.0,
+            "equity": 1001.0,
+            "strategy": {"validation_status": "validated", "history_rows": 30},
+        }
+        self.assertTrue(scanner.should_lock_paper_profit(valid))
+        self.assertFalse(scanner.should_lock_paper_profit({
+            **valid, "equity": 999.0,
+        }))
+        self.assertFalse(scanner.should_lock_paper_profit({
+            **valid, "strategy": {"validation_status": "exploration_unvalidated", "history_rows": 30},
+        }))
+        self.assertFalse(scanner.should_lock_paper_profit({
+            **valid, "strategy": {"validation_status": "validated", "history_rows": 29},
+        }))
+
+    def test_profit_locked_paper_account_manages_positions_but_opens_no_new_entries(self):
+        state = scanner.normalize_state({
+            "equity": 1001.0,
+            "initial_equity": 1000.0,
+            "profit_lock_active": True,
+        })
+        with patch.object(scanner, "fetch_candidate_mints", side_effect=AssertionError("discovery must be skipped")), \
+             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+            result = scanner.run_cycle(state)
+        self.assertTrue(result["profit_locked"])
+        self.assertEqual(result["opened"], [])
+        self.assertEqual(result["scanned"], 0)
+
     def test_run_cycle_opens_on_first_qualified_paper_observation(self):
         state = scanner.normalize_state({})
         with patch.object(scanner, "helius_configured", return_value=False), \
