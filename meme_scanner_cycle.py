@@ -1412,6 +1412,7 @@ def run_cycle(state=None, require_whale_accumulation=False):
             continue
         diagnostics["score_passed"] += 1
         whale_balances = {}
+        whale_accumulation_passed = False
         has_whale_provider = helius_configured()
         if require_whale_accumulation and not has_whale_provider:
             reject("whale_data_unavailable")
@@ -1443,10 +1444,18 @@ def run_cycle(state=None, require_whale_accumulation=False):
                         state["whale_snapshots"][mint] = snapshot
                         reject("whale_accumulation_not_confirmed")
                         continue
+                    whale_accumulation_passed = True
                 whale_balances = snapshot
                 state["whale_snapshots"][mint] = snapshot
                 while len(state["whale_snapshots"]) > 100:
                     state["whale_snapshots"].pop(next(iter(state["whale_snapshots"])))
+        # Persist whether this entry was actually admitted by the whale gate.
+        # These numeric labels flow into the outcome ledger for later walk-forward
+        # analysis; they never alter the score itself.
+        components["whale_gate_enabled"] = 1.0 if require_whale_accumulation else 0.0
+        components["whale_accumulation_confirmed"] = 1.0 if whale_accumulation_passed else 0.0
+        components["entry_liquidity_usd"] = float((pair.get("liquidity") or {}).get("usd") or 0.0)
+        components["entry_volume_h1_usd"] = float((pair.get("volume") or {}).get("h1") or 0.0)
         if not candidate_confirmation(state, mint, score):
             diagnostics["confirmation_pending"] += 1
             reject("confirmation_pending")
