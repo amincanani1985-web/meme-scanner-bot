@@ -1,6 +1,6 @@
 import unittest
 
-from whale_monitor import detect_whale_balance_drops, confirmed_whale_dump
+from whale_monitor import detect_whale_balance_drops, confirmed_whale_dump, whale_accumulation_confirmed
 
 
 class WhaleMonitorTests(unittest.TestCase):
@@ -28,6 +28,18 @@ class WhaleMonitorTests(unittest.TestCase):
                          "priceChange": {"m5": -3.0}}
         self.assertFalse(confirmed_whale_dump(previous, current, quiet_market))
         self.assertTrue(confirmed_whale_dump(previous, current, sell_pressure))
+
+    def test_whale_accumulation_needs_growth_and_market_confirmation(self):
+        previous = {"a": 1000, "b": 1000, "c": 1000, "d": 1000, "e": 1000, "f": 1000}
+        current = {"a": 1020, "b": 1020, "c": 1020, "d": 1020, "e": 1020, "f": 1020}
+        market = {"txns": {"m5": {"buys": 30, "sells": 10}}, "priceChange": {"m5": -2, "h1": 8}}
+        self.assertTrue(whale_accumulation_confirmed(previous, current, market))
+
+    def test_whale_accumulation_rejects_flat_total(self):
+        previous = {"a": 1000, "b": 1000, "c": 1000, "d": 1000, "e": 1000, "f": 1000}
+        current = {"a": 1200, "b": 800, "c": 1000, "d": 1000, "e": 1000, "f": 1000}
+        market = {"txns": {"m5": {"buys": 30, "sells": 10}}, "priceChange": {"m5": 1, "h1": 8}}
+        self.assertFalse(whale_accumulation_confirmed(previous, current, market))
 
     def test_missing_market_data_fails_closed(self):
         self.assertFalse(confirmed_whale_dump({"owner-a": 1000}, {"owner-a": 700}, None))
