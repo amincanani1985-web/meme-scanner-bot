@@ -438,13 +438,36 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertGreater(controlled_pullback, overextended)
         self.assertGreater(controlled_pullback, weaker_buying)
 
-    def test_learning_bonus_only_applies_with_positive_history(self):
+    def test_learning_bonus_ignores_unscored_legacy_win_totals(self):
         baseline, _ = scanner.score_market_opportunity(pair())
         learned, components = scanner.score_market_opportunity(
-            pair(), {"trades": 10, "wins": 8}
+            pair(), {"trades": 100, "wins": 90, "buckets": {}}
+        )
+        self.assertEqual(learned, baseline)
+        self.assertNotIn("learning_bonus", components)
+
+    def test_learning_bonus_requires_positive_net_scored_history(self):
+        baseline, _ = scanner.score_market_opportunity(
+            pair(), {"trades": 10, "wins": 8,
+                     "buckets": {"70": {"n": 10, "wins": 8, "avg_pnl": -2.0}}}
+        )
+        self.assertNotIn("learning_bonus", scanner.score_market_opportunity(
+            pair(), {"trades": 10, "wins": 8,
+                     "buckets": {"70": {"n": 10, "wins": 8, "avg_pnl": -2.0}}}
+        )[1])
+        learned, components = scanner.score_market_opportunity(
+            pair(), {"trades": 10, "wins": 8,
+                     "buckets": {"70": {"n": 10, "wins": 8, "avg_pnl": 2.0}}}
         )
         self.assertGreater(learned, baseline)
         self.assertEqual(components["learning_bonus"], 10.0)
+
+    def test_learning_bonus_requires_at_least_ten_scored_trades(self):
+        _, components = scanner.score_market_opportunity(
+            pair(), {"trades": 100, "wins": 90,
+                     "buckets": {"70": {"n": 9, "wins": 8, "avg_pnl": 2.0}}}
+        )
+        self.assertNotIn("learning_bonus", components)
 
     def test_candidate_confirmation_requires_three_consecutive_hits(self):
         state = {"strategy": {"active_threshold": 80}, "candidate_observations": {}}
