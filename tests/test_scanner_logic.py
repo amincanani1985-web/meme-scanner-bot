@@ -561,6 +561,29 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["opened"], [])
         self.assertEqual(result["scanned"], 0)
 
+    def test_minute_monitor_skips_whale_rpc_when_snapshot_is_fresh_but_still_checks_price(self):
+        state = {
+            "equity": 1000.0, "initial_equity": 1000.0, "trade_count": 0,
+            "blacklist": [], "cooldowns": {}, "positions": {
+                "mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
+                         "entry_time": time.time(), "last_whale_check_at": time.time(),
+                         "entry_liquidity": 100000, "amount_usd": 10.0,
+                         "signal_score": 70, "trailing_armed": False,
+                         "whale_balances": {"owner-a": 1000.0}}
+            }
+        }
+        live_pair = {"priceUsd": "0.88", "liquidity": {"usd": 100000},
+                     "txns": {"m5": {"buys": 10, "sells": 10}},
+                     "priceChange": {"m5": -12.0}}
+        with patch.object(scanner, "helius_configured", return_value=True), \
+             patch.object(scanner, "fetch_whale_balances", side_effect=AssertionError("fresh whale snapshot should be reused")), \
+             patch.object(scanner, "fetch_dex_pair", return_value=live_pair), \
+             patch.object(scanner, "append_trade"), patch.object(scanner, "append_learning_observation"), \
+             patch.object(scanner, "log"):
+            scanner.manage_open_positions(state)
+        self.assertNotIn("mint", state["positions"])
+        self.assertEqual(state["trade_count"], 1)
+
     def test_run_cycle_opens_on_first_qualified_paper_observation(self):
         state = scanner.normalize_state({})
         with patch.object(scanner, "helius_configured", return_value=False), \
@@ -628,6 +651,7 @@ class ScannerLogicTests(unittest.TestCase):
             "positions": {"mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
                 "entry_time": time.time(), "entry_liquidity": 100000, "amount_usd": 10.0,
                 "signal_score": 85, "trailing_armed": False,
+                "last_whale_check_at": time.time() - 301,
                 "whale_balances": {"owner-a": 1000.0}}},
         }
         live_pair = {"priceUsd": "0.98", "liquidity": {"usd": 100000},
