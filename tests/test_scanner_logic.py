@@ -39,6 +39,28 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(scanner.passes_whale_follow_market_filter(candidate),
                          (False, "whale_low_activity_m5:5"))
 
+    def test_whale_follow_filter_accepts_liquid_token_with_three_percent_liquidity_ratio(self):
+        candidate = pair(
+            **{"priceChange": {"m5": 3.0, "h1": 10.0},
+               "marketCap": 2_000_000,
+               "liquidity": {"usd": 60_000},
+               "volume": {"h1": 50_000},
+               "txns": {"m5": {"buys": 30, "sells": 10}}}
+        )
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate), (True, "ok"))
+
+    def test_whale_follow_filter_rejects_liquidity_ratio_below_two_percent(self):
+        candidate = pair(
+            **{"priceChange": {"m5": 3.0, "h1": 10.0},
+               "marketCap": 4_000_000,
+               "liquidity": {"usd": 60_000},
+               "volume": {"h1": 50_000},
+               "txns": {"m5": {"buys": 30, "sells": 10}}}
+        )
+        passed, reason = scanner.passes_whale_follow_market_filter(candidate)
+        self.assertFalse(passed)
+        self.assertEqual(reason, "shadow_liq_mcap_ratio:0.02")
+
     def test_whale_follow_filter_accepts_only_basic_non_chasing_market_shape(self):
         candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
                             "txns": {"m5": {"buys": 30, "sells": 10}}})
