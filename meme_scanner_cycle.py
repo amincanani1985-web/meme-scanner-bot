@@ -400,6 +400,35 @@ def _market_feature_snapshot(pair_data, pc_m5=None, pc_h1=None, buy_sell_ratio=N
     return {key: value for key, value in values.items() if math.isfinite(value)}
 
 
+def _validated_learning_bonus(learning):
+    """Reward prior results only when scored trades show a positive net edge."""
+    if not isinstance(learning, dict):
+        return 0.0
+    buckets = learning.get("buckets")
+    if not isinstance(buckets, dict):
+        return 0.0
+    total = 0
+    wins = 0
+    weighted_net_pnl = 0.0
+    for bucket in buckets.values():
+        if not isinstance(bucket, dict):
+            continue
+        try:
+            n = int(bucket.get("n", 0) or 0)
+            bucket_wins = int(bucket.get("wins", 0) or 0)
+            avg_pnl = float(bucket.get("avg_pnl", 0.0) or 0.0)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if n <= 0 or bucket_wins < 0 or bucket_wins > n or not math.isfinite(avg_pnl):
+            continue
+        total += n
+        wins += bucket_wins
+        weighted_net_pnl += avg_pnl * n
+    if total < 10:
+        return 0.0
+    return 10.0 if wins / total > 0.5 and weighted_net_pnl / total > 0.0 else 0.0
+
+
 def score_market_opportunity(pair_data, learning=None):
     """
     Score 0-100 based on proven factors:
@@ -441,13 +470,12 @@ def score_market_opportunity(pair_data, learning=None):
     components["buy_pressure"] = buy_pressure_bonus
     components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, buy_sell_ratio))
 
-    # 3. Learning adjustment (if available)
-    if learning and learning.get("trades", 0) >= 10 and learning.get("wins", 0) >= 0:
-        win_rate = learning["wins"] / learning["trades"]
-        if win_rate > 0.40:  # only reward learning after a minimum sample
-            learning_bonus = 10.0
-            score += learning_bonus
-            components["learning_bonus"] = learning_bonus
+    # Learning bonus uses scored buckets with positive net PnL, not unrelated
+    # legacy/unscored wins from the headline ledger totals.
+    learning_bonus = _validated_learning_bonus(learning)
+    if learning_bonus:
+        score += learning_bonus
+        components["learning_bonus"] = learning_bonus
     
     score = min(100.0, max(0.0, score))
     return score, components
@@ -484,15 +512,10 @@ def score_shadow_opportunity(pair_data, learning=None):
         "buy_pressure": buy_pressure_bonus,
     }
     components.update(_market_feature_snapshot(pair_data, pc_m5, pc_h1, ratio))
-    if isinstance(learning, dict):
-        try:
-            trades = int(learning.get("trades", 0) or 0)
-            wins = int(learning.get("wins", 0) or 0)
-            if trades >= 10 and 0 <= wins <= trades and wins / trades > 0.40:
-                score += 10.0
-                components["learning_bonus"] = 10.0
-        except (TypeError, ValueError, OverflowError, ZeroDivisionError):
-            pass
+    learning_bonus = _validated_learning_bonus(learning)
+    if learning_bonus:
+        score += learning_bonus
+        components["learning_bonus"] = learning_bonus
     return min(100.0, max(0.0, score)), components
 
 
