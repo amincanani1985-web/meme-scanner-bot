@@ -1496,7 +1496,7 @@ def run_isolated_paper_cycle(root_dir=None):
             save_state(paper_state)
         require_whale_data = (
             helius_configured()
-            and os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "0").strip() == "1"
+            and os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "1").strip() == "1"
         )
         log(
             "[PAPER MODE] "
