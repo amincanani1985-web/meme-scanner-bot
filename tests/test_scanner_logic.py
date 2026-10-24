@@ -575,7 +575,7 @@ class ScannerLogicTests(unittest.TestCase):
             (root / "trades_log.csv").write_text("legacy-ledger", encoding="utf-8")
             original_cwd = Path.cwd()
 
-            def fake_cycle():
+            def fake_cycle(**kwargs):
                 Path("state.json").write_text("paper-state", encoding="utf-8")
                 Path("trades_log.csv").write_text("paper-ledger", encoding="utf-8")
                 return {"equity": 1000.0}
