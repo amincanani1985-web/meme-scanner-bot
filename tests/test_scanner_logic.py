@@ -81,6 +81,32 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(row["score"], "")
             self.assertEqual(row["pnl_pct"], "-5.0")
 
+    def test_whale_confirmed_outcome_is_written_to_separate_cohort(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(scanner, "Path", side_effect=lambda name: Path(tmp) / name):
+                scanner.append_learning_observation(
+                    72.0, 4.0, "max_hold_timeout",
+                    {"whale_gate_enabled": 1.0, "whale_accumulation_confirmed": 1.0,
+                     "momentum_m5_pct": 2.0},
+                )
+            path = Path(tmp) / "whale_strategy_observations.csv"
+            self.assertTrue(path.exists())
+            with path.open(newline="", encoding="utf-8") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["score"], "72.0")
+            self.assertIn('"whale_accumulation_confirmed":1.0', row["features_json"])
+            self.assertFalse((Path(tmp) / "strategy_observations.csv").exists())
+
+    def test_malformed_whale_flags_do_not_break_trade_close_logging(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(scanner, "Path", side_effect=lambda name: Path(tmp) / name):
+                scanner.append_learning_observation(
+                    72.0, -4.0, "max_hold_timeout",
+                    {"whale_gate_enabled": "bad", "whale_accumulation_confirmed": None},
+                )
+            self.assertTrue((Path(tmp) / "strategy_observations.csv").exists())
+            self.assertFalse((Path(tmp) / "whale_strategy_observations.csv").exists())
+
     def test_hardened_risk_constants(self):
         self.assertEqual(scanner.MAX_CONCURRENT_POSITIONS, 4)
         self.assertEqual(scanner.OPPORTUNITY_ENTRY_THRESHOLD, 60.0)
