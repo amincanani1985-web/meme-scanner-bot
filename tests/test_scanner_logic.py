@@ -504,6 +504,25 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertIn("mint", state["positions"])
         self.assertNotIn("whale_data_unavailable", state["paper_scan_diagnostics"]["rejections"])
 
+    def test_whale_gated_entry_records_accumulation_evidence(self):
+        owners = {f"owner-{i}": 1000.0 for i in range(6)}
+        current = {key: value * 1.02 for key, value in owners.items()}
+        state = scanner.normalize_state({"whale_snapshots": {"mint": owners}})
+        with patch.object(scanner, "helius_configured", return_value=True), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(priceChange={"m5": 2.0, "h1": 10.0})), \
+             patch.object(scanner, "fetch_whale_balances", return_value=current), \
+             patch.object(scanner, "confirmed_whale_dump", return_value=False), \
+             patch.object(scanner, "whale_accumulation_confirmed", return_value=True), \
+             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+            scanner.run_cycle(state, require_whale_accumulation=True)
+        self.assertIn("mint", state["positions"])
+        components = state["positions"]["mint"]["entry_components"]
+        self.assertEqual(components["whale_gate_enabled"], 1.0)
+        self.assertEqual(components["whale_accumulation_confirmed"], 1.0)
+        self.assertEqual(components["entry_liquidity_usd"], 100000.0)
+        self.assertEqual(components["entry_volume_h1_usd"], 50000.0)
+
     def test_whale_gated_paper_cycle_fails_closed_without_helius(self):
         state = scanner.normalize_state({})
         with patch.object(scanner, "helius_configured", return_value=False), \
