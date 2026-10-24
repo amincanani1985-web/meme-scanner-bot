@@ -257,6 +257,43 @@ def passes_market_filter(pair_data):
     return True, "ok"
 
 
+
+def passes_whale_follow_market_filter(pair_data):
+    """Strict research-paper entry gate: reject obvious chase and low-activity setups."""
+    passed, reason = passes_market_filter(pair_data)
+    if not passed:
+        return False, reason
+    try:
+        changes = pair_data.get("priceChange") or {}
+        m5 = float(changes.get("m5") or 0)
+        h1 = float(changes.get("h1") or 0)
+        txns = (pair_data.get("txns") or {}).get("m5") or {}
+        buys = float(txns.get("buys") or 0)
+        sells = float(txns.get("sells") or 0)
+        liquidity = float((pair_data.get("liquidity") or {}).get("usd") or 0)
+        volume = float((pair_data.get("volume") or {}).get("h1") or 0)
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return False, "whale_invalid_market_data"
+    values = (m5, h1, buys, sells, liquidity, volume)
+    if not all(math.isfinite(value) for value in values) or min(buys, sells, liquidity, volume) < 0:
+        return False, "whale_invalid_market_data"
+    # Recent shadow outcomes are materially negative; avoid vertical pumps and thin activity.
+    if h1 > 60.0:
+        return False, f"whale_chase_risk_h1:{h1:.1f}%"
+    if m5 > 8.0:
+        return False, f"whale_chase_risk_m5:{m5:.1f}%"
+    if m5 < -2.0:
+        return False, f"whale_falling_momentum_m5:{m5:.1f}%"
+    activity = buys + sells
+    if activity < 10:
+        return False, f"whale_low_activity_m5:{activity:g}"
+    if liquidity < 20000:
+        return False, f"whale_thin_liquidity:{liquidity:.0f}"
+    if volume < 20000:
+        return False, f"whale_thin_volume_h1:{volume:.0f}"
+    return True, "ok"
+
+
 def passes_shadow_market_filter(pair_data):
     """Apply data-quality/liquidity floors for virtual research only, never live entries."""
     if not isinstance(pair_data, dict):
@@ -1248,6 +1285,7 @@ __all__ = [
     "append_trade",
     "append_learning_observation",
     "passes_market_filter",
+    "passes_whale_follow_market_filter",
     "passes_shadow_market_filter",
     "score_market_opportunity",
     "score_shadow_opportunity",
@@ -1340,7 +1378,10 @@ def run_cycle(state=None, require_whale_accumulation=False):
         if not pair:
             reject("pair_data_unavailable")
             continue
-        market_ok, market_reason = passes_market_filter(pair)
+        market_ok, market_reason = (
+            passes_whale_follow_market_filter(pair)
+            if require_whale_accumulation else passes_market_filter(pair)
+        )
         if not market_ok:
             reject(market_reason)
             continue
