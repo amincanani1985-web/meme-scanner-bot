@@ -22,7 +22,12 @@ DEXSCREENER_RECENT_PROFILES_URL = "https://api.dexscreener.com/token-profiles/re
 DEXSCREENER_TOKEN_BATCH_URL = "https://api.dexscreener.com/tokens/v1/solana/{}"
 PAIR_CACHE = {}
 DEXSCREENER_SEARCH_URL = "https://api.dexscreener.com/latest/dex/search"
-DISCOVERY_SEARCH_TERMS = ("BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO", "FARTCOIN", "GOAT", "PNUT", "GIGA", "FWOG", "MOTHER", "WEN", "SLERF", "TURBO", "NEIRO", "PENGU")
+DISCOVERY_SEARCH_TERMS = (
+    "BONK", "WIF", "POPCAT", "MEW", "PONKE", "BOME", "MYRO", "SAMO",
+    "FARTCOIN", "GOAT", "PNUT", "GIGA", "FWOG", "MOTHER", "WEN", "SLERF",
+    "TURBO", "NEIRO", "PENGU", "TRUMP", "MELANIA", "USELESS", "MOODENG",
+    "TROLL", "PIPPIN", "CHILLGUY", "ZEREBRO", "ACT", "UFD", "VINE", "MICHI", "PUMP",
+)
 LAST_DISCOVERY_DIAGNOSTICS = {"selected": 0, "source_counts": {}}
 DEXSCREENER_TOKEN_PAIRS_URL = "https://api.dexscreener.com/token-pairs/v1/solana/{}"
 ENTRY_SLIPPAGE_BPS = 150
