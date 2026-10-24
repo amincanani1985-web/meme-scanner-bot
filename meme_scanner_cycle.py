@@ -259,11 +259,18 @@ def passes_market_filter(pair_data):
 
 
 def passes_whale_follow_market_filter(pair_data):
-    """Strict research-paper entry gate: reject obvious chase and low-activity setups."""
-    passed, reason = passes_market_filter(pair_data)
+    """Entry gate for the isolated whale-follow experiment.
+
+    Use the shadow data-quality floor as the base, then apply whale-specific
+    liquidity, activity, momentum and anti-chasing checks. Do not inherit the
+    legacy 5%-liquidity/market-cap rule, which was excluding otherwise liquid
+    markets before the accumulation signal could be evaluated.
+    """
+    passed, reason = passes_shadow_market_filter(pair_data)
     if not passed:
         return False, reason
     try:
+        created_ms = int(pair_data.get("pairCreatedAt", 0) or 0)
         changes = pair_data.get("priceChange") or {}
         m5 = float(changes.get("m5") or 0)
         h1 = float(changes.get("h1") or 0)
@@ -277,20 +284,26 @@ def passes_whale_follow_market_filter(pair_data):
     values = (m5, h1, buys, sells, liquidity, volume)
     if not all(math.isfinite(value) for value in values) or min(buys, sells, liquidity, volume) < 0:
         return False, "whale_invalid_market_data"
-    # Recent shadow outcomes are materially negative; avoid vertical pumps and thin activity.
+    age_seconds = (time.time() * 1000 - created_ms) / 1000.0
+    if age_seconds < MIN_PAIR_AGE_SECONDS:
+        return False, f"whale_pair_too_new:{age_seconds:.0f}s"
+    if liquidity < 20_000:
+        return False, f"whale_thin_liquidity:{liquidity:.0f}"
+    if volume < 20_000:
+        return False, f"whale_thin_volume_h1:{volume:.0f}"
+    if h1 <= 0:
+        return False, f"whale_weak_momentum_h1:{h1:.1f}%"
     if h1 > 60.0:
         return False, f"whale_chase_risk_h1:{h1:.1f}%"
-    if m5 > 8.0:
-        return False, f"whale_chase_risk_m5:{m5:.1f}%"
     if m5 < -2.0:
         return False, f"whale_falling_momentum_m5:{m5:.1f}%"
+    if m5 > 8.0:
+        return False, f"whale_chase_risk_m5:{m5:.1f}%"
     activity = buys + sells
     if activity < 10:
         return False, f"whale_low_activity_m5:{activity:g}"
-    if liquidity < 20000:
-        return False, f"whale_thin_liquidity:{liquidity:.0f}"
-    if volume < 20000:
-        return False, f"whale_thin_volume_h1:{volume:.0f}"
+    if buys <= sells:
+        return False, f"whale_weak_buy_pressure:{buys / max(sells, 1.0):.2f}"
     return True, "ok"
 
 
