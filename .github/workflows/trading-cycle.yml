@@ -201,7 +201,7 @@ jobs:
 
       - name: Apply bounded adaptive strategy update to isolated paper account
         if: github.event_name != 'pull_request'
-        run: python learn_agent.py --state paper_account/state.json --observations paper_account/strategy_observations.csv --apply
+        run: python learn_agent.py --state paper_account/state.json --observations paper_account/whale_strategy_observations.csv --apply
 
       - name: Run one discovery and entry cycle
         if: github.event_name != 'pull_request'
@@ -226,7 +226,7 @@ jobs:
           set -euo pipefail
           python strategy_backtest.py > /tmp/backtest-report-fresh.json
           python shadow_learning.py > /tmp/shadow-learning-report-fresh.json
-          python strategy_backtest.py --observations paper_account/strategy_observations.csv > /tmp/paper-backtest-report.json
+          python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-backtest-report.json
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
           python - <<'PY'
           import json
