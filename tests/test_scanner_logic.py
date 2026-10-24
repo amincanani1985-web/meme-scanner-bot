@@ -584,6 +584,49 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(json.loads(rows[0]["features_json"]), {})
             self.assertEqual(json.loads(rows[1]["features_json"])["momentum_m5_pct"], 2.5)
 
+    def test_unvalidated_paper_account_uses_exploration_threshold_without_touching_main_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paper = root / "paper_account"
+            paper.mkdir()
+            (paper / "state.json").write_text(json.dumps({
+                "equity": 1000.0, "initial_equity": 1000.0, "trade_count": 51,
+                "strategy": {"active_threshold": 80.0, "status": "waiting_for_validation",
+                             "validation_status": "no_validated_candidate"},
+            }), encoding="utf-8")
+            (root / "state.json").write_text("main-account-must-not-change", encoding="utf-8")
+            captured = {}
+            def fake_cycle(state=None, **kwargs):
+                captured["state"] = state
+                captured["kwargs"] = kwargs
+                return {"equity": state["equity"]}
+            with patch.object(scanner, "helius_configured", return_value=False):
+                with patch.object(scanner, "run_cycle", side_effect=fake_cycle):
+                    scanner.run_isolated_paper_cycle(root)
+            self.assertEqual(captured["state"]["strategy"]["active_threshold"], scanner.OPPORTUNITY_ENTRY_THRESHOLD)
+            self.assertEqual(captured["state"]["strategy"]["validation_status"], "exploration_unvalidated")
+            self.assertEqual((root / "state.json").read_text(encoding="utf-8"), "main-account-must-not-change")
+
+    def test_validated_or_rolled_back_paper_threshold_is_preserved(self):
+        for validation_status, active_threshold in (("validated", 70.0), ("rolled_back", 80.0)):
+            with self.subTest(validation_status=validation_status), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                paper = root / "paper_account"
+                paper.mkdir()
+                (paper / "state.json").write_text(json.dumps({
+                    "equity": 1000.0, "initial_equity": 1000.0, "trade_count": 51,
+                    "strategy": {"active_threshold": active_threshold, "status": validation_status,
+                                 "validation_status": validation_status},
+                }), encoding="utf-8")
+                captured = {}
+                def fake_cycle(state=None, **kwargs):
+                    captured["state"] = state
+                    return {"equity": state["equity"]}
+                with patch.object(scanner, "helius_configured", return_value=False):
+                    with patch.object(scanner, "run_cycle", side_effect=fake_cycle):
+                        scanner.run_isolated_paper_cycle(root)
+                self.assertEqual(captured["state"]["strategy"]["active_threshold"], active_threshold)
+
     def test_isolated_paper_cycle_does_not_require_whale_gate_by_default(self):
         with tempfile.TemporaryDirectory() as tmp:
             captured = {}
