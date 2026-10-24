@@ -562,11 +562,12 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["scanned"], 0)
 
     def test_minute_monitor_skips_whale_rpc_when_snapshot_is_fresh_but_still_checks_price(self):
+        now = time.time()
         state = {
             "equity": 1000.0, "initial_equity": 1000.0, "trade_count": 0,
             "blacklist": [], "cooldowns": {}, "positions": {
                 "mint": {"symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
-                         "entry_time": time.time(), "last_whale_check_at": time.time(),
+                         "entry_time": now, "last_whale_check_at": now,
                          "entry_liquidity": 100000, "amount_usd": 10.0,
                          "signal_score": 70, "trailing_armed": False,
                          "whale_balances": {"owner-a": 1000.0}}
@@ -575,7 +576,8 @@ class ScannerLogicTests(unittest.TestCase):
         live_pair = {"priceUsd": "0.88", "liquidity": {"usd": 100000},
                      "txns": {"m5": {"buys": 10, "sells": 10}},
                      "priceChange": {"m5": -12.0}}
-        with patch.object(scanner, "helius_configured", return_value=True), \
+        with patch.object(scanner.time, "time", return_value=now), \
+             patch.object(scanner, "helius_configured", return_value=True), \
              patch.object(scanner, "fetch_whale_balances", side_effect=AssertionError("fresh whale snapshot should be reused")), \
              patch.object(scanner, "fetch_dex_pair", return_value=live_pair), \
              patch.object(scanner, "append_trade"), patch.object(scanner, "append_learning_observation"), \
