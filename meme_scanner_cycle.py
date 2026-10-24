@@ -1475,13 +1475,17 @@ def run_isolated_paper_cycle(root_dir=None):
     previous_cwd = Path.cwd()
     try:
         os.chdir(paper_dir)
-        # Requiring wallet-balance snapshots without a configured RPC provider
-        # makes the independent paper account reject every candidate forever.
-        # Use the whale-accumulation gate only when its data source is available;
-        # otherwise run the conservative market filter in paper-only mode.
-        require_whale_data = helius_configured()
+        # The whale-accumulation gate is an experimental cohort, not a universal
+        # requirement: requiring top-holder balance growth can deadlock the paper
+        # account and those balance changes do not prove actual swaps. Opt in only
+        # when explicitly requested; holder-drop protection remains active when
+        # Helius is configured.
+        require_whale_data = (
+            helius_configured()
+            and os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "0").strip() == "1"
+        )
         if not require_whale_data:
-            log("[PAPER FALLBACK] Helius unavailable; using conservative market filters without whale confirmation")
+            log("[PAPER MODE] conservative market entry filters enabled; whale-accumulation gate is opt-in")
         return run_cycle(require_whale_accumulation=require_whale_data)
     finally:
         os.chdir(previous_cwd)
