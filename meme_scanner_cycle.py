@@ -1115,12 +1115,17 @@ def append_learning_observation(score, pnl_pct, reason, features=None):
     # Keep outcome cohorts separate: broad shadow research, legacy/momentum paper
     # trades, and entries that actually passed the whale-accumulation gate.
     feature_values = features if isinstance(features, dict) else {}
+    try:
+        whale_gate_enabled = float(feature_values.get("whale_gate_enabled", 0) or 0) >= 1.0
+        whale_accumulation_confirmed_flag = float(
+            feature_values.get("whale_accumulation_confirmed", 0) or 0
+        ) >= 1.0
+    except (TypeError, ValueError, OverflowError):
+        whale_gate_enabled = False
+        whale_accumulation_confirmed_flag = False
     if str(reason).startswith("shadow_"):
         filename = "shadow_observations.csv"
-    elif (
-        float(feature_values.get("whale_gate_enabled", 0) or 0) >= 1.0
-        and float(feature_values.get("whale_accumulation_confirmed", 0) or 0) >= 1.0
-    ):
+    elif whale_gate_enabled and whale_accumulation_confirmed_flag:
         filename = "whale_strategy_observations.csv"
     else:
         filename = "strategy_observations.csv"
