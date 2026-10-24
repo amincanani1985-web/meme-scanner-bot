@@ -1,4 +1,5 @@
 import csv
+from contextlib import ExitStack
 import json
 import time
 import unittest
@@ -464,15 +465,18 @@ class ScannerLogicTests(unittest.TestCase):
     def test_non_whale_paper_mode_does_not_block_entry_when_helius_snapshot_fails(self):
         state = scanner.normalize_state({})
         candidate = pair(priceChange={"m5": 3.0, "h1": 10.0})
-        with patch.object(scanner, "helius_configured", return_value=True), \\
-             patch.object(scanner, "fetch_whale_balances", return_value=None), \\
-             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \\
-             patch.object(scanner, "fetch_dex_pair", return_value=candidate), \\
-             patch.object(scanner, "fetch_dex_pairs", return_value={"mint": candidate}), \\
-             patch.object(scanner, "manage_open_positions"), \\
-             patch.object(scanner, "manage_shadow_positions"), \\
-             patch.object(scanner, "scan_shadow_candidates", return_value={"scanned": 0, "shadow_opened": []}), \\
-             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(scanner, "helius_configured", return_value=True))
+            stack.enter_context(patch.object(scanner, "fetch_whale_balances", return_value=None))
+            stack.enter_context(patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]))
+            stack.enter_context(patch.object(scanner, "fetch_dex_pair", return_value=candidate))
+            stack.enter_context(patch.object(scanner, "fetch_dex_pairs", return_value={"mint": candidate}))
+            stack.enter_context(patch.object(scanner, "manage_open_positions"))
+            stack.enter_context(patch.object(scanner, "manage_shadow_positions"))
+            stack.enter_context(patch.object(scanner, "scan_shadow_candidates",
+                                             return_value={"scanned": 0, "shadow_opened": []}))
+            stack.enter_context(patch.object(scanner, "save_state"))
+            stack.enter_context(patch.object(scanner, "log"))
             result = scanner.run_cycle(state, require_whale_accumulation=False)
         self.assertEqual(result["opened"], ["mint"])
         self.assertIn("mint", state["positions"])
