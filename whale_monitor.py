@@ -74,6 +74,50 @@ def confirmed_whale_dump(previous, current, pair_data, threshold=WHALE_DUMP_THRE
     return sells > buys or price_change <= 0
 
 
+
+def whale_accumulation_confirmed(previous, current, pair_data,
+                                 min_increase_fraction=0.01, min_common_owners=5):
+    """Heuristic for broad holder accumulation plus buy-side market confirmation.
+
+    Token-balance increases can be transfers, not purchases. This function is a
+    paper-only filter and deliberately requires both aggregate balance growth
+    among overlapping tracked owners and independent market buy pressure.
+    """
+    if not isinstance(previous, dict) or not isinstance(current, dict):
+        return False
+    common = sorted(previous.keys() & current.keys())
+    if len(common) < min_common_owners:
+        return False
+    old_total = 0.0
+    new_total = 0.0
+    for owner in common:
+        try:
+            old = float(previous[owner])
+            new = float(current[owner])
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if not math.isfinite(old) or not math.isfinite(new) or old <= 0 or new < 0:
+            return False
+        old_total += old
+        new_total += new
+    if old_total <= 0 or (new_total - old_total) / old_total < min_increase_fraction:
+        return False
+    if not isinstance(pair_data, dict):
+        return False
+    try:
+        m5 = (pair_data.get("txns") or {}).get("m5") or {}
+        buys = float(m5.get("buys"))
+        sells = float(m5.get("sells"))
+        changes = pair_data.get("priceChange") or {}
+        m5_change = float(changes.get("m5"))
+        h1_change = float(changes.get("h1"))
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return False
+    if not all(math.isfinite(value) for value in (buys, sells, m5_change, h1_change)):
+        return False
+    return buys > sells and -5.0 <= m5_change <= 5.0 and h1_change > 0.0
+
+
 def fetch_whale_balances(mint, rpc_url=None):
     """Fetch top token accounts and aggregate balances by wallet owner.
 
