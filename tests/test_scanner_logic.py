@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime, timezone
 from contextlib import ExitStack
 import json
 import time
@@ -616,6 +617,38 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["opened"], ["mint"])
         self.assertIn("mint", state["positions"])
         self.assertNotIn("whale_data_unavailable", state["paper_scan_diagnostics"]["rejections"])
+
+    def test_recent_research_accumulation_event_is_mint_specific_and_time_bounded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "whale_watch_state.json"
+            now = time.time()
+            event = {
+                "timestamp": datetime.fromtimestamp(now - 30, timezone.utc).isoformat(),
+                "mint": "target-mint",
+                "owner": "whale-owner",
+                "increase_pct": 24.0,
+                "market_confirmed": True,
+            }
+            path.write_text(json.dumps({"accumulation_events": [event]}), encoding="utf-8")
+            self.assertTrue(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
+            self.assertFalse(scanner.recent_whale_accumulation_event("other-mint", path, now=now))
+            stale = dict(event, timestamp=datetime.fromtimestamp(now - 900, timezone.utc).isoformat())
+            path.write_text(json.dumps({"accumulation_events": [stale]}), encoding="utf-8")
+            self.assertFalse(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
+
+    def test_unconfirmed_research_accumulation_event_never_confirms_entry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "whale_watch_state.json"
+            now = time.time()
+            event = {
+                "timestamp": datetime.fromtimestamp(now - 30, timezone.utc).isoformat(),
+                "mint": "target-mint",
+                "owner": "whale-owner",
+                "increase_pct": 30.0,
+                "market_confirmed": False,
+            }
+            path.write_text(json.dumps({"accumulation_events": [event]}), encoding="utf-8")
+            self.assertFalse(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
 
     def test_whale_gated_entry_records_accumulation_evidence(self):
         owners = {f"owner-{i}": 1000.0 for i in range(6)}
