@@ -72,6 +72,12 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertFalse(passed)
         self.assertEqual(reason, "shadow_liq_mcap_ratio:0.01")
 
+    def test_whale_follow_filter_rejects_five_minute_chase_above_five_percent(self):
+        candidate = pair(**{"priceChange": {"m5": 6.0, "h1": 10.0},
+                            "txns": {"m5": {"buys": 30, "sells": 10}}})
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate),
+                         (False, "whale_chase_risk_m5:6.0%"))
+
     def test_whale_follow_filter_accepts_only_basic_non_chasing_market_shape(self):
         candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
                             "txns": {"m5": {"buys": 30, "sells": 10}}})
@@ -668,6 +674,22 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(components["whale_accumulation_confirmed"], 1.0)
         self.assertEqual(components["entry_liquidity_usd"], 100000.0)
         self.assertEqual(components["entry_volume_h1_usd"], 50000.0)
+
+    def test_recent_confirmed_whale_research_event_can_admit_entry_without_old_baseline(self):
+        state = scanner.normalize_state({})
+        with patch.object(scanner, "helius_configured", return_value=True), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair(priceChange={"m5": 3.0, "h1": 10.0})), \
+             patch.object(scanner, "fetch_whale_balances", return_value={f"owner-{i}": 1000.0 for i in range(6)}), \
+             patch.object(scanner, "confirmed_whale_dump", return_value=False), \
+             patch.object(scanner, "whale_accumulation_confirmed", return_value=False), \
+             patch.object(scanner, "recent_whale_accumulation_event", return_value=True), \
+             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
+            scanner.run_cycle(state, require_whale_accumulation=True)
+        self.assertIn("mint", state["positions"])
+        components = state["positions"]["mint"]["entry_components"]
+        self.assertEqual(components["whale_accumulation_confirmed"], 1.0)
+        self.assertEqual(components["whale_accumulation_source"], 2.0)
 
     def test_whale_gated_paper_cycle_fails_closed_without_helius(self):
         state = scanner.normalize_state({})
