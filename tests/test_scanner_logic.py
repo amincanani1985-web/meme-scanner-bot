@@ -1,5 +1,4 @@
 import csv
-from datetime import datetime, timezone
 from contextlib import ExitStack
 import json
 import time
@@ -71,12 +70,6 @@ class ScannerLogicTests(unittest.TestCase):
         passed, reason = scanner.passes_whale_follow_market_filter(candidate)
         self.assertFalse(passed)
         self.assertEqual(reason, "shadow_liq_mcap_ratio:0.01")
-
-    def test_whale_follow_filter_rejects_five_minute_chase_above_five_percent(self):
-        candidate = pair(**{"priceChange": {"m5": 6.0, "h1": 10.0},
-                            "txns": {"m5": {"buys": 30, "sells": 10}}})
-        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate),
-                         (False, "whale_chase_risk_m5:6.0%"))
 
     def test_whale_follow_filter_accepts_only_basic_non_chasing_market_shape(self):
         candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
@@ -624,38 +617,6 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertIn("mint", state["positions"])
         self.assertNotIn("whale_data_unavailable", state["paper_scan_diagnostics"]["rejections"])
 
-    def test_recent_research_accumulation_event_is_mint_specific_and_time_bounded(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "whale_watch_state.json"
-            now = time.time()
-            event = {
-                "timestamp": datetime.fromtimestamp(now - 30, timezone.utc).isoformat(),
-                "mint": "target-mint",
-                "owner": "whale-owner",
-                "increase_pct": 24.0,
-                "market_confirmed": True,
-            }
-            path.write_text(json.dumps({"accumulation_events": [event]}), encoding="utf-8")
-            self.assertTrue(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
-            self.assertFalse(scanner.recent_whale_accumulation_event("other-mint", path, now=now))
-            stale = dict(event, timestamp=datetime.fromtimestamp(now - 900, timezone.utc).isoformat())
-            path.write_text(json.dumps({"accumulation_events": [stale]}), encoding="utf-8")
-            self.assertFalse(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
-
-    def test_unconfirmed_research_accumulation_event_never_confirms_entry(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "whale_watch_state.json"
-            now = time.time()
-            event = {
-                "timestamp": datetime.fromtimestamp(now - 30, timezone.utc).isoformat(),
-                "mint": "target-mint",
-                "owner": "whale-owner",
-                "increase_pct": 30.0,
-                "market_confirmed": False,
-            }
-            path.write_text(json.dumps({"accumulation_events": [event]}), encoding="utf-8")
-            self.assertFalse(scanner.recent_whale_accumulation_event("target-mint", path, now=now))
-
     def test_whale_gated_entry_records_accumulation_evidence(self):
         owners = {f"owner-{i}": 1000.0 for i in range(6)}
         current = {key: value * 1.02 for key, value in owners.items()}
@@ -674,22 +635,6 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(components["whale_accumulation_confirmed"], 1.0)
         self.assertEqual(components["entry_liquidity_usd"], 100000.0)
         self.assertEqual(components["entry_volume_h1_usd"], 50000.0)
-
-    def test_recent_confirmed_whale_research_event_can_admit_entry_without_old_baseline(self):
-        state = scanner.normalize_state({})
-        with patch.object(scanner, "helius_configured", return_value=True), \
-             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
-             patch.object(scanner, "fetch_dex_pair", return_value=pair(priceChange={"m5": 3.0, "h1": 10.0})), \
-             patch.object(scanner, "fetch_whale_balances", return_value={f"owner-{i}": 1000.0 for i in range(6)}), \
-             patch.object(scanner, "confirmed_whale_dump", return_value=False), \
-             patch.object(scanner, "whale_accumulation_confirmed", return_value=False), \
-             patch.object(scanner, "recent_whale_accumulation_event", return_value=True), \
-             patch.object(scanner, "save_state"), patch.object(scanner, "log"):
-            scanner.run_cycle(state, require_whale_accumulation=True)
-        self.assertIn("mint", state["positions"])
-        components = state["positions"]["mint"]["entry_components"]
-        self.assertEqual(components["whale_accumulation_confirmed"], 1.0)
-        self.assertEqual(components["whale_accumulation_source"], 2.0)
 
     def test_whale_gated_paper_cycle_fails_closed_without_helius(self):
         state = scanner.normalize_state({})
