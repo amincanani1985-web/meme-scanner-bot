@@ -704,7 +704,7 @@ class ScannerLogicTests(unittest.TestCase):
                         scanner.run_isolated_paper_cycle(Path(tmp))
             self.assertTrue(captured["require_whale_accumulation"])
 
-    def test_isolated_paper_cycle_falls_back_when_whale_provider_is_unavailable(self):
+    def test_isolated_paper_cycle_keeps_whale_gate_on_when_provider_is_unavailable(self):
         with tempfile.TemporaryDirectory() as tmp:
             captured = {}
             def fake_cycle(state=None, **kwargs):
@@ -713,7 +713,7 @@ class ScannerLogicTests(unittest.TestCase):
             with patch.object(scanner, "helius_configured", return_value=False), \
                  patch.object(scanner, "run_cycle", side_effect=fake_cycle):
                 scanner.run_isolated_paper_cycle(Path(tmp))
-            self.assertFalse(captured["require_whale_accumulation"])
+            self.assertTrue(captured["require_whale_accumulation"])
 
     def test_isolated_paper_cycle_writes_to_its_own_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
