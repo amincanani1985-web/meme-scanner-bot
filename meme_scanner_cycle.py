@@ -761,7 +761,7 @@ def fetch_dex_pairs(mints):
     return {mint: PAIR_CACHE.get(mint) for mint in unique}
 
 
-def fetch_candidate_mints(limit=40):
+def fetch_candidate_mints(limit=80):
     """Fetch a bounded, interleaved Solana candidate list from boost, profile, and search feeds."""
     global LAST_DISCOVERY_DIAGNOSTICS
     if limit <= 0:
@@ -1465,6 +1465,8 @@ def run_cycle(state=None, require_whale_accumulation=False):
     )
     if diagnostics["near_misses"]:
         log(f"[PAPER NEAR MISSES] {diagnostics['near_misses']}")
+    if diagnostics["evaluated_candidates"]:
+        log(f"[PAPER SCORED CANDIDATES] {diagnostics['evaluated_candidates']}")
     state["scan_count"] += 1
     state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     save_state(state)
