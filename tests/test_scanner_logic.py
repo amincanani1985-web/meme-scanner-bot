@@ -652,7 +652,7 @@ class ScannerLogicTests(unittest.TestCase):
     def test_isolated_paper_cycle_does_not_require_whale_gate_by_default(self):
         with tempfile.TemporaryDirectory() as tmp:
             captured = {}
-            def fake_cycle(**kwargs):
+            def fake_cycle(state=None, **kwargs):
                 captured.update(kwargs)
                 return {"equity": 1000.0}
             with patch.dict("os.environ", {}, clear=False):
@@ -666,7 +666,7 @@ class ScannerLogicTests(unittest.TestCase):
     def test_isolated_paper_cycle_falls_back_when_whale_provider_is_unavailable(self):
         with tempfile.TemporaryDirectory() as tmp:
             captured = {}
-            def fake_cycle(**kwargs):
+            def fake_cycle(state=None, **kwargs):
                 captured.update(kwargs)
                 return {"equity": 1000.0}
             with patch.object(scanner, "helius_configured", return_value=False), \
@@ -681,7 +681,7 @@ class ScannerLogicTests(unittest.TestCase):
             (root / "trades_log.csv").write_text("legacy-ledger", encoding="utf-8")
             original_cwd = Path.cwd()
 
-            def fake_cycle(**kwargs):
+            def fake_cycle(state=None, **kwargs):
                 Path("state.json").write_text("paper-state", encoding="utf-8")
                 Path("trades_log.csv").write_text("paper-ledger", encoding="utf-8")
                 return {"equity": 1000.0}
