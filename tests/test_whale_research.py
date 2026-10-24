@@ -1,9 +1,40 @@
+import os
+import tempfile
+import time
 import unittest
+from unittest.mock import patch
 
 import whale_research as wr
 
 
 class WhaleResearchTests(unittest.TestCase):
+    def test_research_uses_batched_pair_fetch_for_candidate_universe(self):
+        pair = {
+            "chainId": "solana",
+            "pairCreatedAt": int(time.time() * 1000) - 7_200_000,
+            "priceUsd": "1.0",
+            "liquidity": {"usd": 100_000},
+            "volume": {"h1": 50_000},
+            "marketCap": 250_000,
+            "txns": {"m5": {"buys": 30, "sells": 10}},
+            "priceChange": {"m5": 3.0, "h1": 10.0},
+            "baseToken": {"symbol": "TEST"},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            previous_cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                with patch.object(wr, "helius_configured", return_value=True), \
+                     patch.object(wr.scanner, "fetch_candidate_mints", return_value=["mint-a"]), \
+                     patch.object(wr.scanner, "fetch_dex_pairs", return_value={"mint-a": pair}) as batch_fetch, \
+                     patch.object(wr.scanner, "fetch_dex_pair", side_effect=AssertionError("per-token fetch should not run")), \
+                     patch.object(wr, "fetch_whale_balances", return_value={"owner-a": 1000.0}):
+                    report = wr.run(state_path="whale_watch_state.json")
+                batch_fetch.assert_called_once_with(["mint-a"])
+                self.assertEqual(report["snapshots_updated"], 1)
+            finally:
+                os.chdir(previous_cwd)
+
     def test_large_balance_drop_is_confirmed_only_with_market_sell_pressure(self):
         previous = {"wallet-a": 1000.0, "wallet-b": 500.0}
         current = {"wallet-a": 700.0, "wallet-b": 450.0}
