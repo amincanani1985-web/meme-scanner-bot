@@ -30,6 +30,7 @@ EXIT_SLIPPAGE_BPS = 200
 PAPER_ROUND_TRIP_FEE_PCT = 1.0  # Additional fee reserve; entry/exit slippage is modeled separately
 MAX_HOLD_SECONDS = 600
 MAX_MISSING_PRICE_SECONDS = 600
+WHALE_SNAPSHOT_INTERVAL_SECONDS = 300
 # Do not label shadow outcomes from stale prices after the intended hold window.
 # A 5-minute scheduling tolerance is allowed beyond the 10-minute maximum hold.
 SHADOW_STALE_OBSERVATION_SECONDS = MAX_HOLD_SECONDS + 300
@@ -604,6 +605,7 @@ def open_position(state, mint, pair_data, whale_balances, signal_score, signal_c
         "symbol": symbol,
         "entry_price": entry_price,
         "entry_time": time.time(),
+        "last_whale_check_at": time.time(),
         "entry_liquidity": pair_data.get("liquidity", {}).get("usd", 0) or 0,
         "amount_usd": position_size,
         "peak_price": price,
@@ -941,7 +943,19 @@ def manage_open_positions(state):
             current_liquidity = 0.0
         pos.pop("price_missing_since", None)
         pos.pop("data_status", None)
-        if helius_configured():
+        try:
+            last_whale_check_at = float(pos.get("last_whale_check_at", entry_time) or entry_time)
+        except (TypeError, ValueError, OverflowError):
+            last_whale_check_at = entry_time
+        if not math.isfinite(last_whale_check_at) or last_whale_check_at < 0:
+            last_whale_check_at = entry_time
+        if (
+            helius_configured()
+            and time.time() - last_whale_check_at >= WHALE_SNAPSHOT_INTERVAL_SECONDS
+        ):
+            # Price/stop checks run every monitor tick; holder RPCs are slower and
+            # only need a fresh comparison every five minutes.
+            pos["last_whale_check_at"] = time.time()
             current_whales = fetch_whale_balances(mint)
             if current_whales:
                 previous_whales = pos.get("whale_balances") or state["whale_snapshots"].get(mint, {})
