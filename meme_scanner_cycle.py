@@ -1468,25 +1468,36 @@ def run_cycle(state=None, require_whale_accumulation=False):
 
 
 def run_isolated_paper_cycle(root_dir=None):
-    """Run the same scanner against a fully separate virtual account directory."""
+    """Run an independent paper experiment; never modifies the historical account."""
     root = Path(root_dir or Path.cwd()).resolve()
     paper_dir = root / "paper_account"
     paper_dir.mkdir(parents=True, exist_ok=True)
     previous_cwd = Path.cwd()
     try:
         os.chdir(paper_dir)
-        # The whale-accumulation gate is an experimental cohort, not a universal
-        # requirement: requiring top-holder balance growth can deadlock the paper
-        # account and those balance changes do not prove actual swaps. Opt in only
-        # when explicitly requested; holder-drop protection remains active when
-        # Helius is configured.
+        paper_state = load_state()
+        strategy = paper_state.setdefault("strategy", {})
+        validation_status = strategy.get("validation_status")
+        strategy_status = strategy.get("status")
+        # The independent paper account must explore the configured 60-point
+        # threshold until a threshold is validated or the learner explicitly rolls
+        # the strategy back. The historical account keeps its own baseline/lock.
+        if validation_status not in ("validated", "rolled_back") and strategy_status != "rolled_back":
+            strategy["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
+            strategy["status"] = "paper_exploration"
+            strategy["validation_status"] = "exploration_unvalidated"
+            save_state(paper_state)
         require_whale_data = (
             helius_configured()
             and os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "0").strip() == "1"
         )
-        if not require_whale_data:
-            log("[PAPER MODE] conservative market entry filters enabled; whale-accumulation gate is opt-in")
-        return run_cycle(require_whale_accumulation=require_whale_data)
+        log(
+            "[PAPER MODE] "
+            f"threshold={strategy.get('active_threshold', OPPORTUNITY_ENTRY_THRESHOLD):g} "
+            f"validation={strategy.get('validation_status', 'unknown')} "
+            f"whale_accumulation_gate={'on' if require_whale_data else 'off'}"
+        )
+        return run_cycle(paper_state, require_whale_accumulation=require_whale_data)
     finally:
         os.chdir(previous_cwd)
 
