@@ -593,9 +593,9 @@ class ScannerLogicTests(unittest.TestCase):
             with patch.dict("os.environ", {}, clear=False):
                 import os
                 os.environ.pop("PAPER_REQUIRE_WHALE_ACCUMULATION", None)
-                with patch.object(scanner, "helius_configured", return_value=True), \\
-                     patch.object(scanner, "run_cycle", side_effect=fake_cycle):
-                    scanner.run_isolated_paper_cycle(Path(tmp))
+                with patch.object(scanner, "helius_configured", return_value=True):
+                    with patch.object(scanner, "run_cycle", side_effect=fake_cycle):
+                        scanner.run_isolated_paper_cycle(Path(tmp))
             self.assertFalse(captured["require_whale_accumulation"])
 
     def test_isolated_paper_cycle_falls_back_when_whale_provider_is_unavailable(self):
