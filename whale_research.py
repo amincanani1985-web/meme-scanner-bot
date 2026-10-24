@@ -215,8 +215,10 @@ def run(state_path="whale_watch_state.json"):
                 "top_wallets": []}
     state = _load_state(state_path)
     candidates = []
-    for mint in scanner.fetch_candidate_mints():
-        pair = scanner.fetch_dex_pair(mint)
+    candidate_mints = scanner.fetch_candidate_mints()
+    pairs_by_mint = scanner.fetch_dex_pairs(candidate_mints)
+    for mint in candidate_mints:
+        pair = pairs_by_mint.get(mint)
         if not isinstance(pair, dict):
             continue
         try:
