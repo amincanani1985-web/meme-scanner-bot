@@ -590,7 +590,7 @@ class ScannerLogicTests(unittest.TestCase):
             def fake_cycle(**kwargs):
                 captured.update(kwargs)
                 return {"equity": 1000.0}
-            with patch.object(scanner, "helius_configured", return_value=False), \\
+            with patch.object(scanner, "helius_configured", return_value=False), \
                  patch.object(scanner, "run_cycle", side_effect=fake_cycle):
                 scanner.run_isolated_paper_cycle(Path(tmp))
             self.assertFalse(captured["require_whale_accumulation"])
