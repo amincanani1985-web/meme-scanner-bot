@@ -1503,10 +1503,10 @@ def run_isolated_paper_cycle(root_dir=None):
             strategy["status"] = "paper_exploration"
             strategy["validation_status"] = "exploration_unvalidated"
             save_state(paper_state)
-        require_whale_data = (
-            helius_configured()
-            and os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "1").strip() == "1"
-        )
+        # Whale-follow mode is the isolated account's default. Do not silently
+        # fall back to momentum-only entries when the RPC provider is missing;
+        # run_cycle will fail closed and record whale_data_unavailable instead.
+        require_whale_data = os.environ.get("PAPER_REQUIRE_WHALE_ACCUMULATION", "1").strip() == "1"
         log(
             "[PAPER MODE] "
             f"threshold={strategy.get('active_threshold', OPPORTUNITY_ENTRY_THRESHOLD):g} "
