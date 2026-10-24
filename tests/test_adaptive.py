@@ -9,6 +9,9 @@ class AdaptiveTests(unittest.TestCase):
         self.assertEqual(la.ROUND_TRIP_COST_PCT, scanner.PAPER_ROUND_TRIP_FEE_PCT)
         self.assertEqual(la.ROUND_TRIP_COST_PCT, backtest.ROUND_TRIP_COST_PCT)
 
+    def test_candidate_search_includes_exploration_thresholds(self):
+        self.assertTrue({60.0, 65.0, 70.0, 75.0, 80.0}.issubset(set(la.CANDIDATE_THRESHOLDS)))
+
     def test_walk_forward_needs_history(self):
         self.assertFalse(la.walk_forward([],60)["eligible"])
 
