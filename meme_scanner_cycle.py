@@ -1112,8 +1112,18 @@ def append_trade(mint, position, entry_price, exit_price, reason, pnl_pct, pnl_u
 
 def append_learning_observation(score, pnl_pct, reason, features=None):
     """Persist outcomes and entry features; migrate old CSVs without fabricating historical features."""
-    # Shadow outcomes are research-only and must never train or validate the live-entry threshold.
-    filename = "shadow_observations.csv" if str(reason).startswith("shadow_") else "strategy_observations.csv"
+    # Keep outcome cohorts separate: broad shadow research, legacy/momentum paper
+    # trades, and entries that actually passed the whale-accumulation gate.
+    feature_values = features if isinstance(features, dict) else {}
+    if str(reason).startswith("shadow_"):
+        filename = "shadow_observations.csv"
+    elif (
+        float(feature_values.get("whale_gate_enabled", 0) or 0) >= 1.0
+        and float(feature_values.get("whale_accumulation_confirmed", 0) or 0) >= 1.0
+    ):
+        filename = "whale_strategy_observations.csv"
+    else:
+        filename = "strategy_observations.csv"
     path = Path(filename)
     headers = ["timestamp", "score", "pnl_pct", "reason", "features_json"]
     exists = path.exists() and path.stat().st_size > 0
