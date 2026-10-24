@@ -158,12 +158,16 @@ jobs:
           print(f"- Status: {report.get('status', 'unknown')}")
           print(f"- Candidate tokens inspected: {report.get('scanned', 0)}")
           print(f"- Holder snapshots updated: {report.get('snapshots_updated', 0)}")
-          print(f"- Observed balance drops: {report.get('events', 0)}")
+          print(f"- Observed holder-balance drops: {report.get('events', 0)}")
           print(f"- Drops with market sell-pressure confirmation: {report.get('confirmed_events', 0)}")
+          print(f"- Observed holder-balance increases: {report.get('accumulation_events', 0)}")
+          print(f"- Increases with market buy-pressure confirmation: {report.get('confirmed_accumulations', 0)}")
           print(f"- Wallets with tracked events: {report.get('tracked_wallets', 0)}")
           for wallet in report.get("top_wallets", []):
-              print(f"- Wallet {wallet['owner']}: confirmed={wallet['confirmed_sell_pressure_events']}, observed={wallet['observed_drops']}, tokens={wallet['tokens_seen']}")
-          print("- Confirmation is a heuristic, not proof of a swap or wallet profitability.")
+              print(f"- Sell-side wallet {wallet['owner']}: confirmed={wallet['confirmed_sell_pressure_events']}, observed={wallet['observed_drops']}, tokens={wallet['tokens_seen']}")
+          for wallet in report.get("top_accumulators", []):
+              print(f"- Buy-side candidate {wallet['owner']}: confirmed={wallet['confirmed_buy_pressure_events']}, observed={wallet['observed_increases']}, tokens={wallet['tokens_seen']}")
+          print("- These are balance-change heuristics, not verified swaps or proof of wallet profitability.")
           PY
 
       - name: Validate paper-trade target integrity
