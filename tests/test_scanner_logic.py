@@ -26,6 +26,22 @@ def pair(**overrides):
 
 
 class ScannerLogicTests(unittest.TestCase):
+    def test_whale_follow_filter_rejects_overextended_hourly_pumps(self):
+        candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 120.0}})
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate),
+                         (False, "whale_chase_risk_h1:120.0%"))
+
+    def test_whale_follow_filter_rejects_single_digit_transaction_noise(self):
+        candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
+                            "txns": {"m5": {"buys": 3, "sells": 2}}})
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate),
+                         (False, "whale_low_activity_m5:5"))
+
+    def test_whale_follow_filter_accepts_only_basic_non_chasing_market_shape(self):
+        candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
+                            "txns": {"m5": {"buys": 30, "sells": 10}}})
+        self.assertEqual(scanner.passes_whale_follow_market_filter(candidate), (True, "ok"))
+
     def test_drawdown_uses_account_peak_not_only_initial_balance(self):
         state = {"equity": 800.0, "initial_equity": 1000.0, "peak_equity": 1100.0}
         risk = scanner.update_risk_control(state)
