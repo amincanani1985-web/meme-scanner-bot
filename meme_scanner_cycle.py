@@ -289,7 +289,7 @@ def passes_whale_follow_market_filter(pair_data):
         return False, f"whale_pair_too_new:{age_seconds:.0f}s"
     if liquidity < 20_000:
         return False, f"whale_thin_liquidity:{liquidity:.0f}"
-    if volume < 20_000:
+    if volume < MIN_VOLUME_H1_USD:
         return False, f"whale_thin_volume_h1:{volume:.0f}"
     if h1 <= 0:
         return False, f"whale_weak_momentum_h1:{h1:.1f}%"
