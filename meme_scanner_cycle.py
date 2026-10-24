@@ -1475,7 +1475,14 @@ def run_isolated_paper_cycle(root_dir=None):
     previous_cwd = Path.cwd()
     try:
         os.chdir(paper_dir)
-        return run_cycle(require_whale_accumulation=True)
+        # Requiring wallet-balance snapshots without a configured RPC provider
+        # makes the independent paper account reject every candidate forever.
+        # Use the whale-accumulation gate only when its data source is available;
+        # otherwise run the conservative market filter in paper-only mode.
+        require_whale_data = helius_configured()
+        if not require_whale_data:
+            log("[PAPER FALLBACK] Helius unavailable; using conservative market filters without whale confirmation")
+        return run_cycle(require_whale_accumulation=require_whale_data)
     finally:
         os.chdir(previous_cwd)
 
