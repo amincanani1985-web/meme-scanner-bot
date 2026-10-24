@@ -59,7 +59,7 @@ class ScannerLogicTests(unittest.TestCase):
         )
         passed, reason = scanner.passes_whale_follow_market_filter(candidate)
         self.assertFalse(passed)
-        self.assertEqual(reason, "shadow_liq_mcap_ratio:0.02")
+        self.assertEqual(reason, "shadow_liq_mcap_ratio:0.01")
 
     def test_whale_follow_filter_accepts_only_basic_non_chasing_market_shape(self):
         candidate = pair(**{"priceChange": {"m5": 3.0, "h1": 10.0},
