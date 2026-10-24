@@ -584,6 +584,17 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(json.loads(rows[0]["features_json"]), {})
             self.assertEqual(json.loads(rows[1]["features_json"])["momentum_m5_pct"], 2.5)
 
+    def test_isolated_paper_cycle_falls_back_when_whale_provider_is_unavailable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            captured = {}
+            def fake_cycle(**kwargs):
+                captured.update(kwargs)
+                return {"equity": 1000.0}
+            with patch.object(scanner, "helius_configured", return_value=False), \\
+                 patch.object(scanner, "run_cycle", side_effect=fake_cycle):
+                scanner.run_isolated_paper_cycle(Path(tmp))
+            self.assertFalse(captured["require_whale_accumulation"])
+
     def test_isolated_paper_cycle_writes_to_its_own_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
