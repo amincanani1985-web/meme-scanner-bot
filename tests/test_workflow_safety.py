@@ -27,7 +27,7 @@ class WorkflowSafetyTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn("- name: Run one discovery and entry cycle", workflow)
         self.assertIn("- name: Monitor existing paper positions with 60-second gaps", workflow)
-        self.assertIn("for check in 1 2", workflow)
+        self.assertIn("for check in 1 2 3 4", workflow)
         self.assertIn("python paper_position_monitor.py", workflow)
         self.assertIn("sleep 60", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)
