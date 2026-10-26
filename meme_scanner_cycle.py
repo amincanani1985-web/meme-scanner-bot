@@ -103,7 +103,10 @@ def _load_shadow_completed_mints():
     seen = set()
     visited_paths = set()
     for path in candidates:
-        path_key = str(path)
+        try:
+            path_key = str(path.resolve())
+        except OSError:
+            path_key = str(path)
         if path_key in visited_paths:
             continue
         visited_paths.add(path_key)
