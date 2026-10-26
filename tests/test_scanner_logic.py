@@ -1401,6 +1401,7 @@ class ScannerLogicTests(unittest.TestCase):
                     "chainId": "solana",
                     "baseToken": {"address": "search-mint", "symbol": "BONK", "name": "Bonk"},
                     "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+                    "priceUsd": "0.0001",
                     "liquidity": {"usd": 50000},
                     "volume": {"h1": 40000},
                     "pairCreatedAt": 1760000000000,
