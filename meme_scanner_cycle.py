@@ -1062,7 +1062,7 @@ def _append_shadow_price_path(mint, position, observed_at=None):
         }
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\\n")
+            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n")
         position["price_path_written"] = True
         return True
     except (OSError, TypeError, ValueError, OverflowError) as exc:
