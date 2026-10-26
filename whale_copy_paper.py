@@ -375,13 +375,29 @@ def select_wallets(watch_state, research_state, limit=MAX_WALLETS_PER_CYCLE):
         stats = (research_wallets.get(owner) or {}).get("metrics", {})
         if not isinstance(stats, dict):
             stats = {}
-        event_count = int(evidence.get("confirmed_sell_pressure_events", 0) or 0)
-        drop_count = int(evidence.get("observed_balance_drops", 0) or 0)
+        sell_events = int(evidence.get("confirmed_sell_pressure_events", 0) or 0)
+        observed_drops = int(evidence.get("observed_balance_drops", 0) or 0)
+        buy_events = int(evidence.get("confirmed_buy_pressure_events", 0) or 0)
+        observed_increases = int(evidence.get("observed_balance_increases", 0) or 0)
         tokens_seen = len(evidence.get("tokens_seen", []) or [])
-        score = (100000 if wallet_qualifies(stats) else 0) + event_count * 100 + drop_count * 10 + tokens_seen
-        valid.append((owner, score, stats))
-    valid.sort(key=lambda item: (not wallet_qualifies(item[2]), -float(item[2].get("profit_factor", 0) or 0),
-                                 -float(item[2].get("mean_net_pnl_pct", 0) or 0), -item[1], item[0]))
+        # Holders are not necessarily traders, and falling balances can mean
+        # transfers or exits. Prioritize corroborated accumulation for buy-side
+        # research, and use sell pressure as a mild risk penalty, not a positive
+        # ranking signal. All wallets still have their swaps reconstructed before
+        # any wallet can qualify for copying.
+        behavior_score = buy_events * 200 + observed_increases * 20 + tokens_seen - sell_events * 50 - observed_drops * 5
+        score = (100000 if wallet_qualifies(stats) else 0) + behavior_score
+        valid.append((owner, score, stats, evidence))
+    valid.sort(key=lambda item: (
+        not wallet_qualifies(item[2]),
+        -float(item[2].get("profit_factor", 0) or 0),
+        -float(item[2].get("mean_net_pnl_pct", 0) or 0),
+        -int(item[3].get("confirmed_buy_pressure_events", 0) or 0),
+        -int(item[3].get("observed_balance_increases", 0) or 0),
+        int(item[3].get("confirmed_sell_pressure_events", 0) or 0),
+        -item[1],
+        item[0],
+    ))
     qualified = [owner for owner, _, stats in valid if wallet_qualifies(stats)]
     chosen = qualified[:limit]
     remaining = [owner for owner, _, _ in valid if owner not in set(chosen)]
