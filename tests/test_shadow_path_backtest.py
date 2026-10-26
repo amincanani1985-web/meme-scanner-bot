@@ -169,6 +169,28 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["usable_paths"], 1)
         self.assertEqual(report["rejected_or_censored_paths"], 0)
 
+    def test_walk_forward_counts_only_one_complete_path_per_mint(self):
+        first = path([
+            (seconds, 1.0 if seconds == 0 else 1.2, 100_000)
+            for seconds in range(0, 901, 100)
+        ])
+        repeated = path([
+            (seconds, 1.0 if seconds == 0 else 0.9, 100_000)
+            for seconds in range(0, 901, 100)
+        ])
+        repeated["entry_timestamp"] = 2_000.0
+        repeated["price_history"] = [
+            {**sample, "timestamp": sample["timestamp"] + 1_000.0}
+            for sample in repeated["price_history"]
+        ]
+        repeated["observation_end_timestamp"] += 1_000.0
+        report = analyze_records([first, repeated], min_total_paths=1)
+        self.assertEqual(report["paths_received"], 2)
+        self.assertEqual(report["quality_usable_path_records"], 2)
+        self.assertEqual(report["repeated_mint_paths_excluded"], 1)
+        self.assertEqual(report["usable_paths"], 1)
+        self.assertEqual(report["baseline_performance"]["n"], 1)
+
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
         self.assertEqual(report["status"], "insufficient_history")
