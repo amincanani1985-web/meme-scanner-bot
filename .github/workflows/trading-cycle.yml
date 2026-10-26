@@ -12,6 +12,7 @@ on:
       - "strategy_backtest.py"
       - "shadow_learning.py"
       - "shadow_path_backtest.py"
+      - "scanner_simulator.py"
       - "whale_research.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -27,6 +28,7 @@ on:
       - "strategy_backtest.py"
       - "shadow_learning.py"
       - "shadow_path_backtest.py"
+      - "scanner_simulator.py"
       - "whale_research.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -77,7 +79,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -125,12 +127,14 @@ jobs:
           set -euo pipefail
           python strategy_backtest.py | tee /tmp/backtest-report.json
           python shadow_learning.py | tee /tmp/shadow-learning-report.json
+          python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
           python - <<'PY'
           import json
           from pathlib import Path
           strategy = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
           shadow = json.loads(Path("/tmp/shadow-learning-report.json").read_text(encoding="utf-8"))
-          report = {"strategy": strategy, "shadow": shadow}
+          paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
+          report = {"strategy": strategy, "shadow": shadow, "paper_simulator": paper_simulator}
           Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n", encoding="utf-8")
           PY
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
