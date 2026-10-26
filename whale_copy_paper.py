@@ -224,7 +224,7 @@ def _prepare_wallet_record_for_replay(wallet_record):
     """Initialize a replayable event ledger; quarantine legacy state with unknown order."""
     if not isinstance(wallet_record, dict):
         raise TypeError("wallet_record must be a dictionary")
-    if "trade_events" in wallet_record and isinstance(wallet_record.get("trade_events"), list):
+    if "normalized_swaps" in wallet_record and isinstance(wallet_record.get("normalized_swaps"), list):
         wallet_record.setdefault("positions", {})
         wallet_record.setdefault("closed_trades", [])
         wallet_record.setdefault("seen_signatures", [])
@@ -262,7 +262,7 @@ def _prepare_wallet_record_for_replay(wallet_record):
         wallet_record.setdefault("positions", {})
         wallet_record.setdefault("closed_trades", [])
         wallet_record.setdefault("seen_signatures", [])
-    wallet_record["trade_events"] = []
+    wallet_record["normalized_swaps"] = []
 
 
 def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_FEE_RESERVE_PCT):
@@ -350,7 +350,10 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
     wallet_record["normalized_swaps"] = all_swaps
 
     positions = {}
-    closed_trades = []
+    closed_trades = [
+        dict(trade) for trade in (wallet_record.get("legacy_baseline_closed_trades") or [])
+        if isinstance(trade, dict)
+    ]
     buy_signals = []
     sell_signals = []
     new_closed = 0
