@@ -1,19 +1,17 @@
 {
-  "last_run": "2026-10-26T06:56:41Z",
+  "last_run": "2026-10-26T07:01:47Z",
   "last_scan": {
-    "fetch_error_reasons": {
-      "http_429": 5
-    },
+    "fetch_error_reasons": {},
     "fresh_profitable_wallet_buys": 0,
     "fresh_wallet_sells": 0,
     "new_closed_wallet_trades": 0,
-    "swaps_seen": 4,
+    "swaps_seen": 0,
     "wallets_selected": 16,
-    "wallets_with_fetch_errors": 5
+    "wallets_with_fetch_errors": 0
   },
-  "scan_count": 9,
+  "scan_count": 10,
   "version": 1,
-  "wallet_cursor": 144,
+  "wallet_cursor": 160,
   "wallets": {
     "13ah1XkrFTsXeaPdvVQn8giGpS3HJVXfVwq9qtAPSqxf": {
       "closed_trades": [],
@@ -3491,19 +3489,25 @@
     },
     "DxvCfzrLE4DyctHUZm5Xchmb9zuEaek56zkPbYuivfDF": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
     "EKBXESAKj3SUm2fDJD9xxo7iUJ2TLoqvzAotjJZMh1iv": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
     "ELiwtXyZrFiVfjG7NEVqezkHvHws1xmSf8C7jsYjAQGX": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
@@ -3545,13 +3549,35 @@
     },
     "F1zgvN85XaBvufPTHQCxqz3ri9nWJ8YDtUtjX2ehxHE2": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
     "F25gtWwy6CkfRETBJMiyAWmzot54MTsPeUPfxG78SADS": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "F6iMAncvXAj539FFf3r6w1J5Mpff1XLcrksEWtP5NvAP": {
+      "closed_trades": [],
+      "history_cursor": "38321SghHiH4gRyn9HhgEQUKVpmhnigdRPuAXYB2uD8Hv9Lj8KBwBPUAJPeYPc7XZuekLUWe6tfyHYT4oLGAracd",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
@@ -3572,6 +3598,42 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "FPL1UpEorEgMZCtFdi4uzHzhDFsSZajrpee8Et2Ws79F": {
+      "closed_trades": [],
+      "history_cursor": "3b76LmDHcJ9xQagjiHvDsnf7mFkL1aiTnii7MZ8DAajiWye19zEUqyMidD3BPVvnLQwa4Xhe7EyBn4afSeHcsPdA",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "FQ75g9yWEK5jhyjVX3vWyXQ8AXKYJFNXaM5dYDBfqYyb": {
+      "closed_trades": [],
+      "history_cursor": "3o1ZHbcBpmnpPbFdsxZqniFG6QhN8YF3XTuzrMz5pUZbaVzdSADb6TqxQZ3oo2aSPhw7GuNodTVWzKzacfgkA9sZ",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
     },
     "FZWxV7C4JKKe3wX54MM6QpcVAHtyGrtnPFmihysWfiDB": {
       "closed_trades": [],
@@ -3813,10 +3875,119 @@
         "5myM8u3WhbZ9uUDwtiVLW25F8JjPPhHwyC2rBadBxAaeaoTfp5ZH5wGUEBXaJskiyoFYUz95ahKVmhEo6oVD8aPB"
       ]
     },
+    "FxFrmvAZQysTndn4tE2QbrBgHYcVjVS4a3TMsNEEpPJn": {
+      "closed_trades": [],
+      "history_cursor": "5GSWTsM1FriAWrV5y9q48HBDrxSs8FfXqrm7bg7UWZJ99BFKVM25sj6fMyyFQGi3bRFY4XzuEeHxHMQbrms2iiv3",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "G3VpUHSXdXtiP2TEsDkkgdXKLzakAxfWtbPAYnoDX9uk": {
+      "closed_trades": [],
+      "history_cursor": "3Wp34X9wb56aqqG6da1wR8meKwjupUawqZPSEJndHH5f81uDvhUNmpp9C7sEk2PcCUTR2JdfdA98C4GbGSBhKjye",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "G5qJ6zSMXRGDG7R1ToygKmyrLRvvzG9uwkvobFuQwLka": {
+      "closed_trades": [],
+      "history_cursor": "4BWxyTmKgyYFGNSCYsb6yR6G8GuVj5dpLMvWCpxBsZith835z6noRLUfoCgSxgzW8Tevgau9whnAuNKvxMCZYhn2",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
     "GA7aoowCQ5oVycYXte61C3kdri7oZ56HuJwNUGkygx3": {
       "closed_trades": [],
       "history_cursor": "2TPFxH7nohTTy6jTxZ1qtMGmmcYs4LQ2f5rUZGnYKqxdPAx6DFnV86K68a5C7iJiiaGVyXY239MEHCT4ybuuuam9",
       "last_processed_at": 1792996474.822701,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "GDuHcZ2GDy1P2bGhPLVFu98y1hb15nbnCx7SzeJQ3aye": {
+      "closed_trades": [],
+      "history_cursor": "4zWXu1ofiY9Ypc3q2mWFspKEqRfkLeNUqgPtPq8a7kqWroyty3VSTQNLtvKPG7A7hgfSPtD6yMV1kSUvDoE3X4Pu",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "GEBetqRKLYhJeoR9CNtnKZKhRopVF4E6fV5qM7a2wjGV": {
+      "closed_trades": [],
+      "history_cursor": "4m4LFwmHGo3UWKU3ZG5pDkAFnHvewSSCdcTPxrz57JXctt2EYbPpsDtPWbLwgT8KoKY74DjvRd6fmXwCnSv4CM7T",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "GFo4npp36jcshZZCidGAYRAR2wEcTtSC4efjKXNv1XTS": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "3NBLhDkxbWHXFqj4ReZ3GNM6Cf946p1GSrv9c2UjbM1tWRqV2zwnXim2zFJee6mseuAjmVnKF71aSeQTd4Yq9hTb",
+      "last_processed_at": 1792998107.3120012,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -3899,10 +4070,66 @@
       "seen_signatures": [],
       "trade_events": []
     },
+    "GyaKNLPyisHGUKu2hWA4Z8JNGbU2gKX7eR53ma3L5ob5": {
+      "closed_trades": [],
+      "history_cursor": "3fwoJPgfutEh2pF4N4irWsd2vbWqmsQwsPTqUGgohbTNcaPqVFFWo1rgDbaUUTJRmxgySJsT6au2PfqXLvE2MGyr",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "H5wSA5bNYqjQUweRj9fuTAMYh8FUd7zNFXVQtKWzXaW3": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "2caUr8RZQyMBgtzEmyZ1Uqs5Ev78GPrQDntVcFd4HpEeh787fAeRUE4zPQrkyeQpZobMvzCNnJ7JBPdHkdrpUBFg",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
     "HEHCGoytdufeEBCQXedCjsf3xZZNDtLMYyxPNh5D21ZK": {
       "closed_trades": [],
       "history_cursor": "5dEvyjqYudEexh7zexoCRtbBHTkUo363V8y2zT1uWkSGfyz4PqMdb1EwPrwoJbjc2otNBbsr12ESBYTdgU8L5e2d",
       "last_processed_at": 1792996474.822701,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "HJNSqBVry8F6p7AjMra3V3v3GSNRmQweseRumAu6LTbb": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "4agRxt5W5qj4KptpbH9JhkjGwhZYTKYYx2ETXcSkexKc7wguRVpjCv13sFDstRjA4n4FJWyFVnaqNFDfgHKNug2X",
+      "last_processed_at": 1792998107.3120012,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -3934,6 +4161,78 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "HUg1XNBfdJbFDLEaMBmc2VWf6SCrBkFe11E83ktXXz3f": {
+      "closed_trades": [],
+      "history_cursor": "4kUDDt3H6txkgm1XeK2iQjcwLFAfqfbJDLLrJttZERx6kcifh4PUnSGELwaGQrjms1gULHjFzgKt8V6rarM4SWRf",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "Hfoj3dGN1C7eW68mJj7TYwRgpa3o79v7R6RjDxU52zKa": {
+      "closed_trades": [],
+      "history_cursor": "46KhysSyg2VZqgEWNLgHwPFnRivzrWgoAQKZE56t5j8keqvMsWs41W7oCttftmJnRtTfDGu1y7sTU6PWd8km4mgc",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "Hko1jnxn82c7fFt31JcNGunp8LeHJfEFEKQ7psyeHWJz": {
+      "closed_trades": [],
+      "history_cursor": "4M4MJQUAA5WaMbEEHt6PxJKngEZkmNcYqd5qYMV7DyHMRpv6o2RWmtsFNzXY7LC2dHPpkhyXgobmkYnEr1Poh8WN",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "HrB1sVLdhkSWz23jEbRjLQ4vMQgmMLCp4UpAKFGRP76L": {
+      "closed_trades": [],
+      "history_cursor": "LPWMTWQK41rmzVHT6n5rnztfbmakVKrLHzb9wTqk7gEWWs8YMAVtdJ8EpCeaQsUys8toUhAjSmcEfcXecu1r7yT",
+      "last_processed_at": 1792998107.3120012,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
     },
     "J3ekaUh3CM7SNVAoyGncKg9s86JffFenLJqWNEn1cjx9": {
       "closed_trades": [],
