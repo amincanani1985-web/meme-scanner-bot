@@ -853,6 +853,7 @@ class ScannerLogicTests(unittest.TestCase):
                 "entry_liquidity": 100000.0, "peak_price": 1.0,
                 "signal_score": 85.0, "trailing_armed": False,
                 "components": {"momentum_h1_pct": 4.0},
+                "prospective_entry_filters": ["moderate_pullback_v1"],
                 "price_history": [{
                     "timestamp": entry_time, "price_usd": 1.0,
                     "liquidity_usd": 100000.0,
@@ -887,6 +888,7 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(observation.call_count, 1)
             record = json.loads(path_log.read_text(encoding="utf-8").strip())
             self.assertEqual(record["benchmark_exit"]["reason"], "max_hold_timeout")
+            self.assertEqual(record["prospective_entry_filters"], ["moderate_pullback_v1"])
             self.assertGreaterEqual(record["observed_duration_seconds"], scanner.MAX_HOLD_SECONDS)
             self.assertGreaterEqual(len(record["price_history"]), 3)
         finally:
