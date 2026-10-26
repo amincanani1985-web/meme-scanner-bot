@@ -84,7 +84,10 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 CANDIDATE_CONFIRMATION_HITS = 1           # Paper-only: enter on first qualified observation (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
-SHADOW_MIN_SCORE = 35.0                    # Broaden only virtual research so entry-score cutoffs can be tested; live-entry rules stay unchanged
+SHADOW_MIN_SCORE = 0.0                     # Sample the full non-negative score range for entry-filter research only
+SHADOW_MIN_LIQUIDITY_USD = 1000.0            # Research floor only; production entry floors are unchanged
+SHADOW_MIN_VOLUME_H1_USD = 100.0             # Keep lower-volume candidates in the isolated research cohort
+SHADOW_MIN_LIQ_MCAP_RATIO = 0.005             # Measure weak liquidity ratios; never relax the live entry gate
 MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for faster learning
 
 # ============================================================================
@@ -431,14 +434,14 @@ def passes_shadow_market_filter(pair_data):
     age_seconds = (time.time() * 1000 - created_ms) / 1000.0
     if age_seconds < 300:
         return False, f"shadow_pair_too_new:{age_seconds:.0f}s"
-    if liquidity < 1000:
+    if liquidity < SHADOW_MIN_LIQUIDITY_USD:
         return False, f"shadow_low_liquidity:{liquidity:.0f}"
-    if volume < 500:
+    if volume < SHADOW_MIN_VOLUME_H1_USD:
         return False, f"shadow_low_volume_h1:{volume:.0f}"
     if market_cap <= 0:
         return False, "shadow_missing_market_cap"
-    if liquidity / market_cap < 0.02:
-        return False, f"shadow_liq_mcap_ratio:{liquidity / market_cap:.2f}"
+    if liquidity / market_cap < SHADOW_MIN_LIQ_MCAP_RATIO:
+        return False, f"shadow_liq_mcap_ratio:{liquidity / market_cap:.3f}"
     if price <= 0:
         return False, "shadow_invalid_price"
     if activity < 1:
