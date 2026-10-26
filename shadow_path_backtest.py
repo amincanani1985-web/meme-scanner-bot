@@ -55,6 +55,9 @@ def _normalized_path(record):
     """Validate and normalize recorded samples without reordering time or filling gaps."""
     if not isinstance(record, dict):
         return None, "not_object"
+    mint = str(record.get("mint") or "").strip()
+    if not mint:
+        return None, "missing_mint"
     entry_time = _finite(record.get("entry_timestamp"))
     entry_price = _finite(record.get("entry_price"))
     if entry_time is None or entry_price is None or entry_price <= 0:
@@ -329,12 +332,35 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             continue
         accepted_gaps.extend(gaps)
         normalized.append(candidate)
+    # Keep the earliest quality-complete path per mint. Repeated windows on
+    # the same token are correlated observations, not independent samples, and
+    # must not leak the same asset across chronological train/holdout splits.
     normalized.sort(key=lambda item: (item["entry_timestamp"], str(item.get("mint", ""))))
+    quality_usable_path_records = len(normalized)
+    first_path_by_mint = []
+    seen_mints = set()
+    repeated_mint_paths_excluded = 0
+    for candidate in normalized:
+        mint = str(candidate.get("mint") or "").strip()
+        if mint in seen_mints:
+            repeated_mint_paths_excluded += 1
+            continue
+        seen_mints.add(mint)
+        first_path_by_mint.append(candidate)
+    normalized = first_path_by_mint
+    independent_gaps = [
+        normalized_record["price_history"][i]["timestamp"]
+        - normalized_record["price_history"][i - 1]["timestamp"]
+        for normalized_record in normalized
+        for i in range(1, len(normalized_record["price_history"]))
+    ]
     result = {
         "status": "insufficient_history",
-        "mode": "observed_quotes_only_chronological_walk_forward",
+        "mode": "observed_quotes_only_chronological_walk_forward_unique_mint",
         "round_trip_cost_pct": round_trip_cost_pct,
         "paths_received": len(records),
+        "quality_usable_path_records": quality_usable_path_records,
+        "repeated_mint_paths_excluded": repeated_mint_paths_excluded,
         "usable_paths": len(normalized),
         "rejected_or_censored_paths": rejected,
         "sparse_or_short_paths_rejected": sparse_or_short,
@@ -351,7 +377,14 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             "maximum_seconds": max(accepted_gaps) if accepted_gaps else None,
             "over_120_seconds": sum(gap > 120.0 for gap in accepted_gaps),
         },
+        "independent_sample_gaps": {
+            "count": len(independent_gaps),
+            "median_seconds": median(independent_gaps) if independent_gaps else None,
+            "maximum_seconds": max(independent_gaps) if independent_gaps else None,
+            "over_120_seconds": sum(gap > 120.0 for gap in independent_gaps),
+        },
         "path_quality_policy": {
+            "one_complete_path_per_mint": True,
             "minimum_duration_seconds": MIN_PATH_DURATION_SECONDS,
             "minimum_samples": MIN_PRICE_PATH_SAMPLES,
             "maximum_sample_gap_seconds": MAX_SAMPLE_GAP_SECONDS,
