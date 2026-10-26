@@ -1057,6 +1057,28 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["shadow_opened"], [])
         self.assertNotIn("mint", state["shadow_positions"])
 
+    def test_completed_mint_loader_reads_canonical_and_legacy_path_logs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paper_dir = root / "paper_account"
+            paper_dir.mkdir()
+            (root / "shadow_price_paths.jsonl").write_text(
+                '{"mint":"legacy-mint","entry_timestamp":1}\\n',
+                encoding="utf-8",
+            )
+            (paper_dir / "shadow_price_paths.jsonl").write_text(
+                '{"mint":"paper-mint","entry_timestamp":2}\\n'
+                '{"mint":"legacy-mint","entry_timestamp":3}\\n',
+                encoding="utf-8",
+            )
+            with patch.object(scanner, "Path", side_effect=lambda value: root / str(value)), \
+                 patch.dict("os.environ", {
+                     "SHADOW_PRICE_PATH_LOG": "paper_account/shadow_price_paths.jsonl",
+                 }):
+                completed = scanner._load_shadow_completed_mints()
+        self.assertEqual(set(completed), {"paper-mint", "legacy-mint"})
+        self.assertEqual(len(completed), 2)
+
     def test_shadow_scan_rejects_bearish_signals_clamped_to_zero_score(self):
         state = scanner.normalize_state({})
         bearish = pair(
