@@ -220,6 +220,48 @@ class ShadowPathBacktestTests(unittest.TestCase):
             item for item in filters if item.get("h1_min") is not None
         )))
 
+    def test_memeswap_risk_filters_fail_closed_when_the_profile_is_missing(self):
+        import shadow_path_backtest as backtest
+
+        filters = {item["name"]: item for item in backtest.candidate_entry_filters()}
+        record = path([(0, 1.0, 100_000), (30, 0.99, 100_000)])
+        record["score"] = 75.0
+        record["entry_components"] = {
+            "memeswap_available": 1.0,
+            "memeswap_price_age_seconds": 12.0,
+            "memeswap_profile_age_seconds": 20.0,
+            "memeswap_top1_pct": 9.0,
+            "memeswap_top10_pct": 29.0,
+            "memeswap_top20_pct": 55.0,
+            "memeswap_honeypot": 0.0,
+            "memeswap_mintable": 0.0,
+            "memeswap_lp_locked_pct": 60.0,
+        }
+        self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_top10_at_most_35"]))
+        self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_honeypot_false"]))
+        self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_profile_fresh"]))
+
+        record["entry_components"].pop("memeswap_top10_pct")
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_top10_at_most_35"]))
+        record["entry_components"] = {}
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_honeypot_false"]))
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_profile_fresh"]))
+
+    def test_memeswap_risk_filters_exclude_reported_honeypot_or_mintable_tokens(self):
+        import shadow_path_backtest as backtest
+
+        filters = {item["name"]: item for item in backtest.candidate_entry_filters()}
+        record = path([(0, 1.0, 100_000), (30, 0.99, 100_000)])
+        record["score"] = 75.0
+        record["entry_components"] = {
+            "memeswap_available": 1.0,
+            "memeswap_profile_age_seconds": 15.0,
+            "memeswap_honeypot": 1.0,
+            "memeswap_mintable": 1.0,
+        }
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_honeypot_false"]))
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_mintable_false"]))
+
     def test_joint_entry_exit_search_does_not_select_a_losing_training_rule(self):
         import shadow_path_backtest as backtest
 
