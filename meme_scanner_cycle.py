@@ -384,11 +384,22 @@ def passes_whale_follow_market_filter(pair_data):
         sells = float(txns.get("sells") or 0)
         liquidity = float((pair_data.get("liquidity") or {}).get("usd") or 0)
         volume = float((pair_data.get("volume") or {}).get("h1") or 0)
+        market_cap = float(pair_data.get("marketCap") or pair_data.get("fdv") or 0)
     except (TypeError, ValueError, AttributeError, OverflowError):
         return False, "whale_invalid_market_data"
-    values = (m5, h1, buys, sells, liquidity, volume)
+    values = (m5, h1, buys, sells, liquidity, volume, market_cap)
     if not all(math.isfinite(value) for value in values) or min(buys, sells, liquidity, volume) < 0:
         return False, "whale_invalid_market_data"
+    # Do not inherit the broader research-only floors. Whale-copy uses its own
+    # stable base-quality floor before applying the stricter whale signal checks.
+    if liquidity < 1000:
+        return False, f"shadow_low_liquidity:{liquidity:.0f}"
+    if volume < 500:
+        return False, f"shadow_low_volume_h1:{volume:.0f}"
+    if market_cap <= 0:
+        return False, "shadow_missing_market_cap"
+    if liquidity / market_cap < 0.02:
+        return False, f"shadow_liq_mcap_ratio:{liquidity / market_cap:.2f}"
     age_seconds = (time.time() * 1000 - created_ms) / 1000.0
     if age_seconds < MIN_PAIR_AGE_SECONDS:
         return False, f"whale_pair_too_new:{age_seconds:.0f}s"
