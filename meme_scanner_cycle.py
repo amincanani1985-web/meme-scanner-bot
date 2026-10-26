@@ -427,7 +427,7 @@ def _validated_learning_bonus(learning):
     return 10.0 if wins / total > 0.5 and weighted_net_pnl / total > 0.0 else 0.0
 
 
-def score_market_opportunity(pair_data, learning=None):
+def score_market_opportunity(pair_data, learning=None, require_whale_accumulation=False):
     """
     Score 0-100 based on proven factors:
     - Momentum (m5 strong short-term signal)
@@ -437,7 +437,8 @@ def score_market_opportunity(pair_data, learning=None):
     
     Returns: (score: float, components: dict)
     """
-    if not pair_data or not passes_market_filter(pair_data)[0]:
+    market_filter = passes_whale_follow_market_filter if require_whale_accumulation else passes_market_filter
+    if not pair_data or not market_filter(pair_data)[0]:
         return 0.0, {}
     
     score = 50.0  # baseline
@@ -1486,7 +1487,9 @@ def run_cycle(state=None, require_whale_accumulation=False):
             reject(market_reason)
             continue
         diagnostics["market_filter_passed"] += 1
-        score, components = score_market_opportunity(pair, state.get("learning"))
+        score, components = score_market_opportunity(
+            pair, state.get("learning"), require_whale_accumulation=require_whale_accumulation
+        )
         threshold = float(state["strategy"].get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
         base_token = pair.get("baseToken") or {}
         candidate_snapshot = {
