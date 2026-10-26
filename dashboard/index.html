@@ -353,8 +353,10 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   const baseline=pathReport.baseline_consistency||{};
   $('pathBtBaseline').textContent=(baseline.matches||0)+' / '+(baseline.checked||0);
   const cfg=pathReport.selected_config;
+  const entryFilter=pathReport.selected_entry_filter||(cfg&&cfg.entry_filter)||null;
+  const entryLabel=entryFilter&&entryFilter.name?entryFilter.name:'فیلتر ورود انتخاب نشده';
   $('pathBtConfig').textContent=cfg
-   ? 'حدضرر '+(Number(cfg.hard_stop_pct)*100).toFixed(0)+'٪، تریل '+(Number(cfg.trailing_stop_pct)*100).toFixed(0)+'٪، نگهداری '+Number(cfg.max_hold_seconds).toFixed(0)+' ثانیه'
+   ? entryLabel+' · حدضرر '+(Number(cfg.hard_stop_pct)*100).toFixed(0)+'٪، تریل '+(Number(cfg.trailing_stop_pct)*100).toFixed(0)+'٪، نگهداری '+Number(cfg.max_hold_seconds).toFixed(0)+' ثانیه'
    : 'هنوز انتخاب نشده';
   const hold=pathReport.holdout;
   $('pathBtHoldout').textContent=hold
@@ -371,7 +373,8 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
    ? 'n='+Number(base.n||0)+' · میانگین '+Number(base.mean_pnl_pct||0).toFixed(2)+'٪ · میانه '+Number(base.median_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(base.profit_factor||0).toFixed(2)
    : 'نمونهٔ کامل ندارد';
   $('pathBtBaselineNet').style.color=status==='validated_profitable_out_of_sample'?'var(--green)':'var(--yellow)';
-  $('pathBtNote').textContent='منبع: قیمت‌های واقعیِ نمونه‌برداری‌شده از حساب پیپر؛ هیچ قیمت بین دو نمونه ساخته نمی‌شود. بازده پایه فقط توصیفی است و تأیید راهبرد نیست. فاصله‌های مسیرهای پذیرفته‌شده: میانه '+Number(acceptedGaps.median_seconds||0).toFixed(0)+' ثانیه و بیشینه '+acceptedMaxGap.toFixed(0)+' ثانیه. در کل داده‌ها میانه شکاف '+medianGap.toFixed(0)+' و بیشینه '+maxGap.toFixed(0)+' ثانیه است؛ مسیر ردشده بابت کمبود نمونه/زمان/شکاف: '+Number(pathReport.sparse_or_short_paths_rejected||0)+'؛ دلایل رد: '+JSON.stringify(rejected)+'. سقف پذیرش هر مسیر '+Number((pathReport.path_quality_policy||{}).maximum_sample_gap_seconds||240).toFixed(0)+' ثانیه است. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
+  const gridNote='جست‌وجوی ترکیبی فیلتر ورود/خروج: '+Number(pathReport.evaluated_candidate_configs||0)+' ترکیب ارزیابی‌شده از '+Number(pathReport.joint_candidate_configs||0)+'؛ گزینه‌های سودده در آموزش: '+Number(pathReport.eligible_training_candidate_count||0)+'. ';
+  $('pathBtNote').textContent=gridNote+'منبع: قیمت‌های واقعیِ نمونه‌برداری‌شده از حساب پیپر؛ هیچ قیمت بین دو نمونه ساخته نمی‌شود. بازده پایه فقط توصیفی است و تأیید راهبرد نیست. فاصله‌های مسیرهای پذیرفته‌شده: میانه '+Number(acceptedGaps.median_seconds||0).toFixed(0)+' ثانیه و بیشینه '+acceptedMaxGap.toFixed(0)+' ثانیه. در کل داده‌ها میانه شکاف '+medianGap.toFixed(0)+' و بیشینه '+maxGap.toFixed(0)+' ثانیه است؛ مسیر ردشده بابت کمبود نمونه/زمان/شکاف: '+Number(pathReport.sparse_or_short_paths_rejected||0)+'؛ دلایل رد: '+JSON.stringify(rejected)+'. سقف پذیرش هر مسیر '+Number((pathReport.path_quality_policy||{}).maximum_sample_gap_seconds||240).toFixed(0)+' ثانیه است. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
  }else{
   $('pathBtStatus').textContent='گزارش در دسترس نیست';
   $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
