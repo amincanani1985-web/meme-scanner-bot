@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 459,
+  "scan_count": 460,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-26T08:14:23Z",
+  "last_run": "2026-10-26T08:19:28Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -239,6 +239,11 @@
           "timestamp": 1793002462.340272,
           "price_usd": 0.0008508,
           "liquidity_usd": 94926.52
+        },
+        {
+          "timestamp": 1793002767.1158104,
+          "price_usd": 0.0008636,
+          "liquidity_usd": 95506.54
         }
       ],
       "benchmark_exit_reason": "hard_stop_loss",
@@ -252,9 +257,9 @@
       "entry_price": 0.000166866,
       "entry_time": 1793002168.5265148,
       "entry_liquidity": 50683.92,
-      "peak_price": 0.000166866,
+      "peak_price": 0.0001833,
       "signal_score": 75.09400621118012,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": 24.535,
         "hourly_bonus": 20.0,
@@ -278,6 +283,11 @@
           "timestamp": 1793002462.4157505,
           "price_usd": 0.0001662,
           "liquidity_usd": 53085.24
+        },
+        {
+          "timestamp": 1793002767.1829424,
+          "price_usd": 0.0001833,
+          "liquidity_usd": 54564.44
         }
       ],
       "liquidity_drain_hits": 0
@@ -308,24 +318,34 @@
           "timestamp": 1793002463.7283237,
           "price_usd": 4.142e-05,
           "liquidity_usd": 15523.01
+        },
+        {
+          "timestamp": 1793002767.2427838,
+          "price_usd": 2.303e-05,
+          "liquidity_usd": 11162.36
         }
-      ]
+      ],
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1793002767.2427838,
+      "benchmark_exit_price_usd": 2.303e-05,
+      "benchmark_exit_liquidity_usd": 11162.36,
+      "benchmark_exit_after_slippage_pnl_pct": -46.316122479561756
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-26T08:14:23Z",
+    "timestamp": "2026-10-26T08:19:28Z",
     "candidate_count": 80,
     "filter_passed": 3,
-    "shadow_opened": 1,
+    "shadow_opened": 0,
     "rejections": {
-      "pair_data_unavailable": 36,
+      "pair_data_unavailable": 35,
       "shadow_low_volume_h1:168": 1,
       "shadow_liq_mcap_ratio:0.01": 1,
       "shadow_liq_mcap_ratio:0.00": 1,
       "shadow_low_volume_h1:0": 7,
-      "shadow_low_volume_h1:84": 1,
-      "shadow_low_volume_h1:330": 1,
-      "shadow_low_volume_h1:210": 1
+      "shadow_low_volume_h1:88": 1,
+      "shadow_low_volume_h1:365": 1,
+      "shadow_low_volume_h1:209": 1
     }
   },
   "shadow_completed_mints": [
