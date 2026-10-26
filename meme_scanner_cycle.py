@@ -13,6 +13,8 @@ import os
 import requests
 from memeswap_research import fetch_token_profile as fetch_memeswap_token_profile
 from memeswap_research import is_enabled as memeswap_research_enabled
+from rugcheck_research import fetch_token_report as fetch_rugcheck_token_report
+from rugcheck_research import is_enabled as rugcheck_research_enabled
 from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump, whale_accumulation_confirmed
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -44,6 +46,7 @@ SHADOW_PATH_MAX_SAMPLE_GAP_SECONDS = 240.0
 MAX_SHADOW_COMPLETED_MINTS = 5000
 # Optional external risk data is read only and capped to protect cycle time and API budgets.
 MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE = 4
+MAX_RUGCHECK_RESEARCH_PROFILES_PER_CYCLE = 3  # bounded, read-only report calls; shadow research only
 HTTP_TIMEOUT_SECONDS = 10
 
 
@@ -1466,6 +1469,55 @@ def _prospective_shadow_entry_filters(components, score=None):
     ):
         tags.append("risk_screened_pullback_v1")
 
+    # RugCheck cohorts require an explicitly complete, fresh risk report.
+    # Missing/unknown fields never count as safe. These labels only affect
+    # forward-only shadow analysis, not the account entry decision.
+    rugcheck_fields = {
+        name: feature(name) for name in (
+            "rugcheck_available", "rugcheck_risk_data_available",
+            "rugcheck_full_risk_screen_available", "rugcheck_report_age_seconds",
+            "rugcheck_mint_authority_active", "rugcheck_freeze_authority_active",
+            "rugcheck_mint_close_authority_active", "rugcheck_metadata_mutable",
+            "rugcheck_rugged", "rugcheck_danger_risk_count",
+            "rugcheck_critical_risk_count", "rugcheck_warning_risk_count",
+            "rugcheck_top1_pct", "rugcheck_top10_pct", "rugcheck_top20_pct",
+            "rugcheck_lp_locked_pct", "rugcheck_holder_count",
+        )
+    }
+    rugcheck_clean = (
+        rugcheck_fields["rugcheck_available"] == 1.0
+        and rugcheck_fields["rugcheck_risk_data_available"] == 1.0
+        and rugcheck_fields["rugcheck_full_risk_screen_available"] == 1.0
+        and rugcheck_fields["rugcheck_report_age_seconds"] is not None
+        and rugcheck_fields["rugcheck_report_age_seconds"] <= 300.0
+        and rugcheck_fields["rugcheck_mint_authority_active"] == 0.0
+        and rugcheck_fields["rugcheck_freeze_authority_active"] == 0.0
+        and rugcheck_fields["rugcheck_mint_close_authority_active"] == 0.0
+        and rugcheck_fields["rugcheck_metadata_mutable"] == 0.0
+        and rugcheck_fields["rugcheck_rugged"] == 0.0
+        and rugcheck_fields["rugcheck_danger_risk_count"] == 0.0
+        and rugcheck_fields["rugcheck_critical_risk_count"] == 0.0
+        and rugcheck_fields["rugcheck_top1_pct"] is not None
+        and rugcheck_fields["rugcheck_top1_pct"] <= 10.0
+        and rugcheck_fields["rugcheck_top10_pct"] is not None
+        and rugcheck_fields["rugcheck_top10_pct"] <= 35.0
+        and rugcheck_fields["rugcheck_top20_pct"] is not None
+        and rugcheck_fields["rugcheck_top20_pct"] <= 60.0
+        and rugcheck_fields["rugcheck_lp_locked_pct"] is not None
+        and rugcheck_fields["rugcheck_lp_locked_pct"] >= 50.0
+        and rugcheck_fields["rugcheck_holder_count"] is not None
+        and rugcheck_fields["rugcheck_holder_count"] >= 100.0
+    )
+    if (
+        rugcheck_clean
+        and 5.0 <= h1 <= 45.0 and -10.0 <= m5 <= 5.0 and 1.2 <= ratio <= 4.0
+        and liquidity is not None and liquidity >= 10_000.0
+        and volume is not None and volume >= 10_000.0
+    ):
+        tags.append("rugcheck_screened_pullback_v1")
+        if rugcheck_fields["rugcheck_warning_risk_count"] == 0.0:
+            tags.append("rugcheck_no_warning_pullback_v1")
+
     return tags
 
 
@@ -1481,6 +1533,8 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     filter_passed = 0
     memeswap_profile_budget = iter(range(MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE))
     memeswap_enabled = memeswap_research_enabled()
+    rugcheck_profile_budget = iter(range(MAX_RUGCHECK_RESEARCH_PROFILES_PER_CYCLE))
+    rugcheck_enabled = rugcheck_research_enabled()
     # Shadow samples cover a broad score range; this never changes live entry rules.
     threshold = SHADOW_MIN_SCORE
     for mint in candidates:
@@ -1538,6 +1592,24 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
                         or isinstance(feature_value, (int, float)) and math.isfinite(float(feature_value))
                     ):
                         components[feature_name] = feature_value
+        # Optional, bounded, read-only RugCheck enrichment. This only annotates
+        # the virtual candidate; RugCheck never gates live entries or sends orders.
+        rugcheck_slot = next(rugcheck_profile_budget, None) if rugcheck_enabled else None
+        if rugcheck_slot is not None:
+            try:
+                rugcheck_features = fetch_rugcheck_token_report(mint)
+            except Exception as exc:
+                rugcheck_features = None
+                log(f"[RUGCHECK RESEARCH] {mint[:8]} report fetch failed: {type(exc).__name__}")
+            if isinstance(rugcheck_features, dict):
+                for feature_name, feature_value in rugcheck_features.items():
+                    if feature_name.startswith("rugcheck_") and (
+                        feature_value is None
+                        or isinstance(feature_value, (int, float))
+                        and math.isfinite(float(feature_value))
+                    ):
+                        components[feature_name] = feature_value
+
         entry_price = price * (1.0 + ENTRY_SLIPPAGE_BPS / 10000.0)
         opened_at = time.time()
         state["shadow_positions"][mint] = {
