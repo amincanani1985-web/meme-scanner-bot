@@ -1377,7 +1377,7 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     opened = []
     rejections = {}
     filter_passed = 0
-    memeswap_profile_requests = 0
+    memeswap_profile_budget = iter(range(MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE))
     memeswap_enabled = memeswap_research_enabled()
     # Shadow samples cover a broad score range; this never changes live entry rules.
     threshold = SHADOW_MIN_SCORE
@@ -1420,8 +1420,8 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
         # Optional, bounded, read-only risk enrichment. This runs only after a
         # virtual candidate has passed the research gate; it never affects live
         # entries, sizing, or transaction execution.
-        if memeswap_enabled and memeswap_profile_requests < MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE:
-            memeswap_profile_requests += 1
+        profile_slot = next(memeswap_profile_budget, None) if memeswap_enabled else None
+        if profile_slot is not None:
             try:
                 risk_features = fetch_memeswap_token_profile(mint)
             except Exception as exc:
