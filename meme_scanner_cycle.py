@@ -1706,6 +1706,29 @@ def run_cycle(state=None, require_whale_accumulation=False, research_shadow=True
     # windows across two accounts sharing the same discovery stream.
     if research_shadow:
         scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
+    validation_status = state.get("strategy", {}).get("validation_status")
+    if validation_status and validation_status != "validated":
+        # The paper account is capital preservation, not a place to keep testing
+        # unvalidated thresholds. Isolated shadow research above continues collecting
+        # observed quotes without changing account equity.
+        state["scan_count"] += 1
+        state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        save_state(state)
+        log(
+            f"[ENTRY LOCK] paper entries disabled until an entry/exit rule passes "
+            f"independent net-profit validation; status={validation_status}; "
+            f"shadow_positions={len(state.get('shadow_positions', {}))}"
+        )
+        return {
+            "scanned": len(candidates),
+            "opened": [],
+            "open_positions": len(state["positions"]),
+            "shadow_positions": len(state["shadow_positions"]),
+            "equity": state["equity"],
+            "entry_locked": True,
+            "validation_status": validation_status,
+        }
+
     diagnostics = {
         "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "candidate_count": len(candidates),
