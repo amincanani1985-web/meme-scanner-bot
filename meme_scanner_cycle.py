@@ -91,6 +91,7 @@ MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown 
 SHADOW_MIN_SCORE = 0.0                     # Sample the full non-negative score range for entry-filter research only
 SHADOW_MIN_LIQUIDITY_USD = 1000.0            # Research floor only; production entry floors are unchanged
 SHADOW_MIN_VOLUME_H1_USD = 100.0             # Keep lower-volume candidates in the isolated research cohort
+SHADOW_MIN_PAIR_AGE_SECONDS = 300.0           # Five minutes; the live scanner retains its separate age floor
 SHADOW_MIN_LIQ_MCAP_RATIO = 0.005             # Measure weak liquidity ratios; never relax the live entry gate
 MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for faster learning
 
@@ -447,7 +448,7 @@ def passes_shadow_market_filter(pair_data):
     if created_ms <= 0:
         return False, "missing_pair_age"
     age_seconds = (time.time() * 1000 - created_ms) / 1000.0
-    if age_seconds < 300:
+    if age_seconds < SHADOW_MIN_PAIR_AGE_SECONDS:
         return False, f"shadow_pair_too_new:{age_seconds:.0f}s"
     if liquidity < SHADOW_MIN_LIQUIDITY_USD:
         return False, f"shadow_low_liquidity:{liquidity:.0f}"
@@ -969,10 +970,15 @@ def fetch_candidate_mints(limit=120):
                 except (TypeError, ValueError):
                     continue
                 pair_age_seconds = time.time() - pair_created_ms / 1000 if pair_created_ms > 0 else 0
+                # Discovery is shared by live-paper and shadow research. Apply
+                # the research-quality floor here; the live entry filter still
+                # enforces MIN_LIQUIDITY_USD/MIN_VOLUME_H1_USD/MIN_PAIR_AGE_SECONDS.
+                # This avoids discarding valid research candidates before the
+                # isolated shadow scanner can classify them.
                 if (
-                    pair_liquidity < MIN_LIQUIDITY_USD
-                    or pair_volume_h1 < MIN_VOLUME_H1_USD
-                    or pair_age_seconds < MIN_PAIR_AGE_SECONDS
+                    pair_liquidity < SHADOW_MIN_LIQUIDITY_USD
+                    or pair_volume_h1 < SHADOW_MIN_VOLUME_H1_USD
+                    or pair_age_seconds < SHADOW_MIN_PAIR_AGE_SECONDS
                 ):
                     continue
                 # DEX Screener's price/volume/momentum metrics describe baseToken.
