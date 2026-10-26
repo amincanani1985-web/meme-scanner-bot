@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "meme_scanner_cycle.py"
+      - "whale_copy_paper.py"
       - "paper_scenario_lab.py"
       - "tests/**"
       - "learn_agent.py"
@@ -67,7 +68,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -168,6 +169,34 @@ jobs:
           for wallet in report.get("top_accumulators", []):
               print(f"- Buy-side candidate {wallet['owner']}: confirmed={wallet['confirmed_buy_pressure_events']}, observed={wallet['observed_increases']}, tokens={wallet['tokens_seen']}")
           print("- These are balance-change heuristics, not verified swaps or proof of wallet profitability.")
+          PY
+
+      - name: Run transaction-level whale-copy paper research
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python whale_copy_paper.py | tee /tmp/whale-copy-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-copy-report.json").read_text(encoding="utf-8"))
+          paper = report.get("paper_account", {})
+          print("## Transaction-level whale-copy paper research")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Wallets selected / tracked: {report.get('wallets_selected', 0)} / {report.get('wallets_tracked', 0)}")
+          print(f"- Swap transactions parsed this cycle: {report.get('swaps_seen', 0)}")
+          print(f"- Newly closed wallet trades reconstructed: {report.get('new_closed_wallet_trades', 0)}")
+          print(f"- Wallets qualifying on realized history: {report.get('qualifying_wallets', 0)}")
+          print(f"- Fresh qualifying buys / sells: {report.get('fresh_profitable_wallet_buys', 0)} / {report.get('fresh_wallet_sells', 0)}")
+          print(f"- Separate copy-paper equity: ${paper.get('equity', 0):.2f}")
+          print(f"- Copy-paper closed trades / wins: {paper.get('closed_trades', 0)} / {paper.get('wins', 0)}")
+          print(f"- Copy-paper net PnL: ${paper.get('net_pnl_usd', 0):+.4f}")
+          print(f"- Copy-paper open positions: {paper.get('open_positions', 0)}")
+          print(f"- Entry rejections: {paper.get('entry_rejections', {})}")
+          print("- Realized wallet history is required; balance drops alone never qualify a wallet. The follower only trades in its own paper account.")
+          for wallet in report.get("leaderboard", []):
+              print(f"- Wallet {wallet['owner']}: closed={wallet['closed_trades']}, win rate={wallet['win_rate']:.1%}, PF={wallet['profit_factor']:.2f}, mean net={wallet['mean_net_pnl_pct']:+.2f}%, qualified={wallet['qualified']}")
           PY
 
       - name: Validate paper-trade target integrity
@@ -271,6 +300,10 @@ jobs:
           paper_state = json.loads(paper_path.read_text()) if paper_path.exists() else {}
           paper_csv_path = Path("paper_account/trades_log.csv")
           paper_csv = paper_csv_path.read_text() if paper_csv_path.exists() else ""
+          whale_path = Path("whale_copy_account/state.json")
+          whale_state = json.loads(whale_path.read_text()) if whale_path.exists() else {}
+          whale_csv_path = Path("whale_copy_account/trades_log.csv")
+          whale_csv = whale_csv_path.read_text() if whale_csv_path.exists() else ""
           Path("dashboard/live-data.js").write_text(
               "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\n"
               "window.LIVE_CSV=" + json.dumps(csv) + ";\n"
@@ -287,6 +320,8 @@ jobs:
           if [ -f shadow_observations.csv ]; then git add shadow_observations.csv; fi
           if [ -f whale_watch_state.json ]; then git add whale_watch_state.json; fi
           if [ -f whale_events.csv ]; then git add whale_events.csv; fi
+          if [ -f whale_copy_state.json ]; then git add whale_copy_state.json; fi
+          if [ -d whale_copy_account ]; then git add whale_copy_account/; fi
 
           if git diff --staged --quiet; then
             echo "No state changes to commit"
