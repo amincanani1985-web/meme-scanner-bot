@@ -414,6 +414,54 @@ class ScannerLogicTests(unittest.TestCase):
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
             )
 
+    def test_rugcheck_research_cohorts_require_complete_recent_safety_data(self):
+        base = {
+            "momentum_h1_pct": 15.0,
+            "momentum_m5_pct": -2.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100000.0,
+            "volume_h1_usd": 50000.0,
+        }
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({
+                **base, "rugcheck_available": 1.0, "rugcheck_risk_data_available": 1.0,
+            }),
+        )
+        safe = {
+            **base,
+            "rugcheck_available": 1.0,
+            "rugcheck_risk_data_available": 1.0,
+            "rugcheck_full_risk_screen_available": 1.0,
+            "rugcheck_report_age_seconds": 300.0,
+            "rugcheck_mint_authority_active": 0.0,
+            "rugcheck_freeze_authority_active": 0.0,
+            "rugcheck_mint_close_authority_active": 0.0,
+            "rugcheck_metadata_mutable": 0.0,
+            "rugcheck_rugged": 0.0,
+            "rugcheck_danger_risk_count": 0.0,
+            "rugcheck_critical_risk_count": 0.0,
+            "rugcheck_warning_risk_count": 0.0,
+            "rugcheck_top1_pct": 6.0,
+            "rugcheck_top10_pct": 20.0,
+            "rugcheck_top20_pct": 34.0,
+            "rugcheck_lp_locked_pct": 65.0,
+            "rugcheck_holder_count": 1000.0,
+        }
+        self.assertIn("rugcheck_screened_pullback_v1", scanner._prospective_shadow_entry_filters(safe))
+        self.assertIn("rugcheck_no_warning_pullback_v1", scanner._prospective_shadow_entry_filters(safe))
+        warned = {**safe, "rugcheck_warning_risk_count": 1.0}
+        self.assertIn("rugcheck_screened_pullback_v1", scanner._prospective_shadow_entry_filters(warned))
+        self.assertNotIn("rugcheck_no_warning_pullback_v1", scanner._prospective_shadow_entry_filters(warned))
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**safe, "rugcheck_danger_risk_count": 1.0}),
+        )
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**safe, "rugcheck_report_age_seconds": 25000.0}),
+        )
+
     def test_score_bands_are_tagged_prospectively_at_entry_boundaries(self):
         components = {
             "momentum_h1_pct": 10.0,
