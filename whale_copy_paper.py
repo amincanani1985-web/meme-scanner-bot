@@ -274,6 +274,7 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
     """
     if not isinstance(wallet_record, dict):
         raise TypeError("wallet_record must be a dictionary")
+    _prepare_wallet_record_for_replay(wallet_record)
     now = time.time() if now is None else float(now)
     wallet_record.setdefault("positions", {})
     wallet_record.setdefault("seen_signatures", [])
