@@ -984,9 +984,23 @@ def fetch_candidate_mints(limit=120):
                 mint = token.get("address")
                 # Exact ticker/name matching avoids flooding the feed with clones
                 # such as BONK2, WIFINU, or "POPCAT 2.0".
-                if (symbol == term or name == term) and isinstance(mint, str) and mint and mint not in search_seen:
-                    search_seen.add(mint)
-                    search_items.append(mint)
+                if (symbol == term or name == term) and isinstance(mint, str) and mint:
+                    # Reuse the verified search pair during this cycle. The batch
+                    # endpoint can omit valid mints; pre-caching the actual base-token
+                    # pair prevents a successful-but-partial batch from converting
+                    # usable discovery data into a cached None. Keep the most liquid
+                    # exact-base pair when several search terms return the same mint.
+                    if _valid_solana_pair(pair):
+                        previous = PAIR_CACHE.get(mint)
+                        try:
+                            previous_liquidity = float((previous.get("liquidity") or {}).get("usd") or 0) if isinstance(previous, dict) else 0.0
+                        except (TypeError, ValueError, AttributeError, OverflowError):
+                            previous_liquidity = 0.0
+                        if not isinstance(previous, dict) or pair_liquidity > previous_liquidity:
+                            PAIR_CACHE[mint] = pair
+                    if mint not in search_seen:
+                        search_seen.add(mint)
+                        search_items.append(mint)
         except (requests.RequestException, ValueError, TypeError, AttributeError):
             continue
     # Prioritize established, liquid search results before the noisy launch feeds.
