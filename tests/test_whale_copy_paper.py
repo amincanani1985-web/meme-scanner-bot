@@ -172,7 +172,10 @@ class WhaleCopyPaperTests(unittest.TestCase):
         good_history = [{"net_pnl_pct": 10.0} for _ in range(6)] + [
             {"net_pnl_pct": -2.0}, {"net_pnl_pct": -2.0}
         ]
-        record = {"positions": {}, "seen_signatures": [], "closed_trades": good_history}
+        record = {
+            "positions": {}, "seen_signatures": [], "closed_trades": good_history,
+            "history_complete": True,
+        }
         trade = follower.parse_swap_transaction(
             swap("fresh-good-buy", now - 30, "buy", 1000, 100), WALLET
         )
@@ -180,8 +183,11 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertEqual(len(result["buy_signals"]), 1)
         self.assertEqual(result["buy_signals"][0]["wallet"], WALLET)
 
-        poor_record = {"positions": {}, "seen_signatures": [],
-                       "closed_trades": [{"net_pnl_pct": -5.0} for _ in range(12)]}
+        poor_record = {
+            "positions": {}, "seen_signatures": [],
+            "closed_trades": [{"net_pnl_pct": -5.0} for _ in range(12)],
+            "history_complete": True,
+        }
         poor_trade = follower.parse_swap_transaction(
             swap("fresh-bad-buy", now - 30, "buy", 1000, 100), WALLET
         )
