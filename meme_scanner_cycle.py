@@ -1342,8 +1342,8 @@ PROSPECTIVE_SHADOW_ENTRY_TAGS = (
 )
 
 
-def _prospective_shadow_entry_filters(components):
-    """Apply preregistered, paper-only entry cohorts; never changes live entries."""
+def _prospective_shadow_entry_filters(components, score=None):
+    """Apply preregistered, paper-only feature and score cohorts at entry time."""
     if not isinstance(components, dict):
         return []
     try:
@@ -1368,6 +1368,25 @@ def _prospective_shadow_entry_filters(components):
     full_risk_screen = feature("memeswap_full_risk_screen_available")
     gate_pass = feature("memeswap_gate_pass")
     tags = []
+
+    # Non-overlapping score bins are recorded prospectively, after observing
+    # historical weakness above 80 and broad losses elsewhere. They do not
+    # affect entry decisions; every bin gets its own future-only holdout.
+    try:
+        score_value = float(score)
+    except (TypeError, ValueError, OverflowError):
+        score_value = None
+    if score_value is not None and math.isfinite(score_value):
+        if 35.0 <= score_value < 50.0:
+            tags.append("score_band_35_50_v1")
+        elif 50.0 <= score_value < 60.0:
+            tags.append("score_band_50_60_v1")
+        elif 60.0 <= score_value < 70.0:
+            tags.append("score_band_60_70_v1")
+        elif 70.0 <= score_value < 80.0:
+            tags.append("score_band_70_80_v1")
+        elif 80.0 <= score_value <= 100.0:
+            tags.append("score_band_80_100_v1")
 
     # Original cohorts remain unchanged so their future samples are comparable.
     if 5.0 <= h1 <= 30.0 and -5.0 <= m5 <= 3.0 and 1.0 <= ratio <= 4.0:
@@ -1530,7 +1549,7 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
             "signal_score": score,
             "trailing_armed": False,
             "components": components,
-            "prospective_entry_filters": _prospective_shadow_entry_filters(components),
+            "prospective_entry_filters": _prospective_shadow_entry_filters(components, score=score),
             "price_history": [{
                 "timestamp": opened_at,
                 "price_usd": price,
