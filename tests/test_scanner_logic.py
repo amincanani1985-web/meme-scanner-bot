@@ -1429,11 +1429,17 @@ class ScannerLogicTests(unittest.TestCase):
             response.raise_for_status.return_value = None
             response.json.return_value = {"pairs": []}
             empty_searches.append(response)
-        with patch.object(
+        with patch.object(scanner, "PAIR_CACHE", {}) as pair_cache, patch.object(
             scanner.requests, "get",
             side_effect=[empty_feed, empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
         ):
             candidates = scanner.fetch_candidate_mints(limit=10)
+            # The batch endpoint can omit a token even though the search response
+            # already supplied a recent, liquid, exact-baseToken pair for it.
+            scanner.fetch_dex_pairs(candidates)
+            cached_pair = pair_cache.get("search-mint")
+        self.assertIsNotNone(cached_pair)
+        self.assertEqual(cached_pair["baseToken"]["address"], "search-mint")
         self.assertIn("search-mint", candidates)
         self.assertNotIn("bonk-clone", candidates)
         self.assertNotIn("illiquid-mint", candidates)
