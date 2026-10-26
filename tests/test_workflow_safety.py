@@ -57,9 +57,10 @@ class WorkflowSafetyTests(unittest.TestCase):
     def test_memeswap_enrichment_is_read_only_optional_and_in_the_test_gate(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn('MEMESWAP_RESEARCH_ENABLED: "1"', workflow)
+        ci_workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         compile_step = next(
-            line for line in workflow.splitlines()
-            if "python -m py_compile meme_scanner_cycle.py" in line
+            line for line in ci_workflow.splitlines()
+            if "python -m py_compile" in line and "meme_scanner_cycle.py" in line
         )
         self.assertIn("memeswap_research.py", compile_step)
         self.assertIn("tests/test_memeswap_research.py", compile_step)
