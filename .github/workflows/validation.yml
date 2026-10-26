@@ -11,6 +11,7 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "shadow_learning.py"
+      - "shadow_path_backtest.py"
       - "whale_research.py"
       - "tests/**"
       - ".github/workflows/validation.yml"
@@ -23,6 +24,7 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "shadow_learning.py"
+      - "shadow_path_backtest.py"
       - "whale_research.py"
       - "tests/**"
       - ".github/workflows/validation.yml"
@@ -55,10 +57,11 @@ jobs:
           python -m py_compile
           meme_scanner_cycle.py paper_scenario_lab.py paper_position_monitor.py
           whale_monitor.py learn_agent.py strategy_backtest.py shadow_learning.py
-          whale_research.py tests/test_scanner_logic.py tests/test_adaptive.py
-          tests/test_whale_monitor.py tests/test_paper_position_monitor.py
-          tests/test_workflow_safety.py tests/test_shadow_learning.py
-          tests/test_whale_research.py
+          shadow_path_backtest.py whale_research.py tests/test_scanner_logic.py
+          tests/test_adaptive.py tests/test_whale_monitor.py
+          tests/test_paper_position_monitor.py tests/test_workflow_safety.py
+          tests/test_shadow_learning.py tests/test_whale_research.py
+          tests/test_shadow_path_backtest.py
 
       - name: Run full unit suite three times
         shell: bash
