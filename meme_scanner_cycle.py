@@ -1819,14 +1819,29 @@ def run_isolated_paper_cycle(root_dir=None):
             save_state(paper_state)
         validation_status = strategy.get("validation_status")
         strategy_status = strategy.get("status")
-        # The independent paper account must explore the configured 60-point
-        # threshold until a threshold is validated or the learner explicitly rolls
-        # the strategy back. The historical account keeps its own baseline/lock.
-        if validation_status not in ("validated", "rolled_back") and strategy_status != "rolled_back":
-            strategy["active_threshold"] = OPPORTUNITY_ENTRY_THRESHOLD
-            strategy["status"] = "paper_exploration"
-            strategy["validation_status"] = "exploration_unvalidated"
-            save_state(paper_state)
+
+        # Exploration samples are collected by the separate shadow cohort, whose
+        # filter/score gates do not depend on this account's entry threshold. An
+        # unvalidated experimental threshold therefore must never keep admitting
+        # paper-account entries merely to manufacture more training trades.
+        if validation_status != "validated" and strategy_status != "rolled_back":
+            try:
+                active_threshold = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
+            except (TypeError, ValueError, OverflowError):
+                active_threshold = float("nan")
+            if not math.isfinite(active_threshold) or active_threshold != OPPORTUNITY_ENTRY_THRESHOLD:
+                strategy.update({
+                    "active_threshold": OPPORTUNITY_ENTRY_THRESHOLD,
+                    "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD,
+                    "candidate_threshold": None,
+                    "status": "rolled_back",
+                    "validation_status": "rolled_back",
+                    "rollback_reason": "unvalidated_threshold_reset_to_baseline",
+                })
+                save_state(paper_state)
+            elif strategy.get("candidate_threshold") is not None:
+                strategy["candidate_threshold"] = None
+                save_state(paper_state)
         # Whale-follow mode is the isolated account's default. Do not silently
         # fall back to momentum-only entries when the RPC provider is missing;
         # run_cycle will fail closed and record whale_data_unavailable instead.
