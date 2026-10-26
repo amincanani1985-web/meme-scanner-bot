@@ -50,6 +50,7 @@ env:
   NOTIFY_ISSUE: "1"
   HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
   HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+  SHADOW_PRICE_PATH_LOG: paper_account/shadow_price_paths.jsonl
 
 jobs:
   run-cycle:
@@ -296,7 +297,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python shadow_path_backtest.py --paths paper_account/shadow_price_paths.jsonl | tee /tmp/shadow-path-backtest-report.json
+          python shadow_path_backtest.py --paths shadow_price_paths.jsonl paper_account/shadow_price_paths.jsonl | tee /tmp/shadow-path-backtest-report.json
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
@@ -362,6 +363,7 @@ jobs:
           if [ -f whale_events.csv ]; then git add whale_events.csv; fi
           if [ -f whale_copy_state.json ]; then git add whale_copy_state.json; fi
           if [ -f shadow_price_paths.jsonl ]; then git add shadow_price_paths.jsonl; fi
+          if [ -f paper_account/shadow_price_paths.jsonl ]; then git add paper_account/shadow_price_paths.jsonl; fi
           if [ -d whale_copy_account ]; then git add whale_copy_account/; fi
 
           if git diff --staged --quiet; then
