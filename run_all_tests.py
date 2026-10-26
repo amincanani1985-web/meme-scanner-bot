@@ -19,7 +19,8 @@ def main():
     root = Path(__file__).resolve().parent
     py = sys.executable
     checks = [
-        run([py, "-m", "py_compile", "meme_scanner_cycle.py", "learn_agent.py",
+        run([py, "-m", "py_compile", "memeswap_research.py",
+             "tests/test_memeswap_research.py", "meme_scanner_cycle.py", "learn_agent.py",
              "strategy_backtest.py", "tests/test_scanner_logic.py",
              "tests/test_adaptive.py", "tests/test_v17_improvements.py"],
             "Python syntax"),
