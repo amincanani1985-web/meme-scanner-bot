@@ -1169,6 +1169,63 @@ class ScannerLogicTests(unittest.TestCase):
         )
         self.assertEqual(scanner._prospective_shadow_entry_filters({}), [])
 
+    def test_memeswap_risk_profile_is_saved_only_in_shadow_entry_features(self):
+        state = scanner.normalize_state({})
+        risk_features = {
+            "memeswap_available": 1.0,
+            "memeswap_top10_pct": 28.0,
+            "memeswap_honeypot": 0.0,
+            "memeswap_mintable": 0.0,
+            "memeswap_profile_age_seconds": 15.0,
+        }
+        with patch.object(scanner, "fetch_candidate_mints", return_value=["research-mint"]), \
+             patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_shadow_opportunity", side_effect=lambda *args: (75.0, {"momentum_h1_pct": 12.0})), \
+             patch.object(scanner, "memeswap_research_enabled", return_value=True), \
+             patch.object(scanner, "fetch_memeswap_token_profile", return_value=risk_features) as fetch_profile, \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(
+                state, candidates=["research-mint"], increment_scan_count=False
+            )
+
+        self.assertEqual(result["shadow_opened"], ["research-mint"])
+        components = state["shadow_positions"]["research-mint"]["components"]
+        self.assertEqual(components["memeswap_top10_pct"], 28.0)
+        self.assertEqual(components["memeswap_honeypot"], 0.0)
+        self.assertEqual(components["memeswap_profile_age_seconds"], 15.0)
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["positions"], {})
+        fetch_profile.assert_called_once_with("research-mint")
+
+    def test_memeswap_profile_requests_are_capped_per_scan_cycle(self):
+        state = scanner.normalize_state({})
+        candidates = [f"research-mint-{index}" for index in range(6)]
+        risk_features = {"memeswap_available": 1.0, "memeswap_top10_pct": 25.0}
+        with patch.object(scanner, "fetch_candidate_mints", return_value=candidates), \
+             patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_shadow_opportunity", side_effect=lambda *args: (75.0, {"momentum_h1_pct": 12.0})), \
+             patch.object(scanner, "memeswap_research_enabled", return_value=True), \
+             patch.object(scanner, "fetch_memeswap_token_profile", return_value=risk_features) as fetch_profile, \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(
+                state, candidates=candidates, increment_scan_count=False
+            )
+
+        self.assertEqual(result["shadow_opened"], candidates)
+        self.assertEqual(
+            fetch_profile.call_count,
+            scanner.MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE,
+        )
+        enriched = sum(
+            "memeswap_top10_pct" in position["components"]
+            for position in state["shadow_positions"].values()
+        )
+        self.assertEqual(enriched, scanner.MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE)
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["positions"], {})
+
     def test_shadow_research_does_not_reopen_a_mint_with_a_complete_saved_path(self):
         state = scanner.normalize_state({})
         state["shadow_completed_mints"] = ["mint"]
