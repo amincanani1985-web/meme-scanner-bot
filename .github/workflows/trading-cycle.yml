@@ -207,14 +207,14 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python meme_scanner_cycle.py
 
-      - name: Monitor existing paper positions with 60-second gaps
+      - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          for check in 1 2; do
-            sleep 60
-            echo "Monitor-only check $check/2"
+          for check in 1 2 3 4; do
+            sleep 30
+            echo "Monitor-only check $check/4"
             python paper_position_monitor.py
           done
 
