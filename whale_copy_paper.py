@@ -329,22 +329,75 @@ def _api_key():
     return (parse_qs(urlparse(url).query).get("api-key") or [""])[0].strip()
 
 
-def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET):
-    """Fetch recent enhanced transactions. Returns an empty list on provider failure."""
-    if not wallet or not api_key:
-        return []
-    try:
-        response = requests.get(
-            HELIUS_ENHANCED_URL.format(wallet=wallet),
-            params={"api-key": api_key, "limit": min(MAX_TRANSACTIONS_PER_WALLET, max(1, int(limit))), "sort-order": "desc"},
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        return payload if isinstance(payload, list) else []
-    except (requests.RequestException, ValueError, TypeError, OverflowError):
-        return []
+def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
+                               max_pages=1, before_signature=None, return_metadata=False):
+    """Fetch bounded enhanced-transaction history, supporting backwards pagination.
 
+    When return_metadata=True, return the transactions plus the oldest signature,
+    whether the address history ended, and whether all attempted requests succeeded.
+    A failed older page never discards a successful recent page.
+    """
+    result = {
+        "transactions": [],
+        "last_signature": before_signature,
+        "reached_end": False,
+        "ok": True,
+        "pages_fetched": 0,
+    }
+    if not wallet or not api_key:
+        result["ok"] = False
+        return result if return_metadata else []
+
+    page_size = min(100, max(1, int(limit)))
+    page_limit = max(1, min(10, int(max_pages)))
+    cursor = before_signature
+    seen_signatures = set()
+    for _ in range(page_limit):
+        params = {
+            "api-key": api_key,
+            "limit": page_size,
+            "sort-order": "desc",
+        }
+        if cursor:
+            params["before-signature"] = cursor
+        try:
+            response = requests.get(
+                HELIUS_ENHANCED_URL.format(wallet=wallet),
+                params=params,
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (requests.RequestException, ValueError, TypeError, OverflowError):
+            result["ok"] = False
+            break
+        if not isinstance(payload, list):
+            result["ok"] = False
+            break
+        if not payload:
+            result["reached_end"] = True
+            break
+        page = [item for item in payload if isinstance(item, dict) and item.get("signature")]
+        if not page:
+            result["ok"] = False
+            break
+        for transaction in page:
+            signature = str(transaction["signature"])
+            if signature not in seen_signatures:
+                seen_signatures.add(signature)
+                result["transactions"].append(transaction)
+        result["pages_fetched"] += 1
+        page_last_signature = str(page[-1]["signature"])
+        if page_last_signature == cursor:
+            result["ok"] = False
+            break
+        result["last_signature"] = page_last_signature
+        if len(payload) < page_size:
+            result["reached_end"] = True
+            break
+        cursor = page_last_signature
+
+    return result if return_metadata else result["transactions"]
 
 def _load_json(path, default):
     try:
@@ -686,12 +739,43 @@ def run():
             record = research_state["wallets"].setdefault(owner, {
                 "positions": {}, "seen_signatures": [], "closed_trades": [], "metrics": {},
             })
-            raw_transactions = fetch_wallet_transactions(owner, api_key)
-            if not raw_transactions:
+            # Always check the newest page for timely signals. During wallet
+            # qualification, also walk backwards through old pages so an active
+            # trader's sell is not discarded merely because its buy predates the
+            # last 100 transactions.
+            latest = fetch_wallet_transactions(
+                owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
+                max_pages=1, return_metadata=True,
+            )
+            if not latest["ok"] and not latest["transactions"]:
                 fetch_errors += 1
                 continue
+            transaction_batch = list(latest["transactions"])
+            if not record.get("history_complete", False):
+                cursor = record.get("history_cursor")
+                backfill = fetch_wallet_transactions(
+                    owner, api_key,
+                    limit=MAX_TRANSACTIONS_PER_WALLET,
+                    max_pages=3 if not cursor else 1,
+                    before_signature=cursor,
+                    return_metadata=True,
+                )
+                if backfill["ok"]:
+                    transaction_batch.extend(backfill["transactions"])
+                    if backfill["last_signature"]:
+                        record["history_cursor"] = backfill["last_signature"]
+                    if backfill["reached_end"]:
+                        record["history_complete"] = True
+                elif not transaction_batch:
+                    fetch_errors += 1
+                    continue
+            unique_transactions = {}
+            for transaction in transaction_batch:
+                signature = transaction.get("signature")
+                if signature:
+                    unique_transactions[str(signature)] = transaction
             parsed = []
-            for transaction in raw_transactions:
+            for transaction in unique_transactions.values():
                 trade = parse_swap_transaction(transaction, owner)
                 if trade:
                     parsed.append(trade)
