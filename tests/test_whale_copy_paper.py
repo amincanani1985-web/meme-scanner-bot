@@ -294,7 +294,10 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
         fetch.assert_not_called()
         self.assertEqual(result["status"], "helius_rate_limit_backoff")
-        self.assertEqual(result["last_scan"]["wallets_attempted"], 0)
+        self.assertEqual(result["wallets_attempted"], 0)
+        self.assertEqual(
+            persisted["whale_copy_state.json"]["last_scan"]["wallets_attempted"], 0
+        )
 
     def test_only_previously_profitable_wallets_emit_fresh_buy_signals(self):
         now = time.time()
