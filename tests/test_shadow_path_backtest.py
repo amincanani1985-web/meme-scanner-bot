@@ -2,6 +2,7 @@ import unittest
 
 from shadow_path_backtest import (
     BASELINE_CONFIG,
+    analyze_prospective_cohorts,
     analyze_records,
     baseline_consistency,
     simulate_exit,
@@ -287,6 +288,43 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertGreater(len(report["exploratory_training_candidates"]), 0)
         self.assertIsNone(report["selected_config"])
         self.assertIsNone(report["holdout"])
+
+    def test_prospective_cohort_excludes_untagged_historical_paths(self):
+        records = []
+        for i in range(3):
+            shift = i * 1_000.0
+            record = path([
+                (seconds, 1.0, 100_000.0)
+                for seconds in range(0, 901, 112)
+            ])
+            record["mint"] = f"prospective-test-{i}"
+            record["entry_timestamp"] += shift
+            record["observation_end_timestamp"] += shift
+            for sample in record["price_history"]:
+                sample["timestamp"] += shift
+            record["entry_components"] = {
+                "momentum_h1_pct": 15.0,
+                "momentum_m5_pct": -1.0,
+                "buy_sell_ratio": 1.5,
+            }
+            records.append(record)
+
+        # Historical paths may look like the rule, but they have no entry-time tag.
+        report = analyze_prospective_cohorts(records, min_total_paths=1)
+        cohort = report["moderate_pullback_v1"]
+        self.assertEqual(cohort["paths_received"], 0)
+        self.assertEqual(cohort["usable_paths"], 0)
+        self.assertEqual(cohort["status"], "insufficient_history")
+        self.assertIsNone(cohort["selected_config"])
+
+        # Only a path tagged when the current scanner version opened it joins the cohort.
+        records[1]["prospective_entry_filters"] = ["moderate_pullback_v1"]
+        report = analyze_prospective_cohorts(records, min_total_paths=1)
+        cohort = report["moderate_pullback_v1"]
+        self.assertEqual(cohort["paths_received"], 1)
+        self.assertEqual(cohort["usable_paths"], 1)
+        self.assertEqual(cohort["status"], "insufficient_history")
+        self.assertIsNone(cohort["selected_config"])
 
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
