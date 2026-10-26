@@ -585,11 +585,15 @@ class ScannerLogicTests(unittest.TestCase):
             },
         }
         live_pair = {"priceUsd": "0.85", "liquidity": {"usd": 100000}}
-        with patch.object(scanner, "fetch_dex_pair", return_value=live_pair), \\
-             patch.object(scanner, "helius_configured", return_value=True), \\
-             patch.object(scanner, "fetch_whale_balances", side_effect=AssertionError("risk exit must not wait for whale RPC")), \\
-             patch.object(scanner, "append_trade"), \\
-             patch.object(scanner, "append_learning_observation"):
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(scanner, "fetch_dex_pair", return_value=live_pair))
+            stack.enter_context(patch.object(scanner, "helius_configured", return_value=True))
+            stack.enter_context(patch.object(
+                scanner, "fetch_whale_balances",
+                side_effect=AssertionError("risk exit must not wait for whale RPC"),
+            ))
+            stack.enter_context(patch.object(scanner, "append_trade"))
+            stack.enter_context(patch.object(scanner, "append_learning_observation"))
             scanner.manage_open_positions(state)
         self.assertNotIn("mint", state["positions"])
         self.assertEqual(state["trade_count"], 1)
