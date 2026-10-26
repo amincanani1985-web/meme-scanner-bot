@@ -89,6 +89,36 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertEqual(result["new_closed_trades"], 0)
         self.assertEqual(record["metrics"]["closed_trades"], 1)
 
+    def test_late_historical_backfill_rebuilds_wallet_pnl_in_timestamp_order(self):
+        old_buy = follower.parse_swap_transaction(
+            swap("old-buy", 100, "buy", 1000, 50), WALLET
+        )
+        recent_buy = follower.parse_swap_transaction(
+            swap("recent-buy", 200, "buy", 1000, 100), WALLET
+        )
+        sell = follower.parse_swap_transaction(
+            swap("recent-sell", 300, "sell", 1000, 120), WALLET
+        )
+
+        # Simulate the scanner fetching a fresh page first, then backfilling an
+        # older page on the next cycle. Results must match a full chronological replay.
+        incremental = {}
+        follower.apply_wallet_trades(incremental, [recent_buy, sell], now=400)
+        follower.apply_wallet_trades(incremental, [old_buy], now=400)
+
+        chronological = {}
+        follower.apply_wallet_trades(
+            chronological, [old_buy, recent_buy, sell], now=400
+        )
+
+        self.assertEqual(
+            incremental["closed_trades"], chronological["closed_trades"]
+        )
+        self.assertEqual(
+            incremental["positions"], chronological["positions"]
+        )
+        self.assertEqual(incremental["metrics"], chronological["metrics"])
+
     def test_wallet_qualification_rejects_small_or_unprofitable_samples(self):
         self.assertFalse(follower.wallet_qualifies({
             "closed_trades": 7, "wins": 7, "win_rate": 1.0,
