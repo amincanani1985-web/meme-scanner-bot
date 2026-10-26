@@ -249,6 +249,45 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertIsNone(report["selected_config"])
         self.assertGreater(report["joint_candidate_configs"], 0)
 
+    def test_insufficient_history_runs_training_only_search_but_never_reads_candidate_holdout(self):
+        records = []
+        for i in range(34):
+            shift = i * 1_000.0
+            record = path([
+                (seconds, 1.0 - 0.0001 * seconds, 100_000.0)
+                for seconds in range(0, 901, 30)
+            ])
+            record["mint"] = f"insufficient-sample-{i:03d}"
+            record["entry_timestamp"] += shift
+            record["observation_end_timestamp"] += shift
+            for sample in record["price_history"]:
+                sample["timestamp"] += shift
+            record["score"] = 75.0
+            record["entry_components"] = {
+                "momentum_h1_pct": 10.0,
+                "momentum_m5_pct": 2.0,
+                "buy_sell_ratio": 1.5,
+                "liquidity_usd": 100_000.0,
+                "volume_h1_usd": 50_000.0,
+                "market_cap_usd": 500_000.0,
+                "liquidity_to_mcap_ratio": 0.2,
+            }
+            records.append(record)
+
+        report = analyze_records(records, min_total_paths=50)
+        self.assertEqual(report["status"], "insufficient_history")
+        self.assertEqual(report["usable_paths"], 34)
+        self.assertEqual(report["train_rows"], 23)
+        self.assertEqual(report["validation_rows"], 11)
+        self.assertGreater(report["evaluated_candidate_configs"], 0)
+        self.assertEqual(
+            report["exploratory_status"],
+            "training_only_search_complete_holdout_not_evaluated",
+        )
+        self.assertGreater(len(report["exploratory_training_candidates"]), 0)
+        self.assertIsNone(report["selected_config"])
+        self.assertIsNone(report["holdout"])
+
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
         self.assertEqual(report["status"], "insufficient_history")
