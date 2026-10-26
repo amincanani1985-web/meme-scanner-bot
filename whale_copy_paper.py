@@ -25,8 +25,8 @@ MAX_WALLETS_PER_CYCLE = 16
 MAX_TRANSACTIONS_PER_WALLET = 100
 MAX_STORED_SIGNATURES = 1500
 MAX_STORED_CLOSED_TRADES = 250
-MAX_SIGNAL_AGE_SECONDS = 300
-COPY_CONFIRMATION_WINDOW_SECONDS = 600
+MAX_SIGNAL_AGE_SECONDS = 600
+COPY_CONFIRMATION_WINDOW_SECONDS = 900
 MIN_WALLET_CLOSED_TRADES = 8
 MIN_WALLET_WIN_RATE = 0.55
 MIN_WALLET_PROFIT_FACTOR = 1.25
@@ -227,7 +227,8 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
     wallet_record.setdefault("seen_signatures", [])
     wallet_record.setdefault("closed_trades", [])
     wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
-    seen = set(wallet_record["seen_signatures"])
+    seen_order = [str(signature) for signature in wallet_record["seen_signatures"]]
+    seen = set(seen_order)
     buy_signals, sell_signals = [], []
     new_closed = 0
     valid_trades = [trade for trade in (trades or []) if isinstance(trade, dict)]
@@ -241,13 +242,14 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
         token_amount = _finite_number(trade.get("token_amount"))
         quote_amount = _finite_number(trade.get("quote_amount"))
         quote_symbol = trade.get("quote_symbol")
-        if not signature or signature in seen or not mint or timestamp is None:
+        if not signature or str(signature) in seen or not mint or timestamp is None:
             continue
+        signature = str(signature)
+        seen.add(signature)
+        seen_order.append(signature)
         if side not in ("buy", "sell") or token_amount is None or quote_amount is None:
-            seen.add(signature)
             continue
         if token_amount <= 0 or quote_amount <= 0 or quote_symbol not in ("SOL", "USDC", "USDT"):
-            seen.add(signature)
             continue
 
         if side == "buy":
@@ -306,9 +308,8 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
                     position["cost_quote"] = max(0.0, old_cost - basis)
                     if position["token_amount"] <= 1e-12:
                         wallet_record["positions"].pop(mint, None)
-        seen.add(str(signature))
 
-    wallet_record["seen_signatures"] = list(seen)[-MAX_STORED_SIGNATURES:]
+    wallet_record["seen_signatures"] = seen_order[-MAX_STORED_SIGNATURES:]
     wallet_record["closed_trades"] = wallet_record["closed_trades"][-MAX_STORED_CLOSED_TRADES:]
     wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
     wallet_record["last_processed_at"] = time.time() if now is None else float(now)
@@ -428,23 +429,6 @@ def _close_copy_position(account, mint, raw_exit_price, reason, now):
     account.setdefault("closed_trades", []).append(trade)
     account["closed_trades"] = account["closed_trades"][-500:]
     return trade
-
-
-def _save_copy_ledger(trades, ledger_path):
-    if not trades:
-        return
-    path = Path(ledger_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["timestamp", "mint", "symbol", "entry_price", "exit_price", "pnl_pct", "pnl_usd", "equity_after", "reason", "leader_wallets"]
-    exists = path.exists() and path.stat().st_size > 0
-    with path.open("a", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        if not exists:
-            writer.writeheader()
-        for trade in trades:
-            row = dict(trade)
-            row["leader_wallets"] = "|".join(row.get("leader_wallets", []))
-            writer.writerow(row)
 
 
 def _sol_usd_price():
