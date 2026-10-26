@@ -1141,6 +1141,11 @@ class ScannerLogicTests(unittest.TestCase):
                 "liquid_pullback_v1",
                 "tight_pullback_v1",
                 "recovery_pullback_v1",
+                "broad_moderate_momentum_v2",
+                "volume_confirmed_pullback_v1",
+                "steady_pressure_v1",
+                "continuation_cooldown_v1",
+                "weak_trend_recovery_v1",
             ],
         )
         self.assertEqual(
@@ -1153,7 +1158,12 @@ class ScannerLogicTests(unittest.TestCase):
             scanner._prospective_shadow_entry_filters({
                 **full, "momentum_m5_pct": -8.0,
             }),
-            [],
+            [
+                "broad_moderate_momentum_v2",
+                "volume_confirmed_pullback_v1",
+                "continuation_cooldown_v1",
+                "weak_trend_recovery_v1",
+            ],
         )
         self.assertEqual(
             scanner._prospective_shadow_entry_filters({
@@ -1168,6 +1178,40 @@ class ScannerLogicTests(unittest.TestCase):
             ["moderate_pullback_v1", "broad_pullback_v1"],
         )
         self.assertEqual(scanner._prospective_shadow_entry_filters({}), [])
+
+    def test_risk_screened_pullback_requires_a_complete_fresh_risk_profile(self):
+        base = {
+            "momentum_h1_pct": 15.0,
+            "momentum_m5_pct": -2.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100000.0,
+            "volume_h1_usd": 50000.0,
+        }
+        self.assertNotIn(
+            "risk_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**base, "memeswap_available": 1.0}),
+        )
+        safe = {
+            **base,
+            "memeswap_available": 1.0,
+            "memeswap_risk_data_available": 1.0,
+            "memeswap_full_risk_screen_available": 1.0,
+            "memeswap_gate_pass": 1.0,
+            "memeswap_top1_pct": 8.0,
+            "memeswap_top10_pct": 28.0,
+            "memeswap_top20_pct": 54.0,
+            "memeswap_honeypot": 0.0,
+            "memeswap_mintable": 0.0,
+            "memeswap_fake_score": 3.0,
+            "memeswap_lp_locked_pct": 60.0,
+            "memeswap_buy_tax_value": 0.0,
+            "memeswap_sell_tax_value": 0.0,
+        }
+        self.assertIn("risk_screened_pullback_v1", scanner._prospective_shadow_entry_filters(safe))
+        self.assertNotIn(
+            "risk_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**safe, "memeswap_honeypot": 1.0}),
+        )
 
     def test_memeswap_risk_profile_is_saved_only_in_shadow_entry_features(self):
         state = scanner.normalize_state({})
