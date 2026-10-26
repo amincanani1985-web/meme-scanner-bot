@@ -1141,6 +1141,10 @@ def _append_shadow_price_path(mint, position, observed_at=None):
             "entry_price": float(position["entry_price"]),
             "entry_liquidity_usd": float(position.get("entry_liquidity", 0) or 0),
             "entry_components": position.get("components", {}) if isinstance(position.get("components"), dict) else {},
+            "prospective_entry_filters": sorted({
+                str(tag) for tag in (position.get("prospective_entry_filters") or [])
+                if isinstance(tag, str) and tag.strip()
+            }),
             "benchmark_exit": {
                 "reason": str(position["benchmark_exit_reason"]),
                 "timestamp": float(position.get("benchmark_exit_timestamp", timestamps[-1])),
@@ -1304,6 +1308,27 @@ def manage_shadow_positions(state):
                     f"samples={len(pos.get('price_history', []))}; token remains eligible for a later clean sample"
                 )
 
+PROSPECTIVE_SHADOW_RULE_TAG = "moderate_pullback_v1"
+
+
+def _prospective_shadow_entry_filters(components):
+    """Tag one preregistered research hypothesis; this never changes live entry rules."""
+    if not isinstance(components, dict):
+        return []
+    try:
+        h1 = float(components["momentum_h1_pct"])
+        m5 = float(components["momentum_m5_pct"])
+        ratio = float(components["buy_sell_ratio"])
+        values = (h1, m5, ratio)
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return []
+    if not all(math.isfinite(value) for value in values):
+        return []
+    if 5.0 <= h1 <= 30.0 and -5.0 <= m5 <= 3.0 and 1.0 <= ratio <= 4.0:
+        return [PROSPECTIVE_SHADOW_RULE_TAG]
+    return []
+
+
 def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     """Collect labeled virtual-trade samples independently of account entry eligibility."""
     fetched_here = candidates is None
@@ -1363,6 +1388,7 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
             "signal_score": score,
             "trailing_armed": False,
             "components": components,
+            "prospective_entry_filters": _prospective_shadow_entry_filters(components),
             "price_history": [{
                 "timestamp": opened_at,
                 "price_usd": price,
