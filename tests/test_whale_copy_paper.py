@@ -1,5 +1,6 @@
 import time
 import unittest
+from unittest.mock import Mock, patch
 
 import whale_copy_paper as follower
 
@@ -101,6 +102,20 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "closed_trades": 10, "wins": 6, "win_rate": 0.6,
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
         }))
+
+    def test_wallet_history_fetch_paginates_and_stops_on_short_page(self):
+        first = Mock()
+        first.raise_for_status.return_value = None
+        first.json.return_value = [{"signature": "sig-3"}, {"signature": "sig-2"}]
+        second = Mock()
+        second.raise_for_status.return_value = None
+        second.json.return_value = [{"signature": "sig-1"}]
+        with patch.object(follower.requests, "get", side_effect=[first, second]) as get:
+            txs = follower.fetch_wallet_transactions(WALLET, "test-key", limit=2, max_pages=3)
+        self.assertEqual([tx["signature"] for tx in txs], ["sig-3", "sig-2", "sig-1"])
+        self.assertEqual(get.call_count, 2)
+        self.assertNotIn("before-signature", get.call_args_list[0].kwargs["params"])
+        self.assertEqual(get.call_args_list[1].kwargs["params"]["before-signature"], "sig-2")
 
     def test_wallet_selection_prioritizes_accumulation_over_sell_drops(self):
         watch = {"wallets": {
