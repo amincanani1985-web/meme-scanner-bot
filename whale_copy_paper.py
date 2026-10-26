@@ -358,6 +358,35 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
         wallet_record.get("history_complete", False)
         and not wallet_record.get("history_truncated", False)
     )
+    wallet_record["seen_signatures"] = list(dict.fromkeys(seen_order))[-MAX_STORED_SIGNATURES:]
+
+    if not history_eligible:
+        # Until historical backfill reaches the end, keep any legacy/current ledger
+        # intact. A partial ledger must never be mistaken for complete realized
+        # performance, but fresh leader sells still need to be visible for exits.
+        sell_signals = [
+            {
+                "wallet": str(item.get("wallet") or ""),
+                "mint": str(item["mint"]),
+                "timestamp": float(item["timestamp"]),
+                "signature": str(item["signature"]),
+            }
+            for item in all_swaps
+            if str(item.get("signature")) in fresh_signatures
+            and item.get("side") == "sell"
+            and signal_is_fresh(float(item.get("timestamp", 0)), now=now)
+        ]
+        wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
+        wallet_record["last_processed_at"] = now
+        return {
+            "new_closed_trades": 0,
+            "buy_signals": [],
+            "sell_signals": sell_signals,
+            "metrics": wallet_record["metrics"],
+            "history_complete": False,
+            "history_truncated": bool(wallet_record.get("history_truncated", False)),
+            "normalized_swaps": len(all_swaps),
+        }
 
     # Recompute all open inventory and realized trades in chronological order.
     # This deliberately replaces the old derived ledger rather than appending
