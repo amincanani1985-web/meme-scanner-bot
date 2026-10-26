@@ -43,9 +43,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: trading-cycle
-  # Serialize state-writing cycles. Never cancel an active cycle; GitHub keeps
-  # at most one pending run for this group, preventing concurrent state commits.
+  # Keep scheduled/push runs on main serialized together, but isolate each PR.
+  # Otherwise a pending PR run can replace a pending main run in GitHub's single
+  # pending slot and starve the periodic paper scanner of fresh observations.
+  group: trading-cycle-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: false
 
 env:
