@@ -1206,7 +1206,8 @@ class ScannerLogicTests(unittest.TestCase):
                 + record("legacy-mint", 4_000.0) + "\n",
                 encoding="utf-8",
             )
-            with patch.object(scanner, "Path", side_effect=lambda value: root / str(value)), \
+            with patch.object(scanner, "__file__", str(root / "meme_scanner_cycle.py")), \
+                 patch.object(scanner, "Path", side_effect=lambda value: root / str(value)), \
                  patch.dict("os.environ", {
                      "SHADOW_PRICE_PATH_LOG": "paper_account/shadow_price_paths.jsonl",
                  }):
