@@ -414,6 +414,44 @@ class ScannerLogicTests(unittest.TestCase):
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
             )
 
+    def test_shadow_position_captures_preregistered_entry_cohorts(self):
+        state = scanner.normalize_state({})
+        research_pair = pair(
+            liquidity={"usd": 100000},
+            volume={"h1": 50000},
+            marketCap=250000,
+        )
+        features = {
+            "momentum_h1_pct": 10.0,
+            "momentum_m5_pct": -2.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100000.0,
+            "volume_h1_usd": 50000.0,
+            "market_cap_usd": 250000.0,
+            "liquidity_to_mcap_ratio": 0.4,
+        }
+        with patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=research_pair), \
+             patch.object(scanner, "score_shadow_opportunity", return_value=(75.0, features)), \
+             patch.object(scanner, "_load_shadow_completed_mints", return_value=[]), \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(
+                state, candidates=["cohort-mint"], increment_scan_count=False
+            )
+
+        self.assertEqual(result["shadow_opened"], ["cohort-mint"])
+        tags = state["shadow_positions"]["cohort-mint"]["prospective_entry_filters"]
+        self.assertEqual(
+            set(tags),
+            {
+                "moderate_pullback_v1",
+                "broad_pullback_v1",
+                "liquid_pullback_v1",
+                "tight_pullback_v1",
+                "recovery_pullback_v1",
+            },
+        )
+
     def test_low_score_shadow_candidate_is_research_only_not_a_live_entry(self):
         self.assertEqual(scanner.SHADOW_MIN_SCORE, 0.0)
         research_pair = pair(
