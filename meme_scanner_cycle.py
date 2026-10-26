@@ -119,9 +119,19 @@ def _load_shadow_completed_mints():
                     except json.JSONDecodeError:
                         continue
                     mint = str(record.get("mint") or "").strip() if isinstance(record, dict) else ""
-                    if mint and mint not in seen:
-                        seen.add(mint)
-                        completed.append(mint)
+                    if not mint or mint in seen:
+                        continue
+                    # A persisted record may have been saved even when its quote
+                    # path was too short or sparse for research. Only completed,
+                    # quality-qualified paths should permanently suppress resampling.
+                    position_like = {
+                        "entry_time": record.get("entry_timestamp"),
+                        "price_history": record.get("price_history"),
+                    }
+                    if not _shadow_path_meets_research_quality(position_like):
+                        continue
+                    seen.add(mint)
+                    completed.append(mint)
         except OSError:
             # One broken/missing legacy file must not hide completions in another.
             continue
