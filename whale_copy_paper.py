@@ -343,6 +343,7 @@ def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET
         "reached_end": False,
         "ok": True,
         "pages_fetched": 0,
+        "error": "",
     }
     if not wallet or not api_key:
         result["ok"] = False
@@ -368,10 +369,25 @@ def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET
             )
             response.raise_for_status()
             payload = response.json()
-        except (requests.RequestException, ValueError, TypeError, OverflowError):
+        except requests.HTTPError as exc:
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            result["error"] = f"http_{status}" if status else "http_error"
+            result["ok"] = False
+            break
+        except requests.Timeout:
+            result["error"] = "timeout"
+            result["ok"] = False
+            break
+        except requests.RequestException as exc:
+            result["error"] = type(exc).__name__.lower()
+            result["ok"] = False
+            break
+        except (ValueError, TypeError, OverflowError):
+            result["error"] = "invalid_json_or_input"
             result["ok"] = False
             break
         if not isinstance(payload, list):
+            result["error"] = "unexpected_payload_shape"
             result["ok"] = False
             break
         if not payload:
@@ -730,6 +746,7 @@ def run():
     swaps_seen = 0
     new_closed = 0
     fetch_errors = 0
+    fetch_error_reasons = {}
 
     if not api_key:
         status = "helius_api_key_not_configured"
@@ -739,36 +756,51 @@ def run():
             record = research_state["wallets"].setdefault(owner, {
                 "positions": {}, "seen_signatures": [], "closed_trades": [], "metrics": {},
             })
-            # Always check the newest page for timely signals. During wallet
-            # qualification, also walk backwards through old pages so an active
-            # trader's sell is not discarded merely because its buy predates the
-            # last 100 transactions.
-            latest = fetch_wallet_transactions(
-                owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
-                max_pages=1, return_metadata=True,
-            )
-            if not latest["ok"] and not latest["transactions"]:
-                fetch_errors += 1
-                continue
-            transaction_batch = list(latest["transactions"])
-            if not record.get("history_complete", False):
-                cursor = record.get("history_cursor")
-                backfill = fetch_wallet_transactions(
-                    owner, api_key,
-                    limit=MAX_TRANSACTIONS_PER_WALLET,
-                    max_pages=3 if not cursor else 1,
-                    before_signature=cursor,
-                    return_metadata=True,
+            # Newly discovered/non-qualified wallets are backfilled one page per
+            # visit, so API request volume stays bounded. As soon as a wallet meets
+            # realized-history gates, every poll reads the newest page for fresh
+            # copy signals instead of continuing to walk backward.
+            existing_metrics = (record.get("metrics") or {})
+            qualified_before_poll = wallet_qualifies(existing_metrics)
+            history_complete = bool(record.get("history_complete", False))
+            cursor = record.get("history_cursor")
+            if qualified_before_poll or history_complete or not cursor:
+                fetched = fetch_wallet_transactions(
+                    owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
+                    max_pages=1, return_metadata=True,
                 )
-                if backfill["ok"]:
-                    transaction_batch.extend(backfill["transactions"])
-                    if backfill["last_signature"]:
-                        record["history_cursor"] = backfill["last_signature"]
-                    if backfill["reached_end"]:
-                        record["history_complete"] = True
-                elif not transaction_batch:
-                    fetch_errors += 1
-                    continue
+                fetched_mode = "latest"
+            else:
+                fetched = fetch_wallet_transactions(
+                    owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
+                    max_pages=1, before_signature=cursor, return_metadata=True,
+                )
+                fetched_mode = "backfill"
+
+            if not fetched["ok"] and not fetched["transactions"]:
+                fetch_errors += 1
+                reason = fetched.get("error") or "empty_or_failed_response"
+                fetch_error_reasons[reason] = fetch_error_reasons.get(reason, 0) + 1
+                continue
+            if not fetched["ok"]:
+                fetch_errors += 1
+                reason = fetched.get("error") or "partial_response"
+                fetch_error_reasons[reason] = fetch_error_reasons.get(reason, 0) + 1
+
+            transaction_batch = list(fetched["transactions"])
+            if fetched_mode == "backfill" and fetched["ok"]:
+                if fetched["last_signature"]:
+                    record["history_cursor"] = fetched["last_signature"]
+                if fetched["reached_end"]:
+                    record["history_complete"] = True
+            elif fetched_mode == "latest" and not cursor and fetched["ok"]:
+                # Seed the historical cursor from the latest page; the next visit
+                # starts at the immediately older page instead of redownloading the
+                # newest page over and over.
+                if fetched["last_signature"]:
+                    record["history_cursor"] = fetched["last_signature"]
+                if fetched["reached_end"]:
+                    record["history_complete"] = True
             unique_transactions = {}
             for transaction in transaction_batch:
                 signature = transaction.get("signature")
@@ -792,6 +824,7 @@ def run():
     research_state["last_scan"] = {
         "wallets_selected": len(selected),
         "wallets_with_fetch_errors": fetch_errors,
+        "fetch_error_reasons": fetch_error_reasons,
         "swaps_seen": swaps_seen,
         "new_closed_wallet_trades": new_closed,
         "fresh_profitable_wallet_buys": len(buy_signals),
@@ -821,6 +854,7 @@ def run():
         "wallets_tracked": len(research_state["wallets"]),
         "wallets_selected": len(selected),
         "wallets_with_fetch_errors": fetch_errors,
+        "fetch_error_reasons": fetch_error_reasons,
         "swaps_seen": swaps_seen,
         "new_closed_wallet_trades": new_closed,
         "qualifying_wallets": len(qualifying),
