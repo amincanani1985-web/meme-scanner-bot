@@ -106,6 +106,7 @@
   <div class="live-kpi"><span>بازده خالص پایه، توصیفی</span><b id="pathBtBaselineNet">—</b></div>
   <div class="live-kpi"><span>قانون انتخاب‌شده از آموزش</span><b id="pathBtConfig">—</b></div>
   <div class="live-kpi"><span>بهترین نتیجهٔ آموزشی، فقط اکتشافی</span><b id="pathBtExploratory">—</b></div>
+  <div class="live-kpi"><span>آزمایش آینده‌نگر مستقل</span><b id="pathBtProspective">—</b></div>
   <div class="live-kpi"><span>بازده خالص آزمون نگه‌داشته‌شده</span><b id="pathBtHoldout">—</b></div>
  </div>
  <p class="small" id="pathBtNote">این آزمون به مسیرهای قیمت واقعی از حساب پیپر نیاز دارد. مسیر کوتاه یا نمونهٔ ناکافی به‌عنوان سوددهی تأیید نمی‌شود.</p>
@@ -370,6 +371,26 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   }else{
    $('pathBtExploratory').textContent='دادهٔ آموزشی کافی نیست';
    $('pathBtExploratory').style.color='var(--yellow)';
+  }
+  const prospective=(pathReport.prospective_experiments||{}).moderate_pullback_v1||null;
+  if(prospective){
+   const prospectiveLabels={
+    insufficient_history:'در حال جمع‌آوری مسیر مستقل',
+    no_profitable_training_candidate:'آموزش سودده نیست',
+    holdout_not_profitable:'آزمون مستقل رد شد',
+    validated_profitable_out_of_sample:'سودده خارج از نمونه'
+   };
+   const pStatus=prospective.status||'unknown';
+   $('pathBtProspective').textContent=
+    Number(prospective.usable_paths||0)+'/'+Number(prospective.required_total_paths||50)
+    +' مسیر · '+(prospectiveLabels[pStatus]||pStatus);
+   if(prospective.holdout){
+    $('pathBtProspective').textContent+=' · '+Number(prospective.holdout.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(prospective.holdout.profit_factor||0).toFixed(2);
+   }
+   $('pathBtProspective').style.color=pStatus==='validated_profitable_out_of_sample'?'var(--green)':pStatus==='insufficient_history'?'var(--yellow)':'var(--red)';
+  }else{
+   $('pathBtProspective').textContent='در انتظار دادهٔ تگ‌شده';
+   $('pathBtProspective').style.color='var(--yellow)';
   }
   const hold=pathReport.holdout;
   $('pathBtHoldout').textContent=hold
