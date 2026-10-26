@@ -1,5 +1,5 @@
 {
-  "last_run": "2026-10-26T06:47:07Z",
+  "last_run": "2026-10-26T06:52:37Z",
   "last_scan": {
     "fetch_error_reasons": {
       "http_429": 1
@@ -7,13 +7,13 @@
     "fresh_profitable_wallet_buys": 0,
     "fresh_wallet_sells": 0,
     "new_closed_wallet_trades": 0,
-    "swaps_seen": 38,
+    "swaps_seen": 31,
     "wallets_selected": 16,
     "wallets_with_fetch_errors": 1
   },
-  "scan_count": 7,
+  "scan_count": 8,
   "version": 1,
-  "wallet_cursor": 112,
+  "wallet_cursor": 128,
   "wallets": {
     "13ah1XkrFTsXeaPdvVQn8giGpS3HJVXfVwq9qtAPSqxf": {
       "closed_trades": [],
@@ -1636,14 +1636,16 @@
     },
     "7zcm7MyyxFdokTxLkVVZzHkgQ9pLQP4A2TskoAo3Ntbs": {
       "closed_trades": [],
+      "legacy_baseline_closed_trades": [],
       "metrics": {},
+      "normalized_swaps": [],
       "positions": {},
       "seen_signatures": []
     },
     "82m59BvGrbCSKUXhuqdNXP7pSnYQEasLhWCek7zsbXpT": {
       "closed_trades": [],
-      "history_cursor": "4Rb8WxyRb9SRuJFmDrQoMzj2gzhAvWh7DSgb9jSKUWCZA3EjUgvsFZnX8rGUUyL4yvJgK8ws8Kq9FHUPjbSznVwc",
-      "last_processed_at": 1792997227.522731,
+      "history_cursor": "4RAdrxVaVzo3S9q1WBycymVtM9SU9wKR5KReFJZM2puLceL7k4TU9hSZ8vWoLafg5cZGCSAo7rTsHEL6mdZvY1yk",
+      "last_processed_at": 1792997557.0445309,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -1655,6 +1657,39 @@
       },
       "normalized_history_initialized": true,
       "normalized_swaps": [
+        {
+          "mint": "Y3bCqHdh5rYC8yxs5Uci7eFwwWmgDS41smVyyPVpump",
+          "quote_amount": 5.0,
+          "quote_price_per_token": 2.988843401202481e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "9sNNMhVZsvHwgrFJKk7vx91ZLcwyMT26J7CvEgbVX51fSg9PZh4fzeQSLh8Tn4ugSLwAhCS4a3FVUNsrtGgRoWm",
+          "timestamp": 1792466535.0,
+          "token_amount": 16728879.130932,
+          "wallet": "82m59BvGrbCSKUXhuqdNXP7pSnYQEasLhWCek7zsbXpT"
+        },
+        {
+          "mint": "Y3bCqHdh5rYC8yxs5Uci7eFwwWmgDS41smVyyPVpump",
+          "quote_amount": 12.245208711,
+          "quote_price_per_token": 7.319802250443897e-07,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "4mwQ4HAXEycE6a9YpBvg61qNfVu7NujDWv8DuDcNea2YLaNkm1Sowun9VVsNXuQ9zddqjJeRYkQNGpZfcuszzvsD",
+          "timestamp": 1792472506.0,
+          "token_amount": 16728879.130932,
+          "wallet": "82m59BvGrbCSKUXhuqdNXP7pSnYQEasLhWCek7zsbXpT"
+        },
+        {
+          "mint": "TTWofwAge91oFhZs7kpQdyrVRkmevgM88xijGvQFbKo",
+          "quote_amount": 0.662951548,
+          "quote_price_per_token": 1.9283002318201516,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "4oV3i1bmj7NGFTbkPESDaFWiFJL5LwdY8hrToxf8uNeNexVSn6He2djhumSgn4g5dpWFDSeEaEraQxVwAAUXSvd9",
+          "timestamp": 1792516523.0,
+          "token_amount": 0.343801,
+          "wallet": "82m59BvGrbCSKUXhuqdNXP7pSnYQEasLhWCek7zsbXpT"
+        },
         {
           "mint": "3R1Kry3rj4xpFwud5quHtpQQxh6e8gwp25qiaEqBXkid",
           "quote_amount": 5.0,
@@ -1741,7 +1776,10 @@
         "28p9KymzFHyusgabr4HJCTr7k3LMUC7jodbTEmKdL1VDBQa1v3REKfjMUC7zGH5KhuEcE3ACm6j4kjaQZWMTN7oQ",
         "4aPQnDdnVZEvSdu6pVf28HkEShuF9ohouRtzYURqurzTiaDiBTMbT82hs5FsD8sndeQ1QvftvCLHExpBrAmegWdY",
         "2CBg11bt92qD3pEZnmPtnFH29i8b4LvBZBj5zqX6yEYzEbhfWXa7HZVa9dhw4RmtDyTiugCvhJV8xHUeywtKzgvd",
-        "4w5CUBzczkU5fKwTmTeYbDd5oyEQvAjdJTV2jqYkZGZtyDDQZ3XbNRYieaXuAzcGjJg7d8EWCj6rM75D2GFVvCoA"
+        "4w5CUBzczkU5fKwTmTeYbDd5oyEQvAjdJTV2jqYkZGZtyDDQZ3XbNRYieaXuAzcGjJg7d8EWCj6rM75D2GFVvCoA",
+        "4oV3i1bmj7NGFTbkPESDaFWiFJL5LwdY8hrToxf8uNeNexVSn6He2djhumSgn4g5dpWFDSeEaEraQxVwAAUXSvd9",
+        "4mwQ4HAXEycE6a9YpBvg61qNfVu7NujDWv8DuDcNea2YLaNkm1Sowun9VVsNXuQ9zddqjJeRYkQNGpZfcuszzvsD",
+        "9sNNMhVZsvHwgrFJKk7vx91ZLcwyMT26J7CvEgbVX51fSg9PZh4fzeQSLh8Tn4ugSLwAhCS4a3FVUNsrtGgRoWm"
       ]
     },
     "87rRdssFiTJKY4MGARa4G5vQ31hmR7MxSmhzeaJ5AAxJ": {
@@ -1761,6 +1799,79 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "8JWx2gV9WnhdrZGTsi3hwfaAiiS2K51HtAQ3jFZPC3D4": {
+      "closed_trades": [],
+      "history_cursor": "4m8kMf7dudAqKCYtAuS1B6Ecp8C9T8zafq7CWdxJQ4TXGq6ojJ1PPFByU9z24mWqjEnJ7zLuz3nZneBssY61gjhK",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "8NVtDdbrAB8tDFwYBjEpymLEZu72EpSUtk73ok2QwrhV": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "Beazbmy4rw6wKVJSqRU17f1rf3eAAPFZ2DdNGyKxygQ8YXrV3tq27r5M6DdLEiU5s94FxmAmbxcsjMbbyESaa3H",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "8SR9sht81ZpGheJYqNpgp2P5NBrWeouP8L2Aec9xAstW": {
+      "closed_trades": [],
+      "history_cursor": "qnPNRotFMhGaqNZs3CBTucJ31tHRNtycQU3mwSxm4Uo8BHp4dxRaS1ddQTxByGKTmuowj1KrdKJyC6msb1Rr87G",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "8XtZNSgc4NCgr4TqtEnwWNLHCHkZ2C6FkdXpeHM1z3PZ": {
+      "closed_trades": [],
+      "history_cursor": "5kkHWGW6D9V4QBRZFf1xjeQksxAwTju7Q5mbracA7xoNekbMnxZourDuBUcK8FZC7gpTcVgjrQ3h6RNnBBUntaUc",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
     },
     "8rtyuY3XQKXFaZbs2a35yQBbdLWbkhR5Aed4GaJHe2v5": {
       "closed_trades": [],
@@ -1816,6 +1927,60 @@
       "seen_signatures": [],
       "trade_events": []
     },
+    "9CNyLECt2j8tnDhqxtjYk5HUhZ2b8Nwnyb7sfYN7vND2": {
+      "closed_trades": [],
+      "history_cursor": "3c68zZMoZwFQ9QPa2iXJ7q5PWMnZUipxYgAcAeMUBg8MYyhRwjA5tKPffqiJ1sKViNaXXLkoRCF4DmPHVJUC2yUR",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "9D8xSHWqF9NJWqCtn3rNxYEox63aCbWxYzTMfMur7Cc9": {
+      "closed_trades": [],
+      "history_cursor": "2xCCLbb8j7zTyUovimPTHn3CZ1csi9RR5C7j41XsNpaqqYQqLrtjA6UdQdiusjodi7xMiVW7NUuxMmRA2GVY1qCY",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "9KjR2VWz46yjreNb1QhXBDUtrcSCfYxbUUjNBEwFg9cv": {
+      "closed_trades": [],
+      "history_cursor": "xD8aC8J29UuhYxMKFZriA1RxCPrcMtZvLk61LQf6CR3RDLbo8XPKqQwDkbUXscwoWCsMUBVceBvxBd3XzUuJc1F",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
     "9NpHzpd3rjJhRdFi2Xm5by22YPhDTkEBQHAC2YmVXAKX": {
       "closed_trades": [],
       "history_cursor": "47EFMzbEveHQ19dD5xecrmjs7fxUmgdv7Av9wE27HPBgh6Eu6fbPYXfy2DSkG8L3NJ2dqLkd31YbzkVFTZ7nmG3B",
@@ -1833,6 +1998,24 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "9kVTZGhFkmyZS2hxTypPzgcSu1JEXgd2qcffVmo8hUzF": {
+      "closed_trades": [],
+      "history_cursor": "HZQ5fvnktZDN6BLWnXP4oUCa1S8XCjSNmahmKvYWrkvSFRQxrpEmxfAju8yGNDFHjstJ4NwzL3HENYEKX4Ju1Ve",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
     },
     "9nkE3B5zF3yCDh8YrQrhch4dGNyLYcNBqEB7feo3V9Av": {
       "closed_trades": [],
@@ -1857,6 +2040,207 @@
       "history_complete": true,
       "history_cursor": "2nj8Gxh9uDSaX9xxVz5ubnRN5vWdWwb98AnZjcLBJ6G8iujs1VYnNxcZijSkrwkFWcGpgDAHCF7chMJYnwCrPjju",
       "last_processed_at": 1792996474.822701,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF": {
+      "closed_trades": [],
+      "history_cursor": "54pp7kHXEJBLebmr6vVV3TsC44fFq1L3kzHaVRYmFKGpfCDvvsoE24PmyNbo3rQycEnHseDZmyL5wkokQzYW36vL",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [
+        {
+          "mint": "3tzhVtTYHmqSuzLfne4S8YX6cpyaCCsWXW14XxESpump",
+          "quote_amount": 2.962357121,
+          "quote_price_per_token": 1.3331876041994743e-06,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "3xWRnw6VNX1Re7iUVTyqFCpdN4ZaQY1JuTnewVAnmbQTcq6cY3Ui61AkyVCFWmN1A6Z8ZVdTmKwvd1biFbTU8SJZ",
+          "timestamp": 1774192600.0,
+          "token_amount": 2222010.699521,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "G8uQkJtBLx4Tm8twsiJyVAn5xZu1SBaPRakwKRzHpump",
+          "quote_amount": 3.961156861,
+          "quote_price_per_token": 8.476460308817694e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "3vgqGTMaiPbhvbi7vmNZEmfcMPqiC7CUweM9dUYorDjjk3STR8mWEjjPDpP59ZqrbJto29S2fKbW29w5iFuu3ApN",
+          "timestamp": 1788284505.0,
+          "token_amount": 4673126.183201,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "G8uQkJtBLx4Tm8twsiJyVAn5xZu1SBaPRakwKRzHpump",
+          "quote_amount": 3.961156861,
+          "quote_price_per_token": 9.038402365529062e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "5DwKz2t8hakrbBPB9NMrJeyY9Edf866uCNT248sjpsdzY6VXp6j6mSK6eSM8HX9UhhstG4AeaikU8MahTeEmwK9f",
+          "timestamp": 1788284544.0,
+          "token_amount": 4382585.21894,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "PEAQjk7SRS6rXHVFFmpRr7zrC4g5ZuEebpwTxvaLr3b",
+          "quote_amount": 23.803563474,
+          "quote_price_per_token": 0.0003861825303375329,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "4TFLjoJv8Yuj8fcDBnA2RmCn3QmqQeV8e1w4Yk7EbK61KcyA499DeWQuN5UGaLsEw8Vegr2dkLLyVP336KvSMci6",
+          "timestamp": 1791154280.0,
+          "token_amount": 61638.115668244,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "PEAQjk7SRS6rXHVFFmpRr7zrC4g5ZuEebpwTxvaLr3b",
+          "quote_amount": 23.838326194,
+          "quote_price_per_token": 0.00038800251341235135,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "AWqTjzUhUiSGkNPgXx7xWJbY7LgES1NL4jF6TD8PbVJQUAam955STtjeKbcSAocQVAESs1DexJdRJPF6zZFhc1x",
+          "timestamp": 1791154481.0,
+          "token_amount": 61438.587045094,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "PEAQjk7SRS6rXHVFFmpRr7zrC4g5ZuEebpwTxvaLr3b",
+          "quote_amount": 3.710277513,
+          "quote_price_per_token": 0.00035364125604366915,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "3vdAYRgBhbWT73jn4vZ7t3m4e5eWPjX57unnHFZtA9t6pQqYWmFFmEN4Xp91D7Zzatufk7BpGtyguTxmPTGgn4hv",
+          "timestamp": 1791326283.0,
+          "token_amount": 10491.642164459,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "DtcicPCKTKeAh7TDEzTym3hXeoHAoMiBdYJhMYxZpump",
+          "quote_amount": 3.708657049,
+          "quote_price_per_token": 9.972871135611258e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "3ey5EcRSmngTNCA4ua5vG4ng7qVrKnuJTXvvLf9q96oZPVCFfUGde3yi7c3JaV8rM6ghbeSQSErUi8ktmA7Y9bY3",
+          "timestamp": 1791844518.0,
+          "token_amount": 3718745.583463,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "5vX4JdxapxpUfUdSy6gjatUSXbknfavqVbo1XVB69xUM",
+          "quote_amount": 0.103730959,
+          "quote_price_per_token": 6.136586915447975e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "5NK5UqyfQy8HmYfaufQbZKv3CVwL5wWPM1CLqppdzYHoeKm1Z3yL35tUuczDG12w9oLknP2vcRokv5PDgor7MhZA",
+          "timestamp": 1792422696.0,
+          "token_amount": 1690368.936825,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "6YyNpzDXwG3hCBSkQWZQD5RzDLDHbDBhouv9J4Wpump",
+          "quote_amount": 5.965055,
+          "quote_price_per_token": 6.2344339742295745e-06,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "4tNxHSFuKWN67Kc66NQaWbVxaMeDPyAGzBs9Hy3S1SdBghC3owwZGoex57EFJWGhyRJvCvTfxGbwC96BNceDQrZm",
+          "timestamp": 1792522014.0,
+          "token_amount": 956791.751209,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "9m21fukdvCPBgEjmeeshbskPwbaa5RH8HTHQGeTnGd2t",
+          "quote_amount": 4.670542,
+          "quote_price_per_token": 3.0316609922982158e-05,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "2HyZepm6MgVKevKZq9QZL9t1tDMd3qbMofUvKkc7s9LYHcKUnCt24J75rigt3keeeGS5wVQ8B2C4vzrkk5wzXxyZ",
+          "timestamp": 1792522028.0,
+          "token_amount": 154058.848,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "9g5UvB8iR7Fe9VekHXytWTAXTHgY9Gem9g2x3SBCvRs7",
+          "quote_amount": 2.566275,
+          "quote_price_per_token": 4.373776989280032e-06,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "CwWQSo7z4RqnyKZgKSir49zQZ2w1SyPS28Us2QKuAtatMjcmKbTVRojBkPWasb7okELdZcy9SmDa4PDuLocvzqd",
+          "timestamp": 1792522041.0,
+          "token_amount": 586741.163596097,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        },
+        {
+          "mint": "DtcicPCKTKeAh7TDEzTym3hXeoHAoMiBdYJhMYxZpump",
+          "quote_amount": 2832.001583,
+          "quote_price_per_token": 0.0012868660455068928,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "2tqv7Bb3A6fWrrc46xJADZzxd72Uq7Zo8C181Z8swsopH95fXS71sgAWZ9xfqhVqkt4ei4pG28RdFKJetX5MCJUE",
+          "timestamp": 1792890484.0,
+          "token_amount": 2200696.48499,
+          "wallet": "9rSGNdVZTyHMJNRccbJqQrJedpdhTbaTf2j7dQ8FzAwF"
+        }
+      ],
+      "positions": {},
+      "seen_signatures": [
+        "2tqv7Bb3A6fWrrc46xJADZzxd72Uq7Zo8C181Z8swsopH95fXS71sgAWZ9xfqhVqkt4ei4pG28RdFKJetX5MCJUE",
+        "CwWQSo7z4RqnyKZgKSir49zQZ2w1SyPS28Us2QKuAtatMjcmKbTVRojBkPWasb7okELdZcy9SmDa4PDuLocvzqd",
+        "2HyZepm6MgVKevKZq9QZL9t1tDMd3qbMofUvKkc7s9LYHcKUnCt24J75rigt3keeeGS5wVQ8B2C4vzrkk5wzXxyZ",
+        "4tNxHSFuKWN67Kc66NQaWbVxaMeDPyAGzBs9Hy3S1SdBghC3owwZGoex57EFJWGhyRJvCvTfxGbwC96BNceDQrZm",
+        "5NK5UqyfQy8HmYfaufQbZKv3CVwL5wWPM1CLqppdzYHoeKm1Z3yL35tUuczDG12w9oLknP2vcRokv5PDgor7MhZA",
+        "3ey5EcRSmngTNCA4ua5vG4ng7qVrKnuJTXvvLf9q96oZPVCFfUGde3yi7c3JaV8rM6ghbeSQSErUi8ktmA7Y9bY3",
+        "3vdAYRgBhbWT73jn4vZ7t3m4e5eWPjX57unnHFZtA9t6pQqYWmFFmEN4Xp91D7Zzatufk7BpGtyguTxmPTGgn4hv",
+        "AWqTjzUhUiSGkNPgXx7xWJbY7LgES1NL4jF6TD8PbVJQUAam955STtjeKbcSAocQVAESs1DexJdRJPF6zZFhc1x",
+        "4TFLjoJv8Yuj8fcDBnA2RmCn3QmqQeV8e1w4Yk7EbK61KcyA499DeWQuN5UGaLsEw8Vegr2dkLLyVP336KvSMci6",
+        "5DwKz2t8hakrbBPB9NMrJeyY9Edf866uCNT248sjpsdzY6VXp6j6mSK6eSM8HX9UhhstG4AeaikU8MahTeEmwK9f",
+        "3vgqGTMaiPbhvbi7vmNZEmfcMPqiC7CUweM9dUYorDjjk3STR8mWEjjPDpP59ZqrbJto29S2fKbW29w5iFuu3ApN",
+        "3xWRnw6VNX1Re7iUVTyqFCpdN4ZaQY1JuTnewVAnmbQTcq6cY3Ui61AkyVCFWmN1A6Z8ZVdTmKwvd1biFbTU8SJZ"
+      ]
+    },
+    "9y4tc6N8oSM7G9Vht2S5hCgdgatPucuVNxpL9AvNv2xz": {
+      "closed_trades": [],
+      "history_cursor": "2a791JfmuQvFQCJm4JaskC3Pc7q1YuUfqZyhyXkLf4YbrDgK1qYWGokdGAEdEAxkkFF5gHg7XQrsyJ5mdgkjsgLi",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "A8Da6a7Mcm4Cj5yX1GUMFCe7DAXAokHsiEjxKeJDP21Y": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "3RUiABuUCDf23E7Td85zyPtbmUUa5jmFF3HRnLneTCqrvfvc5evYbCPi7ymuGyYm7HsaZjy6uWKQ5WC1d4kegqQ8",
+      "last_processed_at": 1792997557.0445309,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -1979,6 +2363,237 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "AJiu314fMwejEWB4LzLEjhWx5JYGaym3jNQeybRTRhbV": {
+      "closed_trades": [],
+      "history_complete": true,
+      "history_cursor": "3hsDGNAtkroQzhUR7MYE2vy4jVHS4MrVf57HaWMnHkjCaiWjGJ1xT4qu7pw8BrpYXA598Gy9mYBVvdGXXwz99LoP",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
+    "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP": {
+      "closed_trades": [],
+      "history_cursor": "3ayPHir56ZTx9KqooeNyyqWxhkbox9qjSa1J6u4X93NmUdbAqJPvwvDFEjSfYQ9HmPvuKTKB5C8Q6pHbkEaA96mk",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [
+        {
+          "mint": "99ke9drBRXEoE69aEyVcrYbetYkx7RgzqmG9tU7ipump",
+          "quote_amount": 1.999998825,
+          "quote_price_per_token": 4.556206389637271e-08,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "53YoELWtZYZSRUhz8uqZ9zEWCBCkk5Mb8PVxxboYpC5osTjf9GSm4Hh6XDaqsBoaJsy8UW6wukQmtoDZiB23RqSe",
+          "timestamp": 1792710434.0,
+          "token_amount": 43896141.964702,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "99ke9drBRXEoE69aEyVcrYbetYkx7RgzqmG9tU7ipump",
+          "quote_amount": 0.500111301,
+          "quote_price_per_token": 4.557223287660906e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "48UwbCiLRvTSJNRFKGbGSrGrAjQwjHAgtKMWLHAetGUUywoWQRPgQjRoCVqgLZedffbW5X9CRfWnLEuJqffzi1NJ",
+          "timestamp": 1792710439.0,
+          "token_amount": 10974035.491175,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "99ke9drBRXEoE69aEyVcrYbetYkx7RgzqmG9tU7ipump",
+          "quote_amount": 1.410298139,
+          "quote_price_per_token": 4.2837421115019934e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "4rtdZtGS32diMSLx88NvREayL2az85UKDSxfDmZ3pBrnHwede3Zg87RqS6Kcmrp4MsjxYZqy8LVdSdoSBLci4uTt",
+          "timestamp": 1792710882.0,
+          "token_amount": 32922106.473527,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "3KXDyMo42jWDn9ZNkuSE2piKLQtnUQVr3WdfhgzZpump",
+          "quote_amount": 2.0,
+          "quote_price_per_token": 6.293932191577277e-08,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "5QG2yrYJJbfPhWm5VPh6P2jwSLAvarKPmx2Df8G4WUPPNq3R6htPAZBGKbP78MRGr2wynrxxXJh54naqQj6oqF81",
+          "timestamp": 1792740193.0,
+          "token_amount": 31776637.229687,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "3KXDyMo42jWDn9ZNkuSE2piKLQtnUQVr3WdfhgzZpump",
+          "quote_amount": 1.215576974,
+          "quote_price_per_token": 3.8253795239993475e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "5AGVut1TeFt63wvFxQJSxa4FHDy5FtuBP9hJq5FD2kdvhKth2Yn3z9mrD6XXA8Cbp7JHLzQKK1YXFmZJoxFM4qYE",
+          "timestamp": 1792741032.0,
+          "token_amount": 31776637.229687,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DjSRqZgUqBoVPPbYyTwDcgUWH5DnRS2jZkVWKrb3pump",
+          "quote_amount": 6.0,
+          "quote_price_per_token": 5.828689027177058e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "F5WU1VbMVoX8uveLcSrPjEJvV9tcqaukBeAeH5VqmQNdYo9iwzoNjbGmApNF45bv2CngapmBHKbfpkH1qKkozDj",
+          "timestamp": 1792751267.0,
+          "token_amount": 10293909.95475,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DjSRqZgUqBoVPPbYyTwDcgUWH5DnRS2jZkVWKrb3pump",
+          "quote_amount": 3.56,
+          "quote_price_per_token": 6.285617141479572e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "5CKUSzTZvvJxBrcYqtjhYeWqxMtb4Nfqib4udQAeA5L5AmokV9HgPe6Z62PgLMvhY8fsUjBGvS8WCJqTkBVcJENK",
+          "timestamp": 1792751747.0,
+          "token_amount": 5663723.895156,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DJ4txmJUEbrM3cbX1HkVaxyDgiPX1gbRw4G1a9Gppump",
+          "quote_amount": 1.999998198,
+          "quote_price_per_token": 4.874754338774617e-08,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "4jgFkrbPgV5JCDxmvWT6uDVo8hx4hUTg6U3unJpCJUvLSPKViFk7YuMiQz5ta6j5hJZfEqvR7WyXGYXWJv5CdZE1",
+          "timestamp": 1792776217.0,
+          "token_amount": 41027671.529859,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DJ4txmJUEbrM3cbX1HkVaxyDgiPX1gbRw4G1a9Gppump",
+          "quote_amount": 0.478209975,
+          "quote_price_per_token": 4.162782590804001e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "nWwRQES5qBA7mLHrxiQ7pCDXZqQD8wf7Hckg6v3ptkZH2H1fvTyFf8mnMDNA1xrxSG8W7WaYN43UFehHwi7voSS",
+          "timestamp": 1792776226.0,
+          "token_amount": 11487748.02836,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DjSRqZgUqBoVPPbYyTwDcgUWH5DnRS2jZkVWKrb3pump",
+          "quote_amount": 4.9,
+          "quote_price_per_token": 4.4289240490372714e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "YVy4gExeFAte8vZV9CpCfhfn9qezsr8ug5vQGjAzTCdT9vtekeZh6oxxMWtQUAHn6ySeNcKyau5viyWkkeJpfNk",
+          "timestamp": 1792777669.0,
+          "token_amount": 11063635.198407,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DJ4txmJUEbrM3cbX1HkVaxyDgiPX1gbRw4G1a9Gppump",
+          "quote_amount": 0.860201838,
+          "quote_price_per_token": 2.9119975139960982e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "27m34KqzgrczTMMEKHJSMRhNgjuaSZDrF2rWEWsGNVDpGPbcfSSXbaPx2mZxoDsC1QR5cSmygexnarAd9STPgzv4",
+          "timestamp": 1792777787.0,
+          "token_amount": 29539923.501499,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "VABLYxH2xteHTzr2Ni2Zds2nGZ9GCfFGX82UCZpi1YW",
+          "quote_amount": 2.0,
+          "quote_price_per_token": 9.960104228468736e-08,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "4ZcfkwegYhv9Z4s2nJNRRECwsoAEGdiM9jgxzws9qXL9ekCRZgvC4sLBbSVEtAmH7yhchXCwFfNiEzsx5a1UAPet",
+          "timestamp": 1792778169.0,
+          "token_amount": 20080111.152687,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "VABLYxH2xteHTzr2Ni2Zds2nGZ9GCfFGX82UCZpi1YW",
+          "quote_amount": 1.2,
+          "quote_price_per_token": 1.1111889565041498e-07,
+          "quote_symbol": "SOL",
+          "side": "buy",
+          "signature": "5Tsn2iN4XhkGirHbM77KE6SAYM5N2K7WLRrwxXvAeeSSCX4ZK5tY5YRqi6iL45TdzbhZRfkPr7GihyTpXh2Q24VB",
+          "timestamp": 1792778177.0,
+          "token_amount": 10799243.395788,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "VABLYxH2xteHTzr2Ni2Zds2nGZ9GCfFGX82UCZpi1YW",
+          "quote_amount": 2.732575167,
+          "quote_price_per_token": 8.849197811794775e-08,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "3mRjkV4hS6TWFFwf95ttfVuBuHeLsSRKcTbfLh6jNACDNBGu8kVQNazPhntHzRXHbxBKVozCG8rkMTfjfEo2xoq5",
+          "timestamp": 1792778542.0,
+          "token_amount": 30879354.548475,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "DjSRqZgUqBoVPPbYyTwDcgUWH5DnRS2jZkVWKrb3pump",
+          "quote_amount": 10.11883735,
+          "quote_price_per_token": 3.744767624313982e-07,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "5JvkwFnEbg7UJUscLPSwGHtQyMbzNJMP46s3mt43xVj1729rq7cCNpFvHiapn3pRkjophaMKmzBHdwyXufXHZNyj",
+          "timestamp": 1792780288.0,
+          "token_amount": 27021269.048313,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        },
+        {
+          "mint": "CASHx9KJUStyftLFWGvEVf59SGeG9sh5FfcnZMVPCASH",
+          "quote_amount": 0.343601667,
+          "quote_price_per_token": 0.009605861532010063,
+          "quote_symbol": "SOL",
+          "side": "sell",
+          "signature": "K34GYF6Dsi252evgNqUs1zGC7kJ6vY3eKSUc4SZ6wzjjjupjf5iKwCxXa4bY5S21aazqHcdRkgaTq811s2gESDn",
+          "timestamp": 1792790215.0,
+          "token_amount": 35.77,
+          "wallet": "ALxtkPCKy38uc61JLM65h7BjQbeJGzRkpebFMiZnXKRP"
+        }
+      ],
+      "positions": {},
+      "seen_signatures": [
+        "K34GYF6Dsi252evgNqUs1zGC7kJ6vY3eKSUc4SZ6wzjjjupjf5iKwCxXa4bY5S21aazqHcdRkgaTq811s2gESDn",
+        "5JvkwFnEbg7UJUscLPSwGHtQyMbzNJMP46s3mt43xVj1729rq7cCNpFvHiapn3pRkjophaMKmzBHdwyXufXHZNyj",
+        "3mRjkV4hS6TWFFwf95ttfVuBuHeLsSRKcTbfLh6jNACDNBGu8kVQNazPhntHzRXHbxBKVozCG8rkMTfjfEo2xoq5",
+        "5Tsn2iN4XhkGirHbM77KE6SAYM5N2K7WLRrwxXvAeeSSCX4ZK5tY5YRqi6iL45TdzbhZRfkPr7GihyTpXh2Q24VB",
+        "4ZcfkwegYhv9Z4s2nJNRRECwsoAEGdiM9jgxzws9qXL9ekCRZgvC4sLBbSVEtAmH7yhchXCwFfNiEzsx5a1UAPet",
+        "27m34KqzgrczTMMEKHJSMRhNgjuaSZDrF2rWEWsGNVDpGPbcfSSXbaPx2mZxoDsC1QR5cSmygexnarAd9STPgzv4",
+        "YVy4gExeFAte8vZV9CpCfhfn9qezsr8ug5vQGjAzTCdT9vtekeZh6oxxMWtQUAHn6ySeNcKyau5viyWkkeJpfNk",
+        "nWwRQES5qBA7mLHrxiQ7pCDXZqQD8wf7Hckg6v3ptkZH2H1fvTyFf8mnMDNA1xrxSG8W7WaYN43UFehHwi7voSS",
+        "4jgFkrbPgV5JCDxmvWT6uDVo8hx4hUTg6U3unJpCJUvLSPKViFk7YuMiQz5ta6j5hJZfEqvR7WyXGYXWJv5CdZE1",
+        "5CKUSzTZvvJxBrcYqtjhYeWqxMtb4Nfqib4udQAeA5L5AmokV9HgPe6Z62PgLMvhY8fsUjBGvS8WCJqTkBVcJENK",
+        "F5WU1VbMVoX8uveLcSrPjEJvV9tcqaukBeAeH5VqmQNdYo9iwzoNjbGmApNF45bv2CngapmBHKbfpkH1qKkozDj",
+        "5AGVut1TeFt63wvFxQJSxa4FHDy5FtuBP9hJq5FD2kdvhKth2Yn3z9mrD6XXA8Cbp7JHLzQKK1YXFmZJoxFM4qYE",
+        "5QG2yrYJJbfPhWm5VPh6P2jwSLAvarKPmx2Df8G4WUPPNq3R6htPAZBGKbP78MRGr2wynrxxXJh54naqQj6oqF81",
+        "4rtdZtGS32diMSLx88NvREayL2az85UKDSxfDmZ3pBrnHwede3Zg87RqS6Kcmrp4MsjxYZqy8LVdSdoSBLci4uTt",
+        "48UwbCiLRvTSJNRFKGbGSrGrAjQwjHAgtKMWLHAetGUUywoWQRPgQjRoCVqgLZedffbW5X9CRfWnLEuJqffzi1NJ",
+        "53YoELWtZYZSRUhz8uqZ9zEWCBCkk5Mb8PVxxboYpC5osTjf9GSm4Hh6XDaqsBoaJsy8UW6wukQmtoDZiB23RqSe"
+      ]
     },
     "AU5eQdjHKeHo4E7Ub78p2DBdjUReBsKEYr9dMphwGbRh": {
       "closed_trades": [],
@@ -2375,6 +2990,24 @@
         }
       ]
     },
+    "Ak8FnqD3UAk6enJUfEhVU432sK7QpDAP3L46KRwwrd8J": {
+      "closed_trades": [],
+      "history_cursor": "2tnSEtJpGULBeJ9gW2JUq2zQ1qc3Y36V6XAPNNDy2aW9kg39aAunQDvAsoMGtpJakg8zvf1p98pwYtRd6Xxy6fzQ",
+      "last_processed_at": 1792997557.0445309,
+      "legacy_baseline_closed_trades": [],
+      "metrics": {
+        "closed_trades": 0,
+        "mean_net_pnl_pct": 0.0,
+        "median_net_pnl_pct": 0.0,
+        "profit_factor": 0.0,
+        "win_rate": 0.0,
+        "wins": 0
+      },
+      "normalized_history_initialized": true,
+      "normalized_swaps": [],
+      "positions": {},
+      "seen_signatures": []
+    },
     "AsEmZW224iJFAkuXXZAHmhX8nWbkato1Bbd1czoFQ7Sg": {
       "closed_trades": [],
       "history_cursor": "5cf5ARHCuixucEUcFJ7VzhgFbeYpRFouP5msBq91eAfmKVRXoJxEeroEMyyaZnfJA8nF8XuBdqdJe27SYQyi4jNT",
@@ -2401,6 +3034,12 @@
       "positions": {},
       "seen_signatures": [],
       "trade_events": []
+    },
+    "B9FJomxFnA5WauXkJdh4GBke3NAaGnC8nwEEW6sEGQ7y": {
+      "closed_trades": [],
+      "metrics": {},
+      "positions": {},
+      "seen_signatures": []
     },
     "BFmXMeQxC28jUGmSB7A4AQRuDqc1RgYz2J6GW8H1YkSJ": {
       "closed_trades": [],
