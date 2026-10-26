@@ -25,6 +25,7 @@ MAX_WALLETS_PER_CYCLE = 16
 MAX_TRANSACTIONS_PER_WALLET = 100
 MAX_STORED_SIGNATURES = 1500
 MAX_STORED_CLOSED_TRADES = 250
+MAX_NORMALIZED_SWAPS = 600
 MAX_SIGNAL_AGE_SECONDS = 600
 COPY_CONFIRMATION_WINDOW_SECONDS = 900
 MIN_WALLET_CLOSED_TRADES = 8
@@ -265,159 +266,195 @@ def _prepare_wallet_record_for_replay(wallet_record):
 
 
 def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_FEE_RESERVE_PCT):
-    """Rebuild realized wallet PnL chronologically from normalized, deduplicated swap events."""
-    _prepare_wallet_record_for_replay(wallet_record)
-    archived = list(wallet_record.get("trade_events") or [])
-    archived_signatures = {
-        str(event.get("signature"))
-        for event in archived
-        if isinstance(event, dict) and event.get("signature")
-    }
+    """Merge newly fetched swaps and rebuild realized PnL in transaction-time order.
 
-    new_signatures = set()
-    new_events = []
-    valid_trades = [trade for trade in (trades or []) if isinstance(trade, dict)]
-    valid_trades.sort(key=lambda trade: (
-        _finite_number(trade.get("timestamp")) or 0.0,
-        str(trade.get("signature", "")),
-    ))
+    Backfill pages arrive newest-first across polling cycles. Replaying the normalized
+    swap ledger chronologically prevents a late-arriving historical buy from being
+    incorrectly excluded from the cost basis of a later sell.
+    """
+    if not isinstance(wallet_record, dict):
+        raise TypeError("wallet_record must be a dictionary")
+    now = time.time() if now is None else float(now)
+    wallet_record.setdefault("positions", {})
+    wallet_record.setdefault("seen_signatures", [])
+    wallet_record.setdefault("closed_trades", [])
 
-    for trade in valid_trades:
-        signature = str(trade.get("signature") or "").strip()
-        mint = str(trade.get("mint") or "").strip()
+    prior_seen_order = [str(signature) for signature in wallet_record["seen_signatures"]]
+    prior_seen = set(prior_seen_order)
+    seen_order = list(prior_seen_order)
+    normalized = wallet_record.get("normalized_swaps", [])
+    if not isinstance(normalized, list):
+        normalized = []
+    normalized_by_signature = {}
+    for item in normalized:
+        if not isinstance(item, dict):
+            continue
+        signature = item.get("signature")
+        if signature:
+            normalized_by_signature[str(signature)] = item
+
+    fresh_signatures = set()
+    for trade in (trades or []):
+        if not isinstance(trade, dict):
+            continue
+        signature = trade.get("signature")
+        mint = trade.get("mint")
         side = trade.get("side")
         timestamp = _finite_number(trade.get("timestamp"))
         token_amount = _finite_number(trade.get("token_amount"))
         quote_amount = _finite_number(trade.get("quote_amount"))
         quote_symbol = trade.get("quote_symbol")
-        if (not signature or signature in archived_signatures or not mint or timestamp is None
-                or side not in ("buy", "sell") or token_amount is None or quote_amount is None
-                or token_amount <= 0 or quote_amount <= 0
-                or quote_symbol not in ("SOL", "USDC", "USDT")):
+        if not signature or not mint or timestamp is None:
             continue
-        event = {
+        signature = str(signature)
+        if signature in normalized_by_signature:
+            continue
+        # A signature may exist in an older version's dedupe ring but not in its
+        # normalized ledger. Admit it for backfill accounting, but don't replay it
+        # as a new copy signal.
+        was_seen = signature in prior_seen
+        if side not in ("buy", "sell") or token_amount is None or quote_amount is None:
+            if not was_seen:
+                seen_order.append(signature)
+            continue
+        if token_amount <= 0 or quote_amount <= 0 or quote_symbol not in ("SOL", "USDC", "USDT"):
+            if not was_seen:
+                seen_order.append(signature)
+            continue
+        normalized_item = {
             "signature": signature,
-            "mint": mint,
-            "side": side,
-            "timestamp": timestamp,
-            "token_amount": token_amount,
-            "quote_amount": quote_amount,
-            "quote_symbol": str(quote_symbol),
+            "timestamp": float(timestamp),
             "wallet": str(trade.get("wallet") or ""),
+            "mint": str(mint),
+            "side": side,
+            "token_amount": float(token_amount),
+            "quote_amount": float(quote_amount),
+            "quote_symbol": str(quote_symbol),
+            "quote_price_per_token": float(quote_amount) / float(token_amount),
         }
-        new_events.append(event)
-        new_signatures.add(signature)
-        archived_signatures.add(signature)
+        normalized_by_signature[signature] = normalized_item
+        if not was_seen:
+            fresh_signatures.add(signature)
+            seen_order.append(signature)
 
-    # Backfilled older swaps are inserted before recent swaps during replay. Keep
-    # the newest bounded event window in event-time order, not API arrival order.
-    events = archived + new_events
-    events.sort(key=lambda event: (
-        _finite_number(event.get("timestamp")) or 0.0,
-        str(event.get("signature") or ""),
-    ))
-    events = events[-MAX_STORED_SIGNATURES:]
-    wallet_record["trade_events"] = events
+    all_swaps = sorted(
+        normalized_by_signature.values(),
+        key=lambda item: (float(item.get("timestamp", 0.0) or 0.0), str(item.get("signature", ""))),
+    )
+    if len(all_swaps) > MAX_NORMALIZED_SWAPS:
+        # Never claim that a truncated history is a complete, qualified wallet
+        # history. Keep the newest bounded window, expose the condition in state,
+        # and disable follow signals until a complete ledger is available again.
+        all_swaps = all_swaps[-MAX_NORMALIZED_SWAPS:]
+        wallet_record["history_truncated"] = True
+    wallet_record["normalized_swaps"] = all_swaps
 
     positions = {}
-    closed_trades = [
-        dict(trade) for trade in (wallet_record.get("legacy_baseline_closed_trades") or [])
-        if isinstance(trade, dict)
-    ]
+    closed_trades = []
+    buy_signals = []
+    sell_signals = []
     new_closed = 0
-    buy_signals, sell_signals = [], []
-    current_time = time.time() if now is None else float(now)
+    history_eligible = bool(
+        wallet_record.get("history_complete", False)
+        and not wallet_record.get("history_truncated", False)
+    )
 
-    for trade in events:
-        signature = str(trade.get("signature") or "")
-        mint = str(trade.get("mint") or "")
-        side = trade.get("side")
-        timestamp = _finite_number(trade.get("timestamp"))
-        token_amount = _finite_number(trade.get("token_amount"))
-        quote_amount = _finite_number(trade.get("quote_amount"))
-        quote_symbol = trade.get("quote_symbol")
-        wallet = str(trade.get("wallet") or "")
-        if (not signature or not mint or timestamp is None or token_amount is None
-                or quote_amount is None or token_amount <= 0 or quote_amount <= 0):
-            continue
+    # Recompute all open inventory and realized trades in chronological order.
+    # This deliberately replaces the old derived ledger rather than appending
+    # duplicate PnL entries when old swap pages arrive late.
+    for trade in all_swaps:
+        signature = str(trade["signature"])
+        mint = str(trade["mint"])
+        side = trade["side"]
+        timestamp = float(trade["timestamp"])
+        token_amount = float(trade["token_amount"])
+        quote_amount = float(trade["quote_amount"])
+        quote_symbol = trade["quote_symbol"]
 
-        is_new = signature in new_signatures
         if side == "buy":
-            # Wallet qualification is based only on earlier realized events in this
-            # chronological replay. Old backfill buys cannot qualify themselves.
             current_metrics = calculate_wallet_metrics(closed_trades)
-            if is_new and wallet_qualifies(current_metrics) and signal_is_fresh(timestamp, now=current_time):
+            if (
+                signature in fresh_signatures
+                and history_eligible
+                and wallet_qualifies(current_metrics)
+                and signal_is_fresh(timestamp, now=now)
+            ):
                 buy_signals.append({
-                    "wallet": wallet,
+                    "wallet": str(trade.get("wallet") or ""),
                     "mint": mint,
                     "timestamp": timestamp,
                     "signature": signature,
-                    "quote_symbol": str(quote_symbol),
+                    "quote_symbol": quote_symbol,
                     "leader_price_quote": quote_amount / token_amount,
                     "wallet_metrics": current_metrics,
                 })
             position = positions.get(mint)
-            if not isinstance(position, dict) or position.get("quote_symbol") != quote_symbol:
+            if not isinstance(position, dict):
                 position = {
                     "token_amount": 0.0,
                     "cost_quote": 0.0,
-                    "quote_symbol": str(quote_symbol),
+                    "quote_symbol": quote_symbol,
                     "first_buy_timestamp": timestamp,
                 }
                 positions[mint] = position
-            position["token_amount"] = float(position.get("token_amount", 0.0)) + token_amount
-            position["cost_quote"] = float(position.get("cost_quote", 0.0)) + quote_amount
+            if position.get("quote_symbol") == quote_symbol:
+                position["token_amount"] = float(position.get("token_amount", 0.0)) + token_amount
+                position["cost_quote"] = float(position.get("cost_quote", 0.0)) + quote_amount
+            continue
 
-        elif side == "sell":
-            if is_new and signal_is_fresh(timestamp, now=current_time):
-                sell_signals.append({
-                    "wallet": wallet,
-                    "mint": mint,
-                    "timestamp": timestamp,
-                    "signature": signature,
-                })
-            position = positions.get(mint)
-            if not isinstance(position, dict) or position.get("quote_symbol") != quote_symbol:
-                continue
-            old_qty = _finite_number(position.get("token_amount")) or 0.0
-            old_cost = _finite_number(position.get("cost_quote")) or 0.0
-            sold_qty = min(token_amount, old_qty)
-            if old_qty <= 0 or sold_qty <= 0 or old_cost <= 0:
-                continue
-            basis = old_cost * sold_qty / old_qty
-            proceeds = quote_amount * sold_qty / token_amount
-            gross_pct = (proceeds / basis - 1.0) * 100.0
-            net_pct = gross_pct - float(fee_reserve_pct)
-            closed_trades.append({
+        # Sell signals are used to close a copy position even if the leader no
+        # longer qualifies for new entries. Only fresh signatures are emitted.
+        if signature in fresh_signatures and signal_is_fresh(timestamp, now=now):
+            sell_signals.append({
+                "wallet": str(trade.get("wallet") or ""),
+                "mint": mint,
                 "timestamp": timestamp,
                 "signature": signature,
-                "mint": mint,
-                "quote_symbol": str(quote_symbol),
-                "token_amount": sold_qty,
-                "cost_quote": basis,
-                "proceeds_quote": proceeds,
-                "gross_pnl_pct": gross_pct,
-                "net_pnl_pct": net_pct,
             })
-            if is_new:
-                new_closed += 1
-            position["token_amount"] = max(0.0, old_qty - sold_qty)
-            position["cost_quote"] = max(0.0, old_cost - basis)
-            if position["token_amount"] <= 1e-12:
-                positions.pop(mint, None)
+        position = positions.get(mint)
+        if not isinstance(position, dict) or position.get("quote_symbol") != quote_symbol:
+            continue
+        old_qty = _finite_number(position.get("token_amount")) or 0.0
+        old_cost = _finite_number(position.get("cost_quote")) or 0.0
+        sold_qty = min(token_amount, old_qty)
+        if old_qty <= 0 or sold_qty <= 0 or old_cost <= 0:
+            continue
+        basis = old_cost * sold_qty / old_qty
+        proceeds = quote_amount * sold_qty / token_amount
+        gross_pct = (proceeds / basis - 1.0) * 100.0
+        net_pct = gross_pct - float(fee_reserve_pct)
+        closed_trades.append({
+            "timestamp": timestamp,
+            "signature": signature,
+            "mint": mint,
+            "quote_symbol": quote_symbol,
+            "token_amount": sold_qty,
+            "cost_quote": basis,
+            "proceeds_quote": proceeds,
+            "gross_pnl_pct": gross_pct,
+            "net_pnl_pct": net_pct,
+        })
+        if signature in fresh_signatures:
+            new_closed += 1
+        position["token_amount"] = max(0.0, old_qty - sold_qty)
+        position["cost_quote"] = max(0.0, old_cost - basis)
+        if position["token_amount"] <= 1e-12:
+            positions.pop(mint, None)
 
     wallet_record["positions"] = positions
     wallet_record["closed_trades"] = closed_trades[-MAX_STORED_CLOSED_TRADES:]
-    wallet_record["seen_signatures"] = [event["signature"] for event in events]
+    wallet_record["seen_signatures"] = list(dict.fromkeys(seen_order))[-MAX_STORED_SIGNATURES:]
     wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
-    wallet_record["last_processed_at"] = current_time
+    wallet_record["last_processed_at"] = now
     return {
         "new_closed_trades": new_closed,
         "buy_signals": buy_signals,
         "sell_signals": sell_signals,
         "metrics": wallet_record["metrics"],
+        "history_complete": history_eligible,
+        "history_truncated": bool(wallet_record.get("history_truncated", False)),
+        "normalized_swaps": len(all_swaps),
     }
-
 
 def _api_key():
     key = (os.environ.get("HELIUS_API_KEY") or "").strip()
