@@ -291,7 +291,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python shadow_path_backtest.py --paths shadow_price_paths.jsonl paper_account/shadow_price_paths.jsonl | tee /tmp/shadow-path-backtest-report.json
+          python shadow_path_backtest.py --paths paper_account/shadow_price_paths.jsonl | tee /tmp/shadow-path-backtest-report.json
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
