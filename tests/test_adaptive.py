@@ -78,6 +78,31 @@ class AdaptiveTests(unittest.TestCase):
         self.assertEqual(updated["strategy"]["status"], "rolled_back")
         self.assertEqual(updated["strategy"]["validation_status"], "rolled_back")
 
+    def test_unvalidated_exploration_threshold_resets_when_no_rule_passes(self):
+        # The newest 10 observations alone look positive after costs, so the
+        # short rollback window does not fire. Earlier losses keep both the
+        # training segment and independent holdout net-negative.
+        rows = [
+            {"timestamp": f"{i:03d}", "score": 60.0, "pnl_pct": -10.0, "reason": "paper_loss"}
+            for i in range(50)
+        ] + [
+            {"timestamp": f"{i:03d}", "score": 60.0, "pnl_pct": 1.5, "reason": "recent_rebound"}
+            for i in range(50, 60)
+        ]
+        state = {"trade_count": len(rows), "strategy": {
+            "active_threshold": 60.0,
+            "rollback_threshold": 80.0,
+            "candidate_threshold": None,
+            "status": "paper_exploration",
+            "validation_status": "exploration_unvalidated",
+        }}
+        updated = la.adaptive_update_state(state, rows)
+        self.assertEqual(updated["strategy"]["validation"]["reason"], "no_candidate_passed_net_validation")
+        self.assertEqual(updated["strategy"]["active_threshold"], la.BASELINE_THRESHOLD)
+        self.assertIsNone(updated["strategy"]["candidate_threshold"])
+        self.assertEqual(updated["strategy"]["status"], "rolled_back")
+        self.assertEqual(updated["strategy"]["validation_status"], "rolled_back")
+
     def test_adaptive_activation_uses_chronological_validation(self):
         rows=[]
         for i in range(51):

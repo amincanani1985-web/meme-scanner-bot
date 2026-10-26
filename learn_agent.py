@@ -171,6 +171,21 @@ def adaptive_update_state(state,observations):
     strategy["validation"] = rec
     strategy["last_validation_trade"] = state.get("trade_count", 0)
     if rec.get("reason") in ("no_candidate_has_enough_validation_samples", "no_candidate_passed_net_validation"):
+        # Never leave a lower experimental threshold active merely because its
+        # short rollback window happened to improve. The full chronological
+        # train/holdout search must validate the threshold before it may remain
+        # below the conservative baseline.
+        if current < BASELINE_THRESHOLD and strategy.get("validation_status") != "validated":
+            strategy.update({
+                "active_threshold": BASELINE_THRESHOLD,
+                "candidate_threshold": None,
+                "status": "rolled_back",
+                "validation_status": "rolled_back",
+                "rollback_threshold": BASELINE_THRESHOLD,
+                "baseline_migrated_from": current,
+                "rollback_reason": f"unvalidated_lower_threshold:{rec.get('reason')}",
+            })
+            return state
         strategy["status"] = "waiting_for_validation"
         strategy["validation_status"] = (
             "insufficient_threshold_samples"
