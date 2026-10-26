@@ -1822,6 +1822,8 @@ class DexScreenerMintAttributionTests(unittest.TestCase):
             "rugcheck_report_age_seconds": 300.0,
             "rugcheck_mint_authority_active": 0.0,
             "rugcheck_freeze_authority_active": 0.0,
+            "rugcheck_mint_close_authority_active": 0.0,
+            "rugcheck_metadata_mutable": 0.0,
             "rugcheck_rugged": 0.0,
             "rugcheck_danger_risk_count": 0.0,
             "rugcheck_critical_risk_count": 0.0,
