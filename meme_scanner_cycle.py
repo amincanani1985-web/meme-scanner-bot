@@ -84,7 +84,7 @@ STOP_LOSS_COOLDOWN_MINUTES = 60           # Was 45 min → let emotions settle
 CANDIDATE_CONFIRMATION_HITS = 1           # Paper-only: enter on first qualified observation (was 2)
 CANDIDATE_CONFIRMATION_MAX_GAP_SECONDS = 600  # A missed/stale cycle cannot count as consecutive
 MAX_EQUITY_DRAWDOWN_FRACTION = 0.20       # Halt new entries after 20% drawdown from initial paper equity
-SHADOW_MIN_SCORE = 50.0                    # Exclude bearish/zero-clamped signals from the useful research cohort
+SHADOW_MIN_SCORE = 35.0                    # Broaden only virtual research so entry-score cutoffs can be tested; live-entry rules stay unchanged
 MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for faster learning
 
 # ============================================================================
