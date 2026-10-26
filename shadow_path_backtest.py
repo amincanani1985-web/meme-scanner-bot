@@ -21,6 +21,7 @@ BASELINE_CONFIG = {
 EXIT_SLIPPAGE_BPS = 200
 ROUND_TRIP_COST_PCT = 1.0
 MIN_TRAIN_ROWS = 20
+MIN_EXPLORATORY_HOLDOUT_ROWS = 5
 MIN_VALIDATION_ROWS = 15
 DEFAULT_MIN_TOTAL_PATHS = 50
 MIN_PRICE_PATH_SAMPLES = 9
@@ -359,7 +360,7 @@ def baseline_consistency(records, tolerance_pct=0.05):
 
 def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                     round_trip_cost_pct=ROUND_TRIP_COST_PCT):
-    """Select a predeclared entry+exit rule on training data only, then freeze it for holdout."""
+    """Search on chronological training data, but never inspect candidate holdout until formal gates pass."""
     normalized, rejected, sparse_or_short = [], 0, 0
     observed_gaps, accepted_gaps = [], []
     rejection_reasons = {}
@@ -393,8 +394,8 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         accepted_gaps.extend(gaps)
         normalized.append(candidate)
 
-    # Keep only the first quality-complete path per mint to prevent repeated
-    # windows on one asset appearing on both sides of the chronological split.
+    # Use a single completed path per mint. This prevents overlapping or repeated
+    # observations on one token leaking across the chronological train/holdout split.
     normalized.sort(key=lambda item: (item["entry_timestamp"], str(item.get("mint", ""))))
     quality_usable_path_records = len(normalized)
     first_path_by_mint, seen_mints = [], set()
@@ -458,6 +459,8 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         "evaluated_candidate_configs": 0,
         "eligible_training_candidate_count": 0,
         "eligible_training_candidates": [],
+        "exploratory_training_candidates": [],
+        "exploratory_status": "not_run",
         "selected_config": None,
         "selected_entry_filter": None,
         "train_rows": 0,
@@ -471,20 +474,25 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         for record in normalized
     ]
     result["baseline_performance"] = calculate_metrics(baseline_outcomes)
-    if len(normalized) < int(min_total_paths):
-        return result
 
     split = int(len(normalized) * 0.7)
     train, holdout = normalized[:split], normalized[split:]
     result["train_rows"] = len(train)
     result["validation_rows"] = len(holdout)
-    if len(train) < MIN_TRAIN_ROWS or len(holdout) < MIN_VALIDATION_ROWS:
+    if len(train) < MIN_TRAIN_ROWS or len(holdout) < MIN_EXPLORATORY_HOLDOUT_ROWS:
+        result["exploratory_status"] = "too_few_rows_for_even_exploratory_search"
         return result
 
+    # Exploration scores the training segment only. The holdout candidate outcomes
+    # remain unread until all formal sample gates pass.
     eligible = []
+    exploratory = []
     evaluated = 0
     for entry_filter in entry_filters:
-        train_subset = [record for record in train if entry_filter_matches(record, entry_filter)]
+        train_subset = [
+            record for record in train
+            if entry_filter_matches(record, entry_filter)
+        ]
         if len(train_subset) < MIN_TRAIN_ROWS:
             continue
         for exit_config in exit_configs:
@@ -494,31 +502,50 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                 for record in train_subset
             ]
             metrics = calculate_metrics(outcomes)
+            row = {
+                "entry_filter": entry_filter,
+                "exit_config": exit_config,
+                "train_rows": len(train_subset),
+                "metrics": metrics,
+            }
             if _eligible_train(metrics):
-                eligible.append({
-                    "entry_filter": entry_filter,
-                    "exit_config": exit_config,
-                    "train_rows": len(train_subset),
-                    "metrics": metrics,
-                })
-    result["evaluated_candidate_configs"] = evaluated
-    eligible.sort(key=lambda item: (
+                eligible.append(row)
+            exploratory.append(row)
+
+    sort_key = lambda item: (
         item["metrics"]["mean_pnl_pct"],
         item["metrics"]["median_pnl_pct"],
         item["metrics"]["profit_factor"],
         item["train_rows"],
-    ), reverse=True)
+    )
+    eligible.sort(key=sort_key, reverse=True)
+    exploratory.sort(key=sort_key, reverse=True)
+    result["evaluated_candidate_configs"] = evaluated
     result["eligible_training_candidate_count"] = len(eligible)
     result["eligible_training_candidates"] = eligible[:25]
+    result["exploratory_training_candidates"] = exploratory[:10]
+    result["exploratory_status"] = "training_only_search_complete_holdout_not_evaluated"
+
+    # These are hard promotion gates. Exploratory results are visible, but no
+    # selected rule or holdout claim is made until the independent sample is large.
+    formal_ready = (
+        len(normalized) >= int(min_total_paths)
+        and len(train) >= MIN_TRAIN_ROWS
+        and len(holdout) >= MIN_VALIDATION_ROWS
+    )
+    if not formal_ready:
+        return result
     if not eligible:
         result["status"] = "no_profitable_training_candidate"
+        result["exploratory_status"] = "formal_training_gate_failed_no_candidate"
         return result
 
     selected = eligible[0]
     selected_filter = selected["entry_filter"]
     selected_exit = selected["exit_config"]
     holdout_subset = [
-        record for record in holdout if entry_filter_matches(record, selected_filter)
+        record for record in holdout
+        if entry_filter_matches(record, selected_filter)
     ]
     validation_outcomes = [
         simulate_exit(record, selected_exit, fee_reserve_pct=round_trip_cost_pct)
@@ -535,6 +562,7 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         if _eligible_holdout(validation_metrics)
         else "holdout_not_profitable"
     )
+    result["exploratory_status"] = "formal_walk_forward_completed"
     return result
 
 
