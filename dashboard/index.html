@@ -110,6 +110,7 @@
   <div class="live-kpi"><span>بازده خالص آزمون نگه‌داشته‌شده</span><b id="pathBtHoldout">—</b></div>
  </div>
  <p class="small" id="pathBtNote">این آزمون به مسیرهای قیمت واقعی از حساب پیپر نیاز دارد. مسیر کوتاه یا نمونهٔ ناکافی به‌عنوان سوددهی تأیید نمی‌شود.</p>
+ <p class="small" id="pathBtCohortDetails">فیلترهای آینده‌نگر فقط روی توکن‌هایی ارزیابی می‌شوند که از زمان ورود تگ شده‌اند؛ داده‌های قدیمی وارد این آزمون نمی‌شوند.</p>
 </section>
 
 <section class="card section" id="agentOpsPanel">
@@ -372,26 +373,53 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
    $('pathBtExploratory').textContent='دادهٔ آموزشی کافی نیست';
    $('pathBtExploratory').style.color='var(--yellow)';
   }
-  const prospective=(pathReport.prospective_experiments||{}).moderate_pullback_v1||null;
-  if(prospective){
-   const prospectiveLabels={
-    insufficient_history:'در حال جمع‌آوری مسیر مستقل',
-    no_profitable_training_candidate:'آموزش سودده نیست',
-    holdout_not_profitable:'آزمون مستقل رد شد',
-    validated_profitable_out_of_sample:'سودده خارج از نمونه'
-   };
-   const pStatus=prospective.status||'unknown';
+  const prospectiveExperiments=pathReport.prospective_experiments||{};
+  const prospectiveTags=[
+   'moderate_pullback_v1',
+   'broad_pullback_v1',
+   'liquid_pullback_v1',
+   'tight_pullback_v1',
+   'recovery_pullback_v1'
+  ];
+  const prospectiveLabels={
+   insufficient_history:'نمونه ناکافی',
+   no_profitable_training_candidate:'آموزش زیان‌ده',
+   holdout_not_profitable:'آزمون مستقل رد شد',
+   validated_profitable_out_of_sample:'سودده خارج از نمونه'
+  };
+  const cohortLabels={
+   moderate_pullback_v1:'اصلاح متوسط',
+   broad_pullback_v1:'اصلاح گسترده',
+   liquid_pullback_v1:'اصلاح با نقدینگی',
+   tight_pullback_v1:'اصلاح محدود',
+   recovery_pullback_v1:'بازیابی پس از افت'
+  };
+  const prospectiveSummaries=prospectiveTags.map(tag=>{
+   const item=prospectiveExperiments[tag];
+   if(!item)return cohortLabels[tag]+': بدون گزارش';
+   const statusLabel=prospectiveLabels[item.status]||item.status||'نامشخص';
+   const count=Number(item.usable_paths||0)+'/'+Number(item.required_total_paths||50);
+   let extra='';
+   if(item.holdout){
+    extra='، میانگین آزمون '+Number(item.holdout.mean_pnl_pct||0).toFixed(2)+'٪، PF '+Number(item.holdout.profit_factor||0).toFixed(2);
+   }
+   return cohortLabels[tag]+': '+count+' مسیر، '+statusLabel+extra;
+  });
+  const moderate=prospectiveExperiments.moderate_pullback_v1;
+  if(moderate){
+   const pStatus=moderate.status||'unknown';
    $('pathBtProspective').textContent=
-    Number(prospective.usable_paths||0)+'/'+Number(prospective.required_total_paths||50)
+    Number(moderate.usable_paths||0)+'/'+Number(moderate.required_total_paths||50)
     +' مسیر · '+(prospectiveLabels[pStatus]||pStatus);
-   if(prospective.holdout){
-    $('pathBtProspective').textContent+=' · '+Number(prospective.holdout.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(prospective.holdout.profit_factor||0).toFixed(2);
+   if(moderate.holdout){
+    $('pathBtProspective').textContent+=' · '+Number(moderate.holdout.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(moderate.holdout.profit_factor||0).toFixed(2);
    }
    $('pathBtProspective').style.color=pStatus==='validated_profitable_out_of_sample'?'var(--green)':pStatus==='insufficient_history'?'var(--yellow)':'var(--red)';
   }else{
-   $('pathBtProspective').textContent='در انتظار دادهٔ تگ‌شده';
+   $('pathBtProspective').textContent='در انتظار مسیرهای تگ‌شده';
    $('pathBtProspective').style.color='var(--yellow)';
   }
+  $('pathBtCohortDetails').textContent='آزمایش‌های ثبت‌شده از زمان ورود: '+prospectiveSummaries.join(' | ')+'.';
   const hold=pathReport.holdout;
   $('pathBtHoldout').textContent=hold
    ? Number(hold.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(hold.profit_factor||0).toFixed(2)
