@@ -130,5 +130,29 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("Reached the 10-cycle validation limit", workflow)
 
 
+
+    def test_rugcheck_enrichment_is_read_only_optional_and_in_the_test_gate(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('RUGCHECK_RESEARCH_ENABLED: "1"', workflow)
+        ci_workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        compile_step = next(
+            line for line in ci_workflow.splitlines()
+            if "python -m py_compile" in line and "meme_scanner_cycle.py" in line
+        )
+        self.assertIn("rugcheck_research.py", compile_step)
+        self.assertIn("tests/test_rugcheck_research.py", compile_step)
+        scanner_source = (ROOT / "meme_scanner_cycle.py").read_text(encoding="utf-8")
+        self.assertIn("MAX_RUGCHECK_RESEARCH_PROFILES_PER_CYCLE", scanner_source)
+        self.assertIn("fetch_rugcheck_token_report", scanner_source)
+        self.assertIn("scan_shadow_candidates", scanner_source)
+        live_open = scanner_source[scanner_source.index("def open_position("):
+            scanner_source.index("def close_position(")
+        ]
+        self.assertNotIn("fetch_rugcheck_token_report", live_open)
+        rugcheck_source = (ROOT / "rugcheck_research.py").read_text(encoding="utf-8")
+        self.assertIn("/v1/tokens/{mint}/report", rugcheck_source)
+        self.assertNotIn("send_transaction", rugcheck_source)
+        self.assertNotIn("submit_swap", rugcheck_source)
+
 if __name__ == "__main__":
     unittest.main()
