@@ -1323,7 +1323,7 @@ PROSPECTIVE_SHADOW_ENTRY_TAGS = (
 
 
 def _prospective_shadow_entry_filters(components):
-    """Apply five preregistered, overlapping research cohorts; never changes live entries."""
+    """Apply preregistered, paper-only entry cohorts; never changes live entries."""
     if not isinstance(components, dict):
         return []
     try:
@@ -1335,7 +1335,6 @@ def _prospective_shadow_entry_filters(components):
     if not all(math.isfinite(value) for value in (h1, m5, ratio)):
         return []
 
-    # Additional liquidity/volume gates fail closed when the feature is missing.
     def feature(name):
         try:
             value = float(components[name])
@@ -1345,8 +1344,12 @@ def _prospective_shadow_entry_filters(components):
 
     liquidity = feature("liquidity_usd")
     volume = feature("volume_h1_usd")
+    risk_available = feature("memeswap_risk_data_available")
+    full_risk_screen = feature("memeswap_full_risk_screen_available")
+    gate_pass = feature("memeswap_gate_pass")
     tags = []
 
+    # Original cohorts remain unchanged so their future samples are comparable.
     if 5.0 <= h1 <= 30.0 and -5.0 <= m5 <= 3.0 and 1.0 <= ratio <= 4.0:
         tags.append("moderate_pullback_v1")
     if 0.0 <= h1 <= 45.0 and -5.0 <= m5 <= 5.0 and 1.0 <= ratio <= 5.0:
@@ -1363,6 +1366,65 @@ def _prospective_shadow_entry_filters(components):
             and liquidity is not None and liquidity >= 25_000.0
             and volume is not None and volume >= 10_000.0):
         tags.append("recovery_pullback_v1")
+
+    # New hypotheses intentionally broaden prospective sampling. They remain
+    # paper-only and are tested on paths tagged at entry, not retrofitted to old
+    # outcomes. They are not live-entry settings and carry no profitability claim.
+    if (0.0 <= h1 <= 30.0 and -20.0 <= m5 <= 5.0 and 1.0 <= ratio <= 4.0
+            and liquidity is not None and liquidity >= 10_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("broad_moderate_momentum_v2")
+    if (5.0 <= h1 <= 45.0 and -10.0 <= m5 <= 5.0 and 1.2 <= ratio <= 4.0
+            and liquidity is not None and liquidity >= 10_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("volume_confirmed_pullback_v1")
+    if (0.0 <= h1 <= 30.0 and -2.0 <= m5 <= 5.0 and 1.2 <= ratio <= 4.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("steady_pressure_v1")
+    if (5.0 <= h1 <= 60.0 and -10.0 <= m5 <= 0.0 and 1.2 <= ratio <= 6.0
+            and liquidity is not None and liquidity >= 25_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("continuation_cooldown_v1")
+    if (-10.0 <= h1 <= 20.0 and -10.0 <= m5 <= 3.0 and 1.0 <= ratio <= 6.0
+            and liquidity is not None and liquidity >= 10_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("weak_trend_recovery_v1")
+
+    # Strict risk-screened cohort requires complete, fresh, explicitly safe data.
+    # A basic token lookup (including a gatePass=false row) is not a risk screen.
+    risk_fields = {
+        name: feature(name) for name in (
+            "memeswap_price_age_seconds", "memeswap_profile_age_seconds",
+            "memeswap_top1_pct", "memeswap_top10_pct", "memeswap_top20_pct",
+            "memeswap_honeypot", "memeswap_mintable", "memeswap_fake_score",
+            "memeswap_lp_locked_pct", "memeswap_buy_tax_value", "memeswap_sell_tax_value",
+        )
+    }
+    if (
+        5.0 <= h1 <= 45.0 and -10.0 <= m5 <= 5.0 and 1.2 <= ratio <= 4.0
+        and liquidity is not None and liquidity >= 10_000.0
+        and volume is not None and volume >= 10_000.0
+        and risk_available == 1.0 and full_risk_screen == 1.0 and gate_pass == 1.0
+        and risk_fields["memeswap_price_age_seconds"] is not None
+        and risk_fields["memeswap_price_age_seconds"] <= 60.0
+        and risk_fields["memeswap_profile_age_seconds"] is not None
+        and risk_fields["memeswap_profile_age_seconds"] <= 300.0
+        and risk_fields["memeswap_top1_pct"] is not None
+        and risk_fields["memeswap_top1_pct"] <= 10.0
+        and risk_fields["memeswap_top10_pct"] is not None
+        and risk_fields["memeswap_top10_pct"] <= 35.0
+        and risk_fields["memeswap_top20_pct"] is not None
+        and risk_fields["memeswap_top20_pct"] <= 60.0
+        and risk_fields["memeswap_honeypot"] == 0.0
+        and risk_fields["memeswap_mintable"] == 0.0
+        and risk_fields["memeswap_fake_score"] is not None
+        and risk_fields["memeswap_fake_score"] <= 10.0
+        and risk_fields["memeswap_lp_locked_pct"] is not None
+        and risk_fields["memeswap_lp_locked_pct"] >= 50.0
+        and risk_fields["memeswap_buy_tax_value"] == 0.0
+        and risk_fields["memeswap_sell_tax_value"] == 0.0
+    ):
+        tags.append("risk_screened_pullback_v1")
 
     return tags
 
