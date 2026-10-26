@@ -23,6 +23,9 @@ ROUND_TRIP_COST_PCT = 1.0
 MIN_TRAIN_ROWS = 30
 MIN_VALIDATION_ROWS = 15
 DEFAULT_MIN_TOTAL_PATHS = 50
+MIN_PRICE_PATH_SAMPLES = 9
+MAX_SAMPLE_GAP_SECONDS = 120.0
+MIN_PATH_DURATION_SECONDS = 900.0
 OUTLIER_ABS_PNL_PCT = 100.0
 
 
@@ -289,15 +292,26 @@ def baseline_consistency(records, tolerance_pct=0.05):
 def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                     round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     """Chronological 70/30 walk-forward selection; no promotion on training profit alone."""
-    normalized, rejected = [], 0
+    normalized, rejected, sparse_or_short = [], 0, 0
     for record in records:
         candidate, error = _normalized_path(record)
         if error:
             rejected += 1
             continue
-        # All candidates are compared on a common complete observation window.
-        if candidate["observed_duration_seconds"] < BASELINE_CONFIG["max_hold_seconds"]:
+        history = candidate["price_history"]
+        gaps = [
+            history[i]["timestamp"] - history[i - 1]["timestamp"]
+            for i in range(1, len(history))
+        ]
+        # A long elapsed duration with only an entry/exit quote is not a usable
+        # path for testing stop rules. Require a full 15-minute horizon, enough
+        # actual samples, and no multi-minute gaps that hide stop crossings.
+        if (candidate["observed_duration_seconds"] < MIN_PATH_DURATION_SECONDS
+                or len(history) < MIN_PRICE_PATH_SAMPLES
+                or not gaps
+                or max(gaps) > MAX_SAMPLE_GAP_SECONDS):
             rejected += 1
+            sparse_or_short += 1
             continue
         normalized.append(candidate)
     normalized.sort(key=lambda item: (item["entry_timestamp"], str(item.get("mint", ""))))
@@ -308,6 +322,12 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         "paths_received": len(records),
         "usable_paths": len(normalized),
         "rejected_or_censored_paths": rejected,
+        "sparse_or_short_paths_rejected": sparse_or_short,
+        "path_quality_policy": {
+            "minimum_duration_seconds": MIN_PATH_DURATION_SECONDS,
+            "minimum_samples": MIN_PRICE_PATH_SAMPLES,
+            "maximum_sample_gap_seconds": MAX_SAMPLE_GAP_SECONDS,
+        },
         "required_total_paths": int(min_total_paths),
         "train_rows": 0,
         "validation_rows": 0,
