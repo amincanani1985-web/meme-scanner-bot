@@ -109,6 +109,27 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("sleep 30", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)
 
+
+    def test_observed_quote_portfolio_simulator_runs_after_fresh_paper_outcomes(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"scanner_simulator.py"', workflow)
+        self.assertIn("scanner_simulator.py tests/test_scanner_simulator.py", workflow)
+        self.assertIn(
+            "python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl "
+            "--output /tmp/paper-simulator-report.json",
+            workflow,
+        )
+        refresh = workflow.split(
+            "- name: Refresh learning reports after the latest outcomes", 1
+        )[1].split("- name: Backtest sampled shadow exit paths", 1)[0]
+        self.assertIn("python scanner_simulator.py", refresh)
+        self.assertIn('paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json")', refresh)
+        self.assertIn('"paper_simulator": paper_simulator', refresh)
+        self.assertLess(
+            refresh.index("python scanner_simulator.py"),
+            refresh.index('Path("dashboard/backtest-data.js").write_text'),
+        )
+
     def test_pull_request_runs_cannot_block_the_main_paper_cycle(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn(
