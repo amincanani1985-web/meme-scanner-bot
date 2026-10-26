@@ -927,16 +927,24 @@ def run():
             # visit, so API request volume stays bounded. As soon as a wallet meets
             # realized-history gates, every poll reads the newest page for fresh
             # copy signals instead of continuing to walk backward.
-            existing_metrics = (record.get("metrics") or {})
-            qualified_before_poll = wallet_qualifies(existing_metrics)
             history_complete = bool(record.get("history_complete", False))
+            history_truncated = bool(record.get("history_truncated", False))
+            history_initialized = bool(record.get("normalized_history_initialized", False))
             cursor = record.get("history_cursor")
-            if qualified_before_poll or history_complete or not cursor:
+            if history_complete and not history_truncated:
                 fetched = fetch_wallet_transactions(
                     owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
                     max_pages=1, return_metadata=True,
                 )
                 fetched_mode = "latest"
+            elif not history_initialized or not cursor:
+                # Start each legacy wallet with the newest page, then page backward
+                # one request per visit until the entire bounded history is known.
+                fetched = fetch_wallet_transactions(
+                    owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
+                    max_pages=1, return_metadata=True,
+                )
+                fetched_mode = "seed"
             else:
                 fetched = fetch_wallet_transactions(
                     owner, api_key, limit=MAX_TRANSACTIONS_PER_WALLET,
@@ -960,10 +968,8 @@ def run():
                     record["history_cursor"] = fetched["last_signature"]
                 if fetched["reached_end"]:
                     record["history_complete"] = True
-            elif fetched_mode == "latest" and not cursor and fetched["ok"]:
-                # Seed the historical cursor from the latest page; the next visit
-                # starts at the immediately older page instead of redownloading the
-                # newest page over and over.
+            elif fetched_mode == "seed" and fetched["ok"]:
+                record["normalized_history_initialized"] = True
                 if fetched["last_signature"]:
                     record["history_cursor"] = fetched["last_signature"]
                 if fetched["reached_end"]:
