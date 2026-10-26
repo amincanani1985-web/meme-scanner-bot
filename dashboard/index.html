@@ -103,6 +103,7 @@
   <div class="live-kpi"><span>مسیر قابل استفاده / دریافت‌شده</span><b id="pathBtPaths">—</b></div>
   <div class="live-kpi"><span>آموزش / آزمون زمانی</span><b id="pathBtSplit">—</b></div>
   <div class="live-kpi"><span>تطابق خروج پایه</span><b id="pathBtBaseline">—</b></div>
+  <div class="live-kpi"><span>بازده خالص پایه، توصیفی</span><b id="pathBtBaselineNet">—</b></div>
   <div class="live-kpi"><span>قانون انتخاب‌شده از آموزش</span><b id="pathBtConfig">—</b></div>
   <div class="live-kpi"><span>بازده خالص آزمون نگه‌داشته‌شده</span><b id="pathBtHoldout">—</b></div>
  </div>
@@ -360,9 +361,17 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
    ? Number(hold.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(hold.profit_factor||0).toFixed(2)
    : 'داده کافی نیست';
   const gaps=pathReport.observed_sample_gaps||{};
+  const acceptedGaps=pathReport.accepted_sample_gaps||{};
+  const rejected=pathReport.path_rejection_reasons||{};
+  const base=pathReport.baseline_performance||null;
   const maxGap=Number(gaps.maximum_seconds||0);
   const medianGap=Number(gaps.median_seconds||0);
-  $('pathBtNote').textContent='منبع: قیمت‌های واقعیِ نمونه‌برداری‌شده از حساب پیپر؛ هیچ قیمت بین دو نمونه ساخته نمی‌شود. شکاف مشاهده‌شده: میانه '+medianGap.toFixed(0)+' ثانیه، بیشینه '+maxGap.toFixed(0)+' ثانیه؛ '+Number(gaps.over_120_seconds||0)+' شکاف بیش از ۱۲۰ ثانیه بوده است. سقف پذیرش هر مسیر '+Number((pathReport.path_quality_policy||{}).maximum_sample_gap_seconds||240).toFixed(0)+' ثانیه است. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
+  const acceptedMaxGap=Number(acceptedGaps.maximum_seconds||0);
+  $('pathBtBaselineNet').textContent=base
+   ? 'n='+Number(base.n||0)+' · میانگین '+Number(base.mean_pnl_pct||0).toFixed(2)+'٪ · میانه '+Number(base.median_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(base.profit_factor||0).toFixed(2)
+   : 'نمونهٔ کامل ندارد';
+  $('pathBtBaselineNet').style.color=base&&base.mean_pnl_pct>0&&base.profit_factor>1?'var(--green)':'var(--red)';
+  $('pathBtNote').textContent='منبع: قیمت‌های واقعیِ نمونه‌برداری‌شده از حساب پیپر؛ هیچ قیمت بین دو نمونه ساخته نمی‌شود. بازده پایه فقط توصیفی است و تأیید راهبرد نیست. فاصله‌های مسیرهای پذیرفته‌شده: میانه '+Number(acceptedGaps.median_seconds||0).toFixed(0)+' ثانیه و بیشینه '+acceptedMaxGap.toFixed(0)+' ثانیه. در کل داده‌ها میانه شکاف '+medianGap.toFixed(0)+' و بیشینه '+maxGap.toFixed(0)+' ثانیه است؛ مسیر ردشده بابت کمبود نمونه/زمان/شکاف: '+Number(pathReport.sparse_or_short_paths_rejected||0)+'؛ دلایل رد: '+JSON.stringify(rejected)+'. سقف پذیرش هر مسیر '+Number((pathReport.path_quality_policy||{}).maximum_sample_gap_seconds||240).toFixed(0)+' ثانیه است. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
  }else{
   $('pathBtStatus').textContent='گزارش در دسترس نیست';
   $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
