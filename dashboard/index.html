@@ -29,6 +29,19 @@
  <p class="small" id="paperOverviewNote">این خلاصه از دفترکل مستقل paper_account خوانده می‌شود. داده‌های حساب تاریخی در بخش جداگانه حفظ شده‌اند.</p>
  <p class="small" id="paperScanDiagnostics">علت رد نامزدهای آخرین اسکن هنوز ثبت نشده است.</p>
 </section>
+<section class="card section" id="whaleCopyOverview">
+ <div class="cardhead"><b>🐳 کپی‌ترید نهنگ‌ها · فقط حساب آزمایشی</b><span class="live-pill" id="whaleCopyStatus">در حال بررسی سابقهٔ معاملات کیف‌پول‌ها…</span></div>
+ <div class="live-kpis">
+  <div class="live-kpi"><span>سرمایهٔ پیپر مستقل</span><b id="whaleCopyEquity">—</b></div>
+  <div class="live-kpi"><span>سود و زیان خالص</span><b id="whaleCopyPnl">—</b></div>
+  <div class="live-kpi"><span>معاملات بسته‌شده</span><b id="whaleCopyTradesCount">—</b></div>
+  <div class="live-kpi"><span>نهنگ‌های واجد شرایط</span><b id="whaleCopyQualified">—</b></div>
+  <div class="live-kpi"><span>موقعیت‌های باز</span><b id="whaleCopyPositions">—</b></div>
+  <div class="live-kpi"><span>سیگنال‌های خرید تازه</span><b id="whaleCopySignals">—</b></div>
+ </div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>زمان UTC</th><th>توکن</th><th>بازده خالص</th><th>سود و زیان</th><th>علت خروج</th><th>کیف‌پول‌های رهبر</th></tr></thead><tbody id="whaleCopyTradeRows"><tr><td colspan="6" class="live-empty">هنوز دفترکل این حساب آزمایشی منتشر نشده است.</td></tr></tbody></table></div>
+ <p class="live-note" id="whaleCopyNote">این حساب جدا از حساب پیپر اصلی است. تنها خریدهای تأییدشده از دو کیف‌پول دارای سابقهٔ سود خالص بررسی می‌شوند؛ افت موجودی به‌تنهایی مدرک فروش یا سودآوری نیست.</p>
+</section>
 <section class="card section" id="historicalAccountHeading"><div class="cardhead"><b>📚 سابقهٔ حساب اصلی تاریخی</b><span class="live-pill">فقط خواندنی · قفل ریسک حفظ شده</span></div><p class="small">کارت‌ها، نمودار و جدول‌های تاریخی زیر مربوط به دفترکل قدیمی هستند و نباید با موجودی حساب پیپر مستقل اشتباه گرفته شوند.</p></section>
 <section class="grid">
  <div class="card"><div class="label">موجودی تاریخی حساب اصلی</div><div class="value" id="equity">—</div></div>
@@ -238,6 +251,35 @@ async function loadPaperAccount(){
  }
 }
 async function load(){const btn=$('refresh');btn.disabled=true;btn.textContent='در حال دریافت آخرین داده‌ها…';const stamp=Date.now();try{const base='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/';const [stateResponse,tradesResponse]=await Promise.all([fetch(base+'state.json?ts='+stamp,{cache:'no-store'}),fetch(base+'trades_log.csv?ts='+stamp,{cache:'no-store'})]);if(!stateResponse.ok||!tradesResponse.ok)throw Error('دریافت داده‌های اصلی ناموفق بود');const [state,csv]=await Promise.all([stateResponse.json(),tradesResponse.text()]);if(!state||typeof state.last_run!=='string'||!csv.startsWith('timestamp,'))throw Error('ساختار داده نامعتبر است');window.LIVE_STATE=state;window.LIVE_CSV=csv;render();window.refreshMarketData?.();btn.textContent='↻ تازه‌سازی داده‌ها';}catch(error){const old=document.getElementById('live-data-script');if(old)old.remove();const script=document.createElement('script');script.id='live-data-script';script.src='./live-data.js?v='+stamp;script.onload=()=>{render();window.refreshMarketData?.();btn.textContent='↻ داده ذخیره‌شده (منبع زنده در دسترس نیست)';};script.onerror=()=>{render();btn.textContent='↻ تلاش دوباره';};document.body.appendChild(script);}finally{btn.disabled=false;}}
+async function loadWhaleCopyAccount(){
+ const base='https://raw.githubusercontent.com/amincanani1985-web/meme-scanner-bot/main/',stamp=Date.now();
+ const status=$('whaleCopyStatus'),body=$('whaleCopyTradeRows'),note=$('whaleCopyNote');
+ try{
+  const paths=['whale_copy_account/state.json','whale_copy_state.json','whale_copy_account/trades_log.csv'];
+  const responses=await Promise.all(paths.map(path=>fetch(base+path+'?ts='+stamp,{cache:'no-store'})));
+  if(!responses[0].ok||!responses[1].ok||!responses[2].ok)throw Error('دفترکل کپی‌ترید هنوز توسط چرخهٔ بعدی منتشر نشده است');
+  const [account,research,csv]=await Promise.all([responses[0].json(),responses[1].json(),responses[2].text()]);
+  window.WHALE_COPY_STATE=account;window.WHALE_COPY_RESEARCH=research;window.WHALE_COPY_CSV=csv;
+  const wallets=Object.values(research.wallets||{}),qualified=wallets.filter(w=>{const m=w.metrics||{};return Number(m.closed_trades||0)>=8&&Number(m.win_rate||0)>=.55&&Number(m.profit_factor||0)>=1.25&&Number(m.mean_net_pnl_pct||0)>=.5;}).length;
+  const closed=account.closed_trades||[],wins=closed.filter(t=>Number(t.pnl_usd)>0).length;
+  const pnl=Number(account.equity||0)-Number(account.initial_equity||1000);
+  $('whaleCopyEquity').textContent=money(account.equity);$('whaleCopyPnl').textContent=(pnl>=0?'+':'')+money(pnl);
+  $('whaleCopyPnl').className=''+(pnl>0?'up':pnl<0?'down':'');
+  $('whaleCopyTradesCount').textContent=closed.length.toLocaleString('fa-IR')+' · '+wins.toLocaleString('fa-IR')+' برد';
+  $('whaleCopyQualified').textContent=qualified.toLocaleString('fa-IR')+' از '+wallets.length.toLocaleString('fa-IR');
+  $('whaleCopyPositions').textContent=Object.keys(account.positions||{}).length.toLocaleString('fa-IR');
+  $('whaleCopySignals').textContent=Number((research.last_scan||{}).fresh_profitable_wallet_buys||0).toLocaleString('fa-IR');
+  const rows=parseCSV(csv).slice(-8).reverse();
+  body.innerHTML=rows.map(t=>'<tr><td>'+esc(t.timestamp||'—')+'</td><td>'+esc(t.symbol||t.mint||'—')+'</td><td class="'+(Number(t.pnl_usd)>0?'up':Number(t.pnl_usd)<0?'down':'')+'">'+Number(t.pnl_pct||0).toFixed(2)+'٪</td><td>'+money(t.pnl_usd)+'</td><td>'+esc(t.reason||'—')+'</td><td>'+esc(t.leader_wallets||'—')+'</td></tr>').join('')||'<tr><td colspan="6" class="live-empty">هنوز معاملهٔ بسته‌شده‌ای در حساب کپی‌ترید ثبت نشده است.</td></tr>';
+  if(qualified===0){status.textContent='هنوز هیچ کیف‌پولی معیار سودآوری را نگذرانده';status.style.color='var(--yellow)';}
+  else {status.textContent=qualified+' کیف‌پول با سابقهٔ مثبت';status.style.color='var(--green)';}
+  note.textContent='آخرین اسکن: '+(research.last_run||'نامشخص')+' · کیف‌پول بررسی‌شده در چرخهٔ اخیر: '+Number((research.last_scan||{}).wallets_selected||0)+' · سوآپ‌ شناسایی‌شده: '+Number((research.last_scan||{}).swaps_seen||0)+' · ورود تنها پس از تأیید دو رهبر سودده، نقدینگی کافی و اختلاف قیمت حداکثر ۵٪ انجام می‌شود. این نتیجه همچنان پیپر است و سودآوری هنوز نیازمند نمونهٔ معاملات واقعیِ رصدشده است.';
+ }catch(e){
+  status.textContent='دادهٔ کپی‌ترید در دسترس نیست';status.style.color='var(--yellow)';
+  body.innerHTML='<tr><td colspan="6" class="live-empty">هنوز سابقهٔ کافی برای نمایش وجود ندارد.</td></tr>';
+  note.textContent=String(e.message||e);
+ }
+}
 async function loadگردش‌کارActivity(){
  const status=$('activityوضعیت'), body=$('activityRows'), note=$('activityNote');
  try{
@@ -254,7 +296,7 @@ async function loadگردش‌کارActivity(){
   note.textContent='گزارش GitHub: '+runs.length+' اجرای مرتبط اخیر؛ '+running+' در حال اجرا، '+queued+' در صف و '+failed+' ناموفق. آخرین بررسی: '+new Date().toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran'})+' به وقت تهران. این وضعیت گردش‌کار است و کارکرد پیوسته را تضمین نمی‌کند.';
  }catch(e){status.textContent='وضعیت در دسترس نیست';status.style.color='var(--red)';body.innerHTML='<tr><td colspan="5" class="live-empty">دریافت وضعیت GitHub Actions ممکن نشد. پیوند اجرای گردش‌کارها را در بالا باز کنید.</td></tr>';note.textContent=String(e.message||e);}
 }
-load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadPaperAccount();setInterval(loadPaperAccount,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
+load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadPaperAccount();setInterval(loadPaperAccount,30000);loadWhaleCopyAccount();setInterval(loadWhaleCopyAccount,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
 </script><script src="./backtest-data.js"></script><script>
 (function(){
  const report=window.BACKTEST_REPORT||{};
