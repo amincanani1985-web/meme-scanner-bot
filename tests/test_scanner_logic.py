@@ -1058,10 +1058,10 @@ class ScannerLogicTests(unittest.TestCase):
             captured["strategy"] = dict(state["strategy"])
             return {"equity": state["equity"]}
 
-        with tempfile.TemporaryDirectory() as temp_dir, \\
-             patch.object(scanner, "load_state", return_value=paper_state), \\
-             patch.object(scanner, "save_state"), \\
-             patch.object(scanner, "run_cycle", side_effect=fake_run_cycle), \\
+        with tempfile.TemporaryDirectory() as temp_dir, \
+             patch.object(scanner, "load_state", return_value=paper_state), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "run_cycle", side_effect=fake_run_cycle), \
              patch.dict("os.environ", {"PAPER_REQUIRE_WHALE_ACCUMULATION": "0"}):
             scanner.run_isolated_paper_cycle(temp_dir)
 
