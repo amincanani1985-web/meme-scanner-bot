@@ -79,9 +79,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for check in 1 2 3 4 5 6 7 8; do
+          for check in 1 2 3 4 5 6; do
             sleep 30
-            echo "Monitor-only check $check/8"
+            echo "Monitor-only check $check/6"
             python paper_position_monitor.py
           done
 
@@ -251,9 +251,21 @@ jobs:
 
       - name: Run one discovery and entry cycle
         if: github.event_name != 'pull_request'
-        run: python meme_scanner_cycle.py
+        working-directory: paper_account
+        run: python ../meme_scanner_cycle.py
 
-      # Recompute after the scan so the dashboard includes outcomes closed in this same cycle.
+      - name: Monitor newly opened paper positions immediately
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for check in 1 2 3 4; do
+            sleep 30
+            echo "Immediate post-entry check $check/4"
+            python paper_position_monitor.py
+          done
+
+      # Recompute after entry and immediate monitoring so the dashboard includes outcomes closed in this same cycle.
       - name: Refresh learning reports after the latest outcomes
         if: github.event_name != 'pull_request'
         shell: bash
