@@ -102,6 +102,26 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
         }))
 
+    def test_wallet_selection_prioritizes_accumulation_over_sell_drops(self):
+        watch = {"wallets": {
+            "seller": {
+                "confirmed_sell_pressure_events": 9,
+                "observed_balance_drops": 12,
+                "confirmed_buy_pressure_events": 0,
+                "observed_balance_increases": 0,
+                "tokens_seen": ["mint-a"],
+            },
+            "accumulator": {
+                "confirmed_sell_pressure_events": 0,
+                "observed_balance_drops": 0,
+                "confirmed_buy_pressure_events": 4,
+                "observed_balance_increases": 6,
+                "tokens_seen": ["mint-a", "mint-b"],
+            },
+        }}
+        selected = follower.select_wallets(watch, {"wallets": {}}, limit=1)
+        self.assertEqual(selected, ["accumulator"])
+
     def test_only_previously_profitable_wallets_emit_fresh_buy_signals(self):
         now = time.time()
         good_history = [{"net_pnl_pct": 10.0} for _ in range(6)] + [
