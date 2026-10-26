@@ -1248,6 +1248,23 @@ class ScannerLogicTests(unittest.TestCase):
         accepted, reason = scanner.passes_shadow_market_filter(candidate)
         self.assertTrue(accepted, reason)
 
+    def test_unvalidated_strategy_locks_paper_entries_but_keeps_shadow_research_running(self):
+        state = scanner.normalize_state({})
+        state["strategy"]["validation_status"] = "no_validated_candidate"
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "save_state"), \
+             patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "scan_shadow_candidates", return_value={"scanned": 1, "shadow_opened": ["mint"]}) as shadow_scan, \
+             patch.object(scanner, "log"):
+            result = scanner.run_cycle(state)
+        self.assertTrue(result["entry_locked"])
+        self.assertEqual(result["opened"], [])
+        self.assertEqual(state["positions"], {})
+        shadow_scan.assert_called_once()
+        self.assertEqual(state["scan_count"], 1)
+
     def test_active_scan_records_market_filter_rejection_reason(self):
         state = scanner.normalize_state({})
         with patch.object(scanner, "reconcile_learning_from_trade_log"), \
