@@ -105,6 +105,7 @@
   <div class="live-kpi"><span>تطابق خروج پایه</span><b id="pathBtBaseline">—</b></div>
   <div class="live-kpi"><span>بازده خالص پایه، توصیفی</span><b id="pathBtBaselineNet">—</b></div>
   <div class="live-kpi"><span>قانون انتخاب‌شده از آموزش</span><b id="pathBtConfig">—</b></div>
+  <div class="live-kpi"><span>بهترین نتیجهٔ آموزشی، فقط اکتشافی</span><b id="pathBtExploratory">—</b></div>
   <div class="live-kpi"><span>بازده خالص آزمون نگه‌داشته‌شده</span><b id="pathBtHoldout">—</b></div>
  </div>
  <p class="small" id="pathBtNote">این آزمون به مسیرهای قیمت واقعی از حساب پیپر نیاز دارد. مسیر کوتاه یا نمونهٔ ناکافی به‌عنوان سوددهی تأیید نمی‌شود.</p>
@@ -358,6 +359,18 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   $('pathBtConfig').textContent=cfg
    ? entryLabel+' · حدضرر '+(Number(cfg.hard_stop_pct)*100).toFixed(0)+'٪، تریل '+(Number(cfg.trailing_stop_pct)*100).toFixed(0)+'٪، نگهداری '+Number(cfg.max_hold_seconds).toFixed(0)+' ثانیه'
    : 'هنوز انتخاب نشده';
+  const exploratory=(pathReport.exploratory_training_candidates||[])[0]||null;
+  if(exploratory&&exploratory.metrics){
+   const em=exploratory.metrics;
+   const ef=exploratory.entry_filter||{};
+   $('pathBtExploratory').textContent=(ef.name||'فیلتر نامشخص')
+    +' · میانگین '+Number(em.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(em.profit_factor||0).toFixed(2)
+    +' · n='+Number(exploratory.train_rows||em.n||0);
+   $('pathBtExploratory').style.color=Number(em.mean_pnl_pct)>0?'var(--green)':'var(--red)';
+  }else{
+   $('pathBtExploratory').textContent='دادهٔ آموزشی کافی نیست';
+   $('pathBtExploratory').style.color='var(--yellow)';
+  }
   const hold=pathReport.holdout;
   $('pathBtHoldout').textContent=hold
    ? Number(hold.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(hold.profit_factor||0).toFixed(2)
