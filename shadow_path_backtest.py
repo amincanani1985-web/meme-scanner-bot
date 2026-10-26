@@ -566,6 +566,39 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
     return result
 
 
+PROSPECTIVE_ENTRY_TAGS = ("moderate_pullback_v1",)
+
+
+def analyze_prospective_cohorts(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
+                                round_trip_cost_pct=ROUND_TRIP_COST_PCT):
+    """Score only paths tagged at entry by the current scanner version.
+
+    Untagged historical paths are deliberately excluded because the research
+    rule was identified after those outcomes were observed. The cohort remains
+    paper-only; the normal train/holdout promotion gates still apply.
+    """
+    experiments = {}
+    for tag in PROSPECTIVE_ENTRY_TAGS:
+        cohort = [
+            record for record in records
+            if isinstance(record, dict)
+            and isinstance(record.get("prospective_entry_filters"), list)
+            and tag in record["prospective_entry_filters"]
+        ]
+        result = analyze_records(
+            cohort,
+            min_total_paths=min_total_paths,
+            round_trip_cost_pct=round_trip_cost_pct,
+        )
+        result["experiment_tag"] = tag
+        result["cohort_policy"] = (
+            "Only paths tagged at entry by the deployed scanner version; "
+            "untagged historical paths are excluded from this prospective test."
+        )
+        experiments[tag] = result
+    return experiments
+
+
 def load_paths(paths):
     """Load JSONL path records and report malformed/duplicate rows instead of hiding them."""
     records = []
@@ -616,6 +649,11 @@ def run(paths=None, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
     )
     report["sources"] = diagnostics
     report["baseline_consistency"] = baseline_consistency(records)
+    report["prospective_experiments"] = analyze_prospective_cohorts(
+        records,
+        min_total_paths=min_total_paths,
+        round_trip_cost_pct=round_trip_cost_pct,
+    )
     report["policy"] = (
         "Research only. No live threshold or order path is changed. Approval requires a "
         "profitable training segment and a separate profitable chronological holdout after costs."
