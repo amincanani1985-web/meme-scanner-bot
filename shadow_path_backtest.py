@@ -566,7 +566,13 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
     return result
 
 
-PROSPECTIVE_ENTRY_TAGS = ("moderate_pullback_v1",)
+PROSPECTIVE_ENTRY_TAGS = (
+    "moderate_pullback_v1",
+    "broad_pullback_v1",
+    "liquid_pullback_v1",
+    "tight_pullback_v1",
+    "recovery_pullback_v1",
+)
 
 
 def analyze_prospective_cohorts(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,

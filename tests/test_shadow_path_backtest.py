@@ -326,6 +326,24 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(cohort["status"], "insufficient_history")
         self.assertIsNone(cohort["selected_config"])
 
+    def test_prospective_cohort_registry_contains_all_five_preregistered_tags(self):
+        import shadow_path_backtest as backtest
+
+        expected = {
+            "moderate_pullback_v1",
+            "broad_pullback_v1",
+            "liquid_pullback_v1",
+            "tight_pullback_v1",
+            "recovery_pullback_v1",
+        }
+        self.assertEqual(set(backtest.PROSPECTIVE_ENTRY_TAGS), expected)
+        reports = backtest.analyze_prospective_cohorts([], min_total_paths=1)
+        self.assertEqual(set(reports), expected)
+        for result in reports.values():
+            self.assertEqual(result["status"], "insufficient_history")
+            self.assertEqual(result["paths_received"], 0)
+            self.assertIsNone(result["selected_config"])
+
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
         self.assertEqual(report["status"], "insufficient_history")

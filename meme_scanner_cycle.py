@@ -1309,24 +1309,58 @@ def manage_shadow_positions(state):
                 )
 
 PROSPECTIVE_SHADOW_RULE_TAG = "moderate_pullback_v1"
+PROSPECTIVE_SHADOW_ENTRY_TAGS = (
+    "moderate_pullback_v1",
+    "broad_pullback_v1",
+    "liquid_pullback_v1",
+    "tight_pullback_v1",
+    "recovery_pullback_v1",
+)
 
 
 def _prospective_shadow_entry_filters(components):
-    """Tag one preregistered research hypothesis; this never changes live entry rules."""
+    """Apply five preregistered, overlapping research cohorts; never changes live entries."""
     if not isinstance(components, dict):
         return []
     try:
         h1 = float(components["momentum_h1_pct"])
         m5 = float(components["momentum_m5_pct"])
         ratio = float(components["buy_sell_ratio"])
-        values = (h1, m5, ratio)
     except (KeyError, TypeError, ValueError, OverflowError):
         return []
-    if not all(math.isfinite(value) for value in values):
+    if not all(math.isfinite(value) for value in (h1, m5, ratio)):
         return []
+
+    # Additional liquidity/volume gates fail closed when the feature is missing.
+    def feature(name):
+        try:
+            value = float(components[name])
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return None
+        return value if math.isfinite(value) else None
+
+    liquidity = feature("liquidity_usd")
+    volume = feature("volume_h1_usd")
+    tags = []
+
     if 5.0 <= h1 <= 30.0 and -5.0 <= m5 <= 3.0 and 1.0 <= ratio <= 4.0:
-        return [PROSPECTIVE_SHADOW_RULE_TAG]
-    return []
+        tags.append("moderate_pullback_v1")
+    if 0.0 <= h1 <= 45.0 and -5.0 <= m5 <= 5.0 and 1.0 <= ratio <= 5.0:
+        tags.append("broad_pullback_v1")
+    if (5.0 <= h1 <= 45.0 and -5.0 <= m5 <= 3.0 and 1.0 <= ratio <= 4.0
+            and liquidity is not None and liquidity >= 25_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("liquid_pullback_v1")
+    if (5.0 <= h1 <= 30.0 and -2.0 <= m5 <= 2.0 and 1.2 <= ratio <= 4.0
+            and liquidity is not None and liquidity >= 50_000.0
+            and volume is not None and volume >= 25_000.0):
+        tags.append("tight_pullback_v1")
+    if (10.0 <= h1 <= 60.0 and -5.0 <= m5 <= 0.0 and 1.0 <= ratio <= 6.0
+            and liquidity is not None and liquidity >= 25_000.0
+            and volume is not None and volume >= 10_000.0):
+        tags.append("recovery_pullback_v1")
+
+    return tags
 
 
 def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):

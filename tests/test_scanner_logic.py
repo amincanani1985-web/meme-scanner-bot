@@ -1120,34 +1120,52 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["shadow_opened"], ["mint"])
         self.assertIn("mint", state["shadow_positions"])
 
-    def test_prospective_shadow_filter_tags_only_the_registered_moderate_pullback(self):
+    def test_prospective_shadow_filter_tags_registered_pullback_cohorts(self):
         qualifying = {
             "momentum_h1_pct": 15.0,
             "momentum_m5_pct": -1.0,
             "buy_sell_ratio": 1.5,
             "liquidity_usd": 100000.0,
         }
+        # Without volume history, only the broad and moderate cohorts qualify.
         self.assertEqual(
             scanner._prospective_shadow_entry_filters(qualifying),
-            ["moderate_pullback_v1"],
+            ["moderate_pullback_v1", "broad_pullback_v1"],
+        )
+        full = {**qualifying, "volume_h1_usd": 50000.0}
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters(full),
+            [
+                "moderate_pullback_v1",
+                "broad_pullback_v1",
+                "liquid_pullback_v1",
+                "tight_pullback_v1",
+                "recovery_pullback_v1",
+            ],
         )
         self.assertEqual(
             scanner._prospective_shadow_entry_filters({
-                **qualifying, "momentum_h1_pct": 90.0,
+                **full, "momentum_h1_pct": 90.0,
             }),
             [],
         )
         self.assertEqual(
             scanner._prospective_shadow_entry_filters({
-                **qualifying, "momentum_m5_pct": -8.0,
+                **full, "momentum_m5_pct": -8.0,
             }),
             [],
         )
         self.assertEqual(
             scanner._prospective_shadow_entry_filters({
-                **qualifying, "buy_sell_ratio": 6.0,
+                **full, "buy_sell_ratio": 6.5,
             }),
             [],
+        )
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters({
+                **full, "liquidity_usd": float("nan"),
+            }),
+            ["moderate_pullback_v1", "broad_pullback_v1"],
         )
         self.assertEqual(scanner._prospective_shadow_entry_filters({}), [])
 
