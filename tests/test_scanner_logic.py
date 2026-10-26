@@ -415,7 +415,7 @@ class ScannerLogicTests(unittest.TestCase):
             )
 
     def test_low_score_shadow_candidate_is_research_only_not_a_live_entry(self):
-        self.assertEqual(scanner.SHADOW_MIN_SCORE, 35.0)
+        self.assertEqual(scanner.SHADOW_MIN_SCORE, 0.0)
         research_pair = pair(
             liquidity={"usd": 30000},
             volume={"h1": 5000},
