@@ -775,6 +775,55 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["trade_count"], 0)
         self.assertIn("price_missing_since", state["positions"]["mint"])
 
+    def test_shadow_price_path_is_retained_after_baseline_exit_until_research_horizon(self):
+        entry_time = 10000.0
+        path_log = Path(tempfile.gettempdir()) / ("shadow-path-test-" + str(time.time_ns()) + ".jsonl")
+        state = {
+            "equity": 1000.0, "trade_count": 0,
+            "shadow_positions": {"mint": {
+                "symbol": "PATH", "entry_price": 1.0, "entry_time": entry_time,
+                "entry_liquidity": 100000.0, "peak_price": 1.0,
+                "signal_score": 85.0, "trailing_armed": False,
+                "components": {"momentum_h1_pct": 4.0},
+                "price_history": [{
+                    "timestamp": entry_time, "price_usd": 1.0,
+                    "liquidity_usd": 100000.0,
+                }],
+            }},
+        }
+        sample_pair = pair(priceUsd="1.0", liquidity={"usd": 100000.0})
+        observation = Mock()
+        try:
+            with patch.dict("os.environ", {"SHADOW_PRICE_PATH_LOG": str(path_log)}), \
+                 patch.object(scanner.time, "time", return_value=entry_time + scanner.MAX_HOLD_SECONDS), \
+                 patch.object(scanner, "fetch_dex_pair", return_value=sample_pair), \
+                 patch.object(scanner, "append_learning_observation", observation), \
+                 patch.object(scanner, "log"):
+                scanner.manage_shadow_positions(state)
+            self.assertIn("mint", state["shadow_positions"])
+            self.assertEqual(
+                state["shadow_positions"]["mint"]["benchmark_exit_reason"],
+                "max_hold_timeout",
+            )
+            self.assertEqual(observation.call_count, 1)
+            self.assertFalse(path_log.exists())
+
+            with patch.dict("os.environ", {"SHADOW_PRICE_PATH_LOG": str(path_log)}), \
+                 patch.object(scanner.time, "time", return_value=entry_time + scanner.SHADOW_STALE_OBSERVATION_SECONDS), \
+                 patch.object(scanner, "fetch_dex_pair", return_value=pair(priceUsd="1.05", liquidity={"usd": 100000.0})), \
+                 patch.object(scanner, "append_learning_observation", observation), \
+                 patch.object(scanner, "log"):
+                scanner.manage_shadow_positions(state)
+
+            self.assertNotIn("mint", state["shadow_positions"])
+            self.assertEqual(observation.call_count, 1)
+            record = json.loads(path_log.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["benchmark_exit"]["reason"], "max_hold_timeout")
+            self.assertGreaterEqual(record["observed_duration_seconds"], scanner.MAX_HOLD_SECONDS)
+            self.assertGreaterEqual(len(record["price_history"]), 3)
+        finally:
+            path_log.unlink(missing_ok=True)
+
     def test_stale_shadow_position_is_discarded_without_training_sample(self):
         state = {
             "equity": 293.36, "trade_count": 0,
