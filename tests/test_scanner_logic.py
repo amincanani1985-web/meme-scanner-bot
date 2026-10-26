@@ -1118,6 +1118,37 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(result["shadow_opened"], ["mint"])
         self.assertIn("mint", state["shadow_positions"])
 
+    def test_prospective_shadow_filter_tags_only_the_registered_moderate_pullback(self):
+        qualifying = {
+            "momentum_h1_pct": 15.0,
+            "momentum_m5_pct": -1.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100000.0,
+        }
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters(qualifying),
+            ["moderate_pullback_v1"],
+        )
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters({
+                **qualifying, "momentum_h1_pct": 90.0,
+            }),
+            [],
+        )
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters({
+                **qualifying, "momentum_m5_pct": -8.0,
+            }),
+            [],
+        )
+        self.assertEqual(
+            scanner._prospective_shadow_entry_filters({
+                **qualifying, "buy_sell_ratio": 6.0,
+            }),
+            [],
+        )
+        self.assertEqual(scanner._prospective_shadow_entry_filters({}), [])
+
     def test_shadow_research_does_not_reopen_a_mint_with_a_complete_saved_path(self):
         state = scanner.normalize_state({})
         state["shadow_completed_mints"] = ["mint"]
