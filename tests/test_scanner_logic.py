@@ -1197,6 +1197,8 @@ class ScannerLogicTests(unittest.TestCase):
             "memeswap_risk_data_available": 1.0,
             "memeswap_full_risk_screen_available": 1.0,
             "memeswap_gate_pass": 1.0,
+            "memeswap_price_age_seconds": 12.0,
+            "memeswap_profile_age_seconds": 20.0,
             "memeswap_top1_pct": 8.0,
             "memeswap_top10_pct": 28.0,
             "memeswap_top20_pct": 54.0,
