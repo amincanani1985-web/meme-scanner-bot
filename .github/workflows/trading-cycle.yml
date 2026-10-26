@@ -10,6 +10,7 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "shadow_learning.py"
+      - "shadow_path_backtest.py"
       - "whale_research.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -23,6 +24,7 @@ on:
       - "learn_agent.py"
       - "strategy_backtest.py"
       - "shadow_learning.py"
+      - "shadow_path_backtest.py"
       - "whale_research.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -69,7 +71,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
 
       - name: Run scanner tests 10 times
         shell: bash
@@ -284,6 +286,31 @@ jobs:
           )
           PY
 
+      - name: Backtest sampled shadow exit paths (research only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python shadow_path_backtest.py --paths shadow_price_paths.jsonl paper_account/shadow_price_paths.jsonl | tee /tmp/shadow-path-backtest-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/shadow-path-backtest-report.json").read_text(encoding="utf-8"))
+          print("## Sampled quote-path exit backtest")
+          print("- Data: recorded paper quotes only; no synthetic candles or prices.")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Paths received / usable: {report.get('paths_received', 0)} / {report.get('usable_paths', 0)}")
+          print(f"- Chronological train / holdout: {report.get('train_rows', 0)} / {report.get('validation_rows', 0)}")
+          consistency = report.get("baseline_consistency", {})
+          print(f"- Baseline replay matches: {consistency.get('matches', 0)} / {consistency.get('checked', 0)}")
+          if report.get("selected_config") is not None:
+              print(f"- Selected training-only rule: {report['selected_config']}")
+              print(f"- Training metrics: {report.get('training', {})}")
+              print(f"- Untouched holdout metrics: {report.get('holdout', {})}")
+          if report.get("status") != "validated_profitable_out_of_sample":
+              print("- **NOT VALIDATED:** no exit rule has passed the complete net-profitable holdout gates.")
+          PY
+
       - name: Commit updated state
         if: github.event_name != 'pull_request'
         shell: bash
@@ -325,6 +352,7 @@ jobs:
           if [ -f whale_watch_state.json ]; then git add whale_watch_state.json; fi
           if [ -f whale_events.csv ]; then git add whale_events.csv; fi
           if [ -f whale_copy_state.json ]; then git add whale_copy_state.json; fi
+          if [ -f shadow_price_paths.jsonl ]; then git add shadow_price_paths.jsonl; fi
           if [ -d whale_copy_account ]; then git add whale_copy_account/; fi
 
           if git diff --staged --quiet; then
