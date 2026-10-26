@@ -102,6 +102,27 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
         }))
 
+    def test_only_previously_profitable_wallets_emit_fresh_buy_signals(self):
+        now = time.time()
+        good_history = [{"net_pnl_pct": 10.0} for _ in range(6)] + [
+            {"net_pnl_pct": -2.0}, {"net_pnl_pct": -2.0}
+        ]
+        record = {"positions": {}, "seen_signatures": [], "closed_trades": good_history}
+        trade = follower.parse_swap_transaction(
+            swap("fresh-good-buy", now - 30, "buy", 1000, 100), WALLET
+        )
+        result = follower.apply_wallet_trades(record, [trade], now=now)
+        self.assertEqual(len(result["buy_signals"]), 1)
+        self.assertEqual(result["buy_signals"][0]["wallet"], WALLET)
+
+        poor_record = {"positions": {}, "seen_signatures": [],
+                       "closed_trades": [{"net_pnl_pct": -5.0} for _ in range(12)]}
+        poor_trade = follower.parse_swap_transaction(
+            swap("fresh-bad-buy", now - 30, "buy", 1000, 100), WALLET
+        )
+        poor_result = follower.apply_wallet_trades(poor_record, [poor_trade], now=now)
+        self.assertEqual(poor_result["buy_signals"], [])
+
     def test_expired_copy_signal_is_never_eligible(self):
         now = time.time()
         self.assertTrue(follower.signal_is_fresh(now - 30, now=now, max_age_seconds=60))
