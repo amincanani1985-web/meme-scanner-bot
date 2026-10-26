@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "meme_scanner_cycle.py"
+      - "whale_copy_paper.py"
       - "paper_scenario_lab.py"
       - "tests/**"
       - "learn_agent.py"
@@ -308,7 +309,9 @@ jobs:
               "window.LIVE_STATE=" + json.dumps(state, separators=(",", ":")) + ";\n"
               "window.LIVE_CSV=" + json.dumps(csv) + ";\n"
               "window.PAPER_STATE=" + json.dumps(paper_state, separators=(",", ":")) + ";\n"
-              "window.PAPER_CSV=" + json.dumps(paper_csv) + ";\n",
+              "window.PAPER_CSV=" + json.dumps(paper_csv) + ";\n"
+              "window.WHALE_COPY_STATE=" + json.dumps(whale_state, separators=(",", ":")) + ";\n"
+              "window.WHALE_COPY_CSV=" + json.dumps(whale_csv) + ";\n",
               encoding="utf-8",
           )
           PY
