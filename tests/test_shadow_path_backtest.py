@@ -191,6 +191,61 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["usable_paths"], 1)
         self.assertEqual(report["baseline_performance"]["n"], 1)
 
+    def test_predeclared_entry_filters_are_serializable_and_reject_missing_features(self):
+        import shadow_path_backtest as backtest
+
+        filters = backtest.candidate_entry_filters()
+        names = [item["name"] for item in filters]
+        self.assertGreaterEqual(len(filters), 5)
+        self.assertEqual(len(names), len(set(names)))
+        record = path([(0, 1.0, 100_000), (30, 0.99, 100_000)])
+        record["score"] = 75.0
+        record["entry_components"] = {
+            "momentum_h1_pct": 10.0,
+            "momentum_m5_pct": 2.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100_000.0,
+            "volume_h1_usd": 50_000.0,
+            "market_cap_usd": 500_000.0,
+            "liquidity_to_mcap_ratio": 0.2,
+        }
+        self.assertTrue(backtest.entry_filter_matches(record, filters[0]))
+        self.assertTrue(all(isinstance(item, dict) for item in filters))
+        record["entry_components"] = {}
+        self.assertFalse(backtest.entry_filter_matches(record, next(
+            item for item in filters if item.get("h1_min") is not None
+        )))
+
+    def test_joint_entry_exit_search_does_not_select_a_losing_training_rule(self):
+        import shadow_path_backtest as backtest
+
+        records = []
+        for i in range(50):
+            record = path([
+                (seconds, 1.0 - 0.0001 * seconds, 100_000.0)
+                for seconds in range(0, 901, 30)
+            ])
+            record["mint"] = f"unique-mint-{i}"
+            record["score"] = 75.0
+            record["entry_components"] = {
+                "momentum_h1_pct": 10.0,
+                "momentum_m5_pct": 2.0,
+                "buy_sell_ratio": 1.5,
+                "liquidity_usd": 100_000.0,
+                "volume_h1_usd": 50_000.0,
+                "market_cap_usd": 500_000.0,
+                "liquidity_to_mcap_ratio": 0.2,
+            }
+            records.append(record)
+
+        report = backtest.analyze_records(records, min_total_paths=50)
+        self.assertEqual(report["train_rows"], 35)
+        self.assertEqual(report["validation_rows"], 15)
+        self.assertEqual(report["status"], "no_profitable_training_candidate")
+        self.assertEqual(report["eligible_training_candidates"], [])
+        self.assertIsNone(report["selected_config"])
+        self.assertGreater(report["joint_candidate_configs"], 0)
+
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
         self.assertEqual(report["status"], "insufficient_history")
