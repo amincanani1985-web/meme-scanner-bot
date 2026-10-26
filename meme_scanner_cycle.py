@@ -92,27 +92,39 @@ MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for
 # ============================================================================
 
 def _load_shadow_completed_mints():
-    """Migrate completed quote-path mints so old paths are not sampled again."""
-    path = Path("shadow_price_paths.jsonl")
-    if not path.is_file():
-        return []
+    """Load completed mints from the canonical paper log and legacy root log."""
+    configured = os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")
+    candidates = [
+        Path(configured),
+        Path("shadow_price_paths.jsonl"),
+        Path("paper_account/shadow_price_paths.jsonl"),
+    ]
     completed = []
     seen = set()
-    try:
-        with path.open(encoding="utf-8") as handle:
-            for line in handle:
-                if not line.strip():
-                    continue
-                try:
-                    record = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                mint = str(record.get("mint") or "").strip() if isinstance(record, dict) else ""
-                if mint and mint not in seen:
-                    seen.add(mint)
-                    completed.append(mint)
-    except OSError:
-        return []
+    visited_paths = set()
+    for path in candidates:
+        path_key = str(path)
+        if path_key in visited_paths:
+            continue
+        visited_paths.add(path_key)
+        if not path.is_file():
+            continue
+        try:
+            with path.open(encoding="utf-8") as handle:
+                for line in handle:
+                    if not line.strip():
+                        continue
+                    try:
+                        record = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    mint = str(record.get("mint") or "").strip() if isinstance(record, dict) else ""
+                    if mint and mint not in seen:
+                        seen.add(mint)
+                        completed.append(mint)
+        except OSError:
+            # One broken/missing legacy file must not hide completions in another.
+            continue
     return completed[-MAX_SHADOW_COMPLETED_MINTS:]
 
 
