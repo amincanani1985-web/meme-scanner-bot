@@ -26,9 +26,9 @@
   ],
   "cooldowns": {},
   "trade_count": 53,
-  "scan_count": 451,
+  "scan_count": 452,
   "version": "v17-production-hardened",
-  "last_run": "2026-10-26T06:52:48Z",
+  "last_run": "2026-10-26T06:56:48Z",
   "learning": {
     "trades": 53,
     "wins": 21,
@@ -244,9 +244,19 @@
           "timestamp": 1792997565.9110568,
           "price_usd": 0.0004594,
           "liquidity_usd": 9157831.66
+        },
+        {
+          "timestamp": 1792997806.5068667,
+          "price_usd": 0.0004605,
+          "liquidity_usd": 9172750.29
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.5068667,
+      "benchmark_exit_price_usd": 0.0004605,
+      "benchmark_exit_liquidity_usd": 9172750.29,
+      "benchmark_exit_after_slippage_pnl_pct": -2.5595683420616893
     },
     "CA8q2mkYWZnUNqYmf6pxyxAPZsmSe2EG9P7hHMW5pump": {
       "symbol": "REMUS",
@@ -284,9 +294,19 @@
           "timestamp": 1792997566.0342603,
           "price_usd": 0.001261,
           "liquidity_usd": 106689.66
+        },
+        {
+          "timestamp": 1792997806.5783052,
+          "price_usd": 0.001256,
+          "liquidity_usd": 106496.9
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.5783052,
+      "benchmark_exit_price_usd": 0.001256,
+      "benchmark_exit_liquidity_usd": 106496.9,
+      "benchmark_exit_after_slippage_pnl_pct": 2.164250646370175
     },
     "H7VZNCBynDK5ikBS9krDJ2Tx8CUr1wxedV19ZgkWpump": {
       "symbol": "CATTLEAXE",
@@ -324,6 +344,11 @@
           "timestamp": 1792997566.0972097,
           "price_usd": 0.00121,
           "liquidity_usd": 105713.16
+        },
+        {
+          "timestamp": 1792997806.6172276,
+          "price_usd": 0.001219,
+          "liquidity_usd": 106156.98
         }
       ],
       "benchmark_exit_reason": "hard_stop_loss",
@@ -368,16 +393,26 @@
           "timestamp": 1792997566.1568708,
           "price_usd": 0.0006039,
           "liquidity_usd": 12860839.45
+        },
+        {
+          "timestamp": 1792997806.6520057,
+          "price_usd": 0.0006083,
+          "liquidity_usd": 12912918.08
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.6520057,
+      "benchmark_exit_price_usd": 0.0006083,
+      "benchmark_exit_liquidity_usd": 12912918.08,
+      "benchmark_exit_after_slippage_pnl_pct": -3.1936479427996325
     },
     "3p4LAKKCcsiBF5nuYYqLu8mJpfXStQJMk2LYubM3pump": {
       "symbol": "Chop",
       "entry_price": 0.0006797454999999999,
       "entry_time": 1792996967.1389234,
       "entry_liquidity": 73824.85,
-      "peak_price": 0.0007085,
+      "peak_price": 0.0007224,
       "signal_score": 61.295779661016944,
       "trailing_armed": false,
       "components": {
@@ -408,9 +443,19 @@
           "timestamp": 1792997566.2790704,
           "price_usd": 0.0007085,
           "liquidity_usd": 76029.03
+        },
+        {
+          "timestamp": 1792997806.6945086,
+          "price_usd": 0.0007224,
+          "liquidity_usd": 76830.32
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.6945086,
+      "benchmark_exit_price_usd": 0.0007224,
+      "benchmark_exit_liquidity_usd": 76830.32,
+      "benchmark_exit_after_slippage_pnl_pct": 4.149567742633101
     },
     "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk": {
       "symbol": "USELESS",
@@ -448,9 +493,19 @@
           "timestamp": 1792997566.3346622,
           "price_usd": 0.1567,
           "liquidity_usd": 4015732.43
+        },
+        {
+          "timestamp": 1792997806.7319217,
+          "price_usd": 0.1568,
+          "liquidity_usd": 4019515.44
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.7319217,
+      "benchmark_exit_price_usd": 0.1568,
+      "benchmark_exit_liquidity_usd": 4019515.44,
+      "benchmark_exit_after_slippage_pnl_pct": -3.2631926848077435
     },
     "9DGb9TWswLUqu85reo2kNoZkKkME9nB9YVfjYkqopump": {
       "symbol": "GTA",
@@ -488,9 +543,19 @@
           "timestamp": 1792997566.3915052,
           "price_usd": 0.0002975,
           "liquidity_usd": 47962.39
+        },
+        {
+          "timestamp": 1792997806.7704568,
+          "price_usd": 0.0002763,
+          "liquidity_usd": 46188.24
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.7704568,
+      "benchmark_exit_price_usd": 0.0002763,
+      "benchmark_exit_liquidity_usd": 46188.24,
+      "benchmark_exit_after_slippage_pnl_pct": -8.608285785164968
     },
     "HsprHxBRgiVaQdRf3TnKNuZZtaX9JUSPgMFdAkk6pump": {
       "symbol": "GATO",
@@ -528,9 +593,19 @@
           "timestamp": 1792997566.4474912,
           "price_usd": 0.00323,
           "liquidity_usd": 174309.73
+        },
+        {
+          "timestamp": 1792997806.8099968,
+          "price_usd": 0.00326,
+          "liquidity_usd": 175231.2
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.8099968,
+      "benchmark_exit_price_usd": 0.00326,
+      "benchmark_exit_liquidity_usd": 175231.2,
+      "benchmark_exit_after_slippage_pnl_pct": -2.248875562218897
     },
     "CsovxRtEM6g4jcVGtcTB3xwycoAuPjEafpUTR6zrpump": {
       "symbol": "Hellcat",
@@ -568,9 +643,19 @@
           "timestamp": 1792997566.506097,
           "price_usd": 7.407e-05,
           "liquidity_usd": 21753.71
+        },
+        {
+          "timestamp": 1792997806.8451896,
+          "price_usd": 7.361e-05,
+          "liquidity_usd": 21686.31
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.8451896,
+      "benchmark_exit_price_usd": 7.361e-05,
+      "benchmark_exit_liquidity_usd": 21686.31,
+      "benchmark_exit_after_slippage_pnl_pct": -7.639084940960313
     },
     "BTvAbqm2z6r81UX9f3Kt9eijZwAr824QyjCeYaNCpump": {
       "symbol": "ApeLax",
@@ -608,9 +693,19 @@
           "timestamp": 1792997566.5894623,
           "price_usd": 9.868e-05,
           "liquidity_usd": 25188.22
+        },
+        {
+          "timestamp": 1792997806.8819604,
+          "price_usd": 9.306e-05,
+          "liquidity_usd": 24430.38
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.8819604,
+      "benchmark_exit_price_usd": 9.306e-05,
+      "benchmark_exit_liquidity_usd": 24430.38,
+      "benchmark_exit_after_slippage_pnl_pct": -0.5412502958173455
     },
     "7JEfFdwmXfQf89ty1sF3aspN9oku9fHikA7XZTTXpump": {
       "symbol": "GTA",
@@ -648,9 +743,19 @@
           "timestamp": 1792997566.6594846,
           "price_usd": 0.001596,
           "liquidity_usd": 109774.78
+        },
+        {
+          "timestamp": 1792997806.92142,
+          "price_usd": 0.001482,
+          "liquidity_usd": 105832.5
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.92142,
+      "benchmark_exit_price_usd": 0.001482,
+      "benchmark_exit_liquidity_usd": 105832.5,
+      "benchmark_exit_after_slippage_pnl_pct": -11.013896037056096
     },
     "SAtoZGJkh4Eid9EQZYXWnCNVn5asZrWZLouBMX1SHi1": {
       "symbol": "Satoshi",
@@ -688,16 +793,26 @@
           "timestamp": 1792997566.7161248,
           "price_usd": 0.0001776,
           "liquidity_usd": 37396.56
+        },
+        {
+          "timestamp": 1792997806.9729846,
+          "price_usd": 0.0001786,
+          "liquidity_usd": 37449.28
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997806.9729846,
+      "benchmark_exit_price_usd": 0.0001786,
+      "benchmark_exit_liquidity_usd": 37449.28,
+      "benchmark_exit_after_slippage_pnl_pct": -1.63070204772114
     },
     "HTi6JahmSzq2s1B2zg7GG6Ev6cQEpoGRDRxKWATYpump": {
       "symbol": "BENICIO",
       "entry_price": 2.9556799999999995e-05,
       "entry_time": 1792996967.1391497,
       "entry_liquidity": 15625.02,
-      "peak_price": 2.9556799999999995e-05,
+      "peak_price": 3.014e-05,
       "signal_score": 71.068,
       "trailing_armed": false,
       "components": {
@@ -728,9 +843,19 @@
           "timestamp": 1792997566.7712312,
           "price_usd": 2.847e-05,
           "liquidity_usd": 15452.81
+        },
+        {
+          "timestamp": 1792997807.040893,
+          "price_usd": 3.014e-05,
+          "liquidity_usd": 15904.97
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997807.040893,
+      "benchmark_exit_price_usd": 3.014e-05,
+      "benchmark_exit_liquidity_usd": 15904.97,
+      "benchmark_exit_after_slippage_pnl_pct": -0.06631299734746504
     },
     "8cFU1FJHVZQAricMRXPE5wa3zg6GvdG52mcutMMBpump": {
       "symbol": "ROFLAMP",
@@ -768,16 +893,26 @@
           "timestamp": 1792997566.8348575,
           "price_usd": 0.0001831,
           "liquidity_usd": 35984.72
+        },
+        {
+          "timestamp": 1792997807.1135094,
+          "price_usd": 0.0001338,
+          "liquidity_usd": 30546.96
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1792997807.1135094,
+      "benchmark_exit_price_usd": 0.0001338,
+      "benchmark_exit_liquidity_usd": 30546.96,
+      "benchmark_exit_after_slippage_pnl_pct": -20.647293061086167
     },
     "AhBidGAgv6QbKSWfrSCegGrzFLcBx4E5FNYTKHNQQj6C": {
       "symbol": "LAUNCH",
       "entry_price": 0.0013763399999999998,
       "entry_time": 1792996967.1391966,
       "entry_liquidity": 117909.63,
-      "peak_price": 0.001407,
+      "peak_price": 0.001411,
       "signal_score": 73.26327272727272,
       "trailing_armed": false,
       "components": {
@@ -808,9 +943,19 @@
           "timestamp": 1792997566.903119,
           "price_usd": 0.001407,
           "liquidity_usd": 121013.87
+        },
+        {
+          "timestamp": 1792997807.1517777,
+          "price_usd": 0.001411,
+          "liquidity_usd": 121374.05
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1792997807.1517777,
+      "benchmark_exit_price_usd": 0.001411,
+      "benchmark_exit_liquidity_usd": 121374.05,
+      "benchmark_exit_after_slippage_pnl_pct": 0.46790763910081346
     },
     "DtcicPCKTKeAh7TDEzTym3hXeoHAoMiBdYJhMYxZpump": {
       "symbol": "CBUCKS",
@@ -843,6 +988,11 @@
           "timestamp": 1792997566.962743,
           "price_usd": 0.001181,
           "liquidity_usd": 112796.51
+        },
+        {
+          "timestamp": 1792997807.2006214,
+          "price_usd": 0.001182,
+          "liquidity_usd": 112827.18
         }
       ],
       "liquidity_drain_hits": 0
@@ -878,6 +1028,11 @@
           "timestamp": 1792997567.0361576,
           "price_usd": 0.247,
           "liquidity_usd": 246836787.95
+        },
+        {
+          "timestamp": 1792997807.2371297,
+          "price_usd": 0.247,
+          "liquidity_usd": 246836787.95
         }
       ],
       "liquidity_drain_hits": 0
@@ -887,7 +1042,7 @@
       "entry_price": 6.216874999999999e-05,
       "entry_time": 1792997239.2131436,
       "entry_liquidity": 20538.29,
-      "peak_price": 7.098e-05,
+      "peak_price": 7.435e-05,
       "signal_score": 68.36761224489796,
       "trailing_armed": true,
       "components": {
@@ -913,6 +1068,11 @@
           "timestamp": 1792997567.189184,
           "price_usd": 7.098e-05,
           "liquidity_usd": 22273.08
+        },
+        {
+          "timestamp": 1792997807.3426292,
+          "price_usd": 7.435e-05,
+          "liquidity_usd": 22824.25
         }
       ],
       "liquidity_drain_hits": 0
@@ -948,6 +1108,11 @@
           "timestamp": 1792997567.2530894,
           "price_usd": 5.542e-05,
           "liquidity_usd": 20356.69
+        },
+        {
+          "timestamp": 1792997807.3788776,
+          "price_usd": 5.542e-05,
+          "liquidity_usd": 20356.69
         }
       ],
       "liquidity_drain_hits": 0
@@ -978,8 +1143,18 @@
           "timestamp": 1792997568.968884,
           "price_usd": 1.215e-05,
           "liquidity_usd": 7541.55
+        },
+        {
+          "timestamp": 1792997807.4167132,
+          "price_usd": 1.077e-05,
+          "liquidity_usd": 6979.47
         }
-      ]
+      ],
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1792997807.4167132,
+      "benchmark_exit_price_usd": 1.077e-05,
+      "benchmark_exit_liquidity_usd": 6979.47,
+      "benchmark_exit_after_slippage_pnl_pct": -14.414644529587045
     },
     "5qDiSWLy5mXog6L5u1rZGwCerDN29X5tFtVBp8j5pump": {
       "symbol": "Bow",
@@ -1007,15 +1182,25 @@
           "timestamp": 1792997568.9689274,
           "price_usd": 0.0001474,
           "liquidity_usd": 34204.01
+        },
+        {
+          "timestamp": 1792997807.4627123,
+          "price_usd": 0.0001277,
+          "liquidity_usd": 31711.3
         }
-      ]
+      ],
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1792997807.4627123,
+      "benchmark_exit_price_usd": 0.0001277,
+      "benchmark_exit_liquidity_usd": 31711.3,
+      "benchmark_exit_after_slippage_pnl_pct": -16.352407242782945
     },
     "8gnyYyngFtzPP6K9YRQ8a7kZWKQ5tzu5N2D23Rafxrn5": {
       "symbol": "STM",
       "entry_price": 0.0001363145,
       "entry_time": 1792997568.9689438,
       "entry_liquidity": 31959.68,
-      "peak_price": 0.0001363145,
+      "peak_price": 0.0001464,
       "signal_score": 71.47857142857143,
       "trailing_armed": false,
       "components": {
@@ -1036,8 +1221,14 @@
           "timestamp": 1792997568.9689438,
           "price_usd": 0.0001343,
           "liquidity_usd": 31959.68
+        },
+        {
+          "timestamp": 1792997807.5022,
+          "price_usd": 0.0001464,
+          "liquidity_usd": 33425.33
         }
-      ]
+      ],
+      "liquidity_drain_hits": 0
     },
     "BTCk1ZAAGrbSq7e4L7mg8oiRKRqafkUbeLQpXeGq9BTC": {
       "symbol": "BTC",
@@ -1065,8 +1256,14 @@
           "timestamp": 1792997568.9689577,
           "price_usd": 8.301e-05,
           "liquidity_usd": 24773.88
+        },
+        {
+          "timestamp": 1792997807.5441735,
+          "price_usd": 8.245e-05,
+          "liquidity_usd": 24661.14
         }
-      ]
+      ],
+      "liquidity_drain_hits": 0
     },
     "ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY": {
       "symbol": "MOODENG",
@@ -1094,21 +1291,21 @@
           "timestamp": 1792997568.968989,
           "price_usd": 0.03936,
           "liquidity_usd": 2592073.06
+        },
+        {
+          "timestamp": 1792997807.6064744,
+          "price_usd": 0.03936,
+          "liquidity_usd": 2592073.06
         }
-      ]
+      ],
+      "liquidity_drain_hits": 0
     }
   },
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-26T06:52:48Z",
+    "timestamp": "2026-10-26T06:56:48Z",
     "candidate_count": 80,
-    "filter_passed": 8,
-    "shadow_opened": 5,
-    "rejections": {
-      "pair_data_unavailable": 12,
-      "shadow_low_activity": 1,
-      "shadow_liq_mcap_ratio:0.01": 1,
-      "shadow_liq_mcap_ratio:0.00": 1,
-      "shadow_low_volume_h1:0": 1
-    }
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   }
 }
