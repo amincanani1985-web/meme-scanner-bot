@@ -1063,12 +1063,12 @@ class ScannerLogicTests(unittest.TestCase):
             paper_dir = root / "paper_account"
             paper_dir.mkdir()
             (root / "shadow_price_paths.jsonl").write_text(
-                '{"mint":"legacy-mint","entry_timestamp":1}\\n',
+                '{"mint":"legacy-mint","entry_timestamp":1}\n',
                 encoding="utf-8",
             )
             (paper_dir / "shadow_price_paths.jsonl").write_text(
-                '{"mint":"paper-mint","entry_timestamp":2}\\n'
-                '{"mint":"legacy-mint","entry_timestamp":3}\\n',
+                '{"mint":"paper-mint","entry_timestamp":2}\n'
+                '{"mint":"legacy-mint","entry_timestamp":3}\n',
                 encoding="utf-8",
             )
             with patch.object(scanner, "Path", side_effect=lambda value: root / str(value)), \
