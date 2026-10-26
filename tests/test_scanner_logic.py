@@ -929,7 +929,7 @@ class ScannerLogicTests(unittest.TestCase):
             self.assertEqual(json.loads(rows[0]["features_json"]), {})
             self.assertEqual(json.loads(rows[1]["features_json"])["momentum_m5_pct"], 2.5)
 
-    def test_unvalidated_paper_account_uses_exploration_threshold_without_touching_main_state(self):
+    def test_unvalidated_paper_account_stays_at_baseline_without_touching_main_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             paper = root / "paper_account"
@@ -948,8 +948,15 @@ class ScannerLogicTests(unittest.TestCase):
             with patch.object(scanner, "helius_configured", return_value=False):
                 with patch.object(scanner, "run_cycle", side_effect=fake_cycle):
                     scanner.run_isolated_paper_cycle(root)
-            self.assertEqual(captured["state"]["strategy"]["active_threshold"], scanner.OPPORTUNITY_ENTRY_THRESHOLD)
-            self.assertEqual(captured["state"]["strategy"]["validation_status"], "exploration_unvalidated")
+            self.assertEqual(
+                captured["state"]["strategy"]["active_threshold"],
+                scanner.LEGACY_BASELINE_ENTRY_THRESHOLD,
+            )
+            self.assertEqual(
+                captured["state"]["strategy"]["validation_status"],
+                "no_validated_candidate",
+            )
+            self.assertNotEqual(captured["state"]["strategy"]["status"], "paper_exploration")
             self.assertEqual((root / "state.json").read_text(encoding="utf-8"), "main-account-must-not-change")
 
     def test_validated_or_rolled_back_paper_threshold_is_preserved(self):
@@ -1065,7 +1072,7 @@ class ScannerLogicTests(unittest.TestCase):
              patch.dict("os.environ", {"PAPER_REQUIRE_WHALE_ACCUMULATION": "0"}):
             scanner.run_isolated_paper_cycle(temp_dir)
 
-        self.assertEqual(captured["threshold"], scanner.OPPORTUNITY_ENTRY_THRESHOLD)
+        self.assertEqual(captured["threshold"], scanner.LEGACY_BASELINE_ENTRY_THRESHOLD)
         self.assertEqual(captured["strategy"]["status"], "rolled_back")
         self.assertEqual(captured["strategy"]["validation_status"], "rolled_back")
         self.assertIsNone(captured["strategy"]["candidate_threshold"])
