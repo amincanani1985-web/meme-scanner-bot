@@ -50,7 +50,7 @@ env:
   NOTIFY_ISSUE: "1"
   HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
   HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
-  SHADOW_PRICE_PATH_LOG: paper_account/shadow_price_paths.jsonl
+  SHADOW_PRICE_PATH_LOG: "${{ github.workspace }}/paper_account/shadow_price_paths.jsonl"
 
 jobs:
   run-cycle:
