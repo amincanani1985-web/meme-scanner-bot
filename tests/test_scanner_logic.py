@@ -415,7 +415,7 @@ class ScannerLogicTests(unittest.TestCase):
             )
 
     def test_low_score_shadow_candidate_is_research_only_not_a_live_entry(self):
-        self.assertEqual(scanner.SHADOW_MIN_SCORE, 35.0)
+        self.assertEqual(scanner.SHADOW_MIN_SCORE, 0.0)
         research_pair = pair(
             liquidity={"usd": 30000},
             volume={"h1": 5000},
@@ -1216,22 +1216,37 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(len(completed), 2)
 
 
-    def test_shadow_scan_rejects_bearish_signals_clamped_to_zero_score(self):
+    def test_zero_score_bearish_candidate_is_recorded_in_shadow_research_only(self):
         state = scanner.normalize_state({})
         bearish = pair(
-            priceChange={"m5": -10.0, "h1": -90.0},
+            priceChange={"m5": -100.0, "h1": -100.0},
             txns={"m5": {"buys": 0, "sells": 10}},
             liquidity={"usd": 5000},
             volume={"h1": 10000},
             marketCap=100000,
         )
+        score, _ = scanner.score_shadow_opportunity(bearish)
+        self.assertEqual(score, 0.0)
         with patch.object(scanner, "fetch_candidate_mints", return_value=["bearish"]), \
              patch.object(scanner, "fetch_dex_pair", return_value=bearish), \
              patch.object(scanner, "log"):
             result = scanner.scan_shadow_candidates(state)
-        self.assertEqual(result["shadow_opened"], [])
-        self.assertEqual(state["shadow_positions"], {})
+        self.assertEqual(result["shadow_opened"], ["bearish"])
+        self.assertEqual(state["shadow_positions"]["bearish"]["signal_score"], 0.0)
+        self.assertEqual(state["positions"], {})
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["trade_count"], 0)
 
+    def test_shadow_research_filter_can_capture_low_volume_low_ratio_tokens_live_filter_rejects(self):
+        candidate = pair(
+            liquidity={"usd": 10000},
+            volume={"h1": 150},
+            marketCap=1_000_000,
+            txns={"m5": {"buys": 2, "sells": 1}},
+        )
+        self.assertFalse(scanner.passes_market_filter(candidate)[0])
+        accepted, reason = scanner.passes_shadow_market_filter(candidate)
+        self.assertTrue(accepted, reason)
 
     def test_active_scan_records_market_filter_rejection_reason(self):
         state = scanner.normalize_state({})
