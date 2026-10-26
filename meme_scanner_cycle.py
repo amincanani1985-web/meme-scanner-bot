@@ -970,6 +970,29 @@ def manage_open_positions(state):
             current_liquidity = 0.0
         pos.pop("price_missing_since", None)
         pos.pop("data_status", None)
+        pos["peak_price"] = max(peak_price, current_price)
+        pnl_pct = (current_price - entry_price) / entry_price if entry_price > 0 else 0.0
+        # A gap through the hard-stop level must be classified as a hard stop,
+        # even if a trailing stop was previously armed at a higher price.
+        if pnl_pct <= -HARD_STOP_LOSS_PCT:
+            close_position(state, mint, current_price, "hard_stop_loss")
+            continue
+        if pnl_pct >= 0.08:
+            pos["trailing_armed"] = True
+        if pos.get("trailing_armed") and pos["peak_price"] > 0:
+            drop_from_peak = (pos["peak_price"] - current_price) / pos["peak_price"]
+            if drop_from_peak >= TRAILING_STOP_PCT:
+                close_position(state, mint, current_price, "trailing_stop")
+                continue
+        if current_liquidity > 0 and liquidity_drain_detected(pos, current_liquidity):
+            close_position(state, mint, current_price, "liquidity_drained")
+            continue
+        if time.time() - float(pos.get("entry_time", time.time())) >= MAX_HOLD_SECONDS:
+            close_position(state, mint, current_price, "max_hold_timeout")
+            continue
+
+        # Fetching holder snapshots may take seconds. All price/time-based exits
+        # run first so a slow or failing RPC cannot delay a stop or max-hold close.
         try:
             last_whale_check_at = float(pos.get("last_whale_check_at", entry_time) or entry_time)
         except (TypeError, ValueError, OverflowError):
@@ -995,25 +1018,7 @@ def manage_open_positions(state):
                 state["whale_snapshots"][mint] = current_whales
             else:
                 log(f"[WARN] whale snapshot unavailable for open position {mint}; price/risk exits remain active")
-        pos["peak_price"] = max(peak_price, current_price)
-        pnl_pct = (current_price - entry_price) / entry_price if entry_price > 0 else 0.0
-        # A gap through the hard-stop level must be classified as a hard stop,
-        # even if a trailing stop was previously armed at a higher price.
-        if pnl_pct <= -HARD_STOP_LOSS_PCT:
-            close_position(state, mint, current_price, "hard_stop_loss")
-            continue
-        if pnl_pct >= 0.08:
-            pos["trailing_armed"] = True
-        if pos.get("trailing_armed") and pos["peak_price"] > 0:
-            drop_from_peak = (pos["peak_price"] - current_price) / pos["peak_price"]
-            if drop_from_peak >= TRAILING_STOP_PCT:
-                close_position(state, mint, current_price, "trailing_stop")
-                continue
-        if current_liquidity > 0 and liquidity_drain_detected(pos, current_liquidity):
-            close_position(state, mint, current_price, "liquidity_drained")
-            continue
-        if time.time() - float(pos.get("entry_time", time.time())) >= MAX_HOLD_SECONDS:
-            close_position(state, mint, current_price, "max_hold_timeout")
+
 
 
 
