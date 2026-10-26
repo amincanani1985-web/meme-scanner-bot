@@ -6,6 +6,7 @@ on:
       - "meme_scanner_cycle.py"
       - "learn_agent.py"
       - "strategy_backtest.py"
+      - "shadow_path_backtest.py"
       - "tests/**"
       - "run_all_tests.py"
       - "run_tests.py"
@@ -18,6 +19,7 @@ on:
       - "meme_scanner_cycle.py"
       - "learn_agent.py"
       - "strategy_backtest.py"
+      - "shadow_path_backtest.py"
       - "tests/**"
       - "run_all_tests.py"
       - "run_tests.py"
@@ -39,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Validate Python syntax
-        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_v17_improvements.py
+        run: python -m py_compile meme_scanner_cycle.py learn_agent.py strategy_backtest.py shadow_path_backtest.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_v17_improvements.py tests/test_shadow_path_backtest.py
       - name: Run canonical test suite 10 times
         shell: bash
         run: |
