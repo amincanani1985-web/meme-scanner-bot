@@ -54,6 +54,18 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn('os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")', scanner_source)
         self.assertIn('Path("paper_account/shadow_price_paths.jsonl")', scanner_source)
 
+    def test_discovery_cycle_runs_in_the_same_isolated_paper_account_as_monitoring(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        marker = "- name: Run one discovery and entry cycle"
+        self.assertIn(marker, workflow)
+        section = workflow.split(marker, 1)[1].split("# Recompute after the scan", 1)[0]
+        self.assertIn("working-directory: paper_account", section)
+        self.assertIn("run: python ../meme_scanner_cycle.py", section)
+        self.assertNotIn("run: python meme_scanner_cycle.py", section)
+        self.assertIn("python paper_position_monitor.py", workflow)
+        self.assertIn("--state paper_account/state.json", workflow)
+        self.assertIn("--observations paper_account/strategy_observations.csv", workflow)
+
     def test_exit_monitoring_samples_positions_for_four_minutes_without_rediscovery(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn("- name: Run one discovery and entry cycle", workflow)
