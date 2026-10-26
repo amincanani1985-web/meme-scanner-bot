@@ -384,6 +384,40 @@ class ScannerLogicTests(unittest.TestCase):
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
             )
 
+    def test_low_score_shadow_candidate_is_research_only_not_a_live_entry(self):
+        self.assertEqual(scanner.SHADOW_MIN_SCORE, 35.0)
+        research_pair = pair(
+            liquidity={"usd": 30000},
+            volume={"h1": 5000},
+            marketCap=200000,
+        )
+        self.assertFalse(scanner.passes_market_filter(research_pair)[0])
+        self.assertTrue(scanner.passes_shadow_market_filter(research_pair)[0])
+        state = scanner.normalize_state({
+            "equity": 1000.0,
+            "initial_equity": 1000.0,
+            "trade_count": 0,
+            "shadow_positions": {},
+            "shadow_completed_mints": [],
+        })
+        with patch.object(scanner, "fetch_dex_pairs"), \
+             patch.object(scanner, "fetch_dex_pair", return_value=research_pair), \
+             patch.object(scanner, "score_shadow_opportunity", return_value=(40.0, {
+                 "momentum_h1_pct": -4.0,
+                 "momentum_m5_pct": -1.0,
+                 "buy_sell_ratio": 0.8,
+                 "liquidity_usd": 30000.0,
+                 "volume_h1_usd": 5000.0,
+             })), \
+             patch.object(scanner, "_load_shadow_completed_mints", return_value=[]), \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(
+                state, candidates=["research-only-mint"], increment_scan_count=False
+            )
+        self.assertEqual(result["shadow_opened"], ["research-only-mint"])
+        self.assertIn("research-only-mint", state["shadow_positions"])
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["trade_count"], 0)
     def test_shadow_filter_accepts_research_candidate_below_live_liquidity_floor(self):
         research_pair = pair(liquidity={"usd": 30000}, volume={"h1": 5000}, marketCap=200000)
         self.assertFalse(scanner.passes_market_filter(research_pair)[0])
