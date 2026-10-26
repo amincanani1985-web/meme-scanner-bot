@@ -141,6 +141,21 @@ def _load_shadow_completed_mints():
         except OSError:
             # One broken/missing legacy file must not hide completions in another.
             continue
+
+    # The historical account may still have legacy shadow paths in flight. Treat
+    # those mints as reserved while the isolated paper cohort creates new paths so
+    # the same mint is not independently opened twice in the same workflow.
+    try:
+        root_state = json.loads((workspace / "state.json").read_text(encoding="utf-8"))
+        active_positions = root_state.get("shadow_positions", {})
+        if isinstance(active_positions, dict):
+            for raw_mint in active_positions:
+                mint = str(raw_mint or "").strip()
+                if mint and mint not in seen:
+                    seen.add(mint)
+                    completed.append(mint)
+    except (OSError, json.JSONDecodeError, TypeError, AttributeError):
+        pass
     return completed[-MAX_SHADOW_COMPLETED_MINTS:]
 
 
