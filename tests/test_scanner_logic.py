@@ -1035,6 +1035,41 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["positions"], {})
 
 
+    def test_unvalidated_paper_threshold_fails_closed_to_baseline(self):
+        paper_state = {
+            "equity": 1000.0,
+            "initial_equity": 1000.0,
+            "peak_equity": 1000.0,
+            "trade_count": 20,
+            "positions": {},
+            "shadow_positions": {},
+            "strategy": {
+                "active_threshold": 60.0,
+                "rollback_threshold": scanner.OPPORTUNITY_ENTRY_THRESHOLD,
+                "candidate_threshold": None,
+                "status": "paper_exploration",
+                "validation_status": "exploration_unvalidated",
+            },
+        }
+        captured = {}
+
+        def fake_run_cycle(state, require_whale_accumulation=False):
+            captured["threshold"] = state["strategy"]["active_threshold"]
+            captured["strategy"] = dict(state["strategy"])
+            return {"equity": state["equity"]}
+
+        with tempfile.TemporaryDirectory() as temp_dir, \\
+             patch.object(scanner, "load_state", return_value=paper_state), \\
+             patch.object(scanner, "save_state"), \\
+             patch.object(scanner, "run_cycle", side_effect=fake_run_cycle), \\
+             patch.dict("os.environ", {"PAPER_REQUIRE_WHALE_ACCUMULATION": "0"}):
+            scanner.run_isolated_paper_cycle(temp_dir)
+
+        self.assertEqual(captured["threshold"], scanner.OPPORTUNITY_ENTRY_THRESHOLD)
+        self.assertEqual(captured["strategy"]["status"], "rolled_back")
+        self.assertEqual(captured["strategy"]["validation_status"], "rolled_back")
+        self.assertIsNone(captured["strategy"]["candidate_threshold"])
+
     def test_shadow_research_can_observe_tokens_blacklisted_by_the_live_strategy(self):
         state = scanner.normalize_state({})
         state["blacklist"] = ["mint"]
