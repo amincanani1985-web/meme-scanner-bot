@@ -110,6 +110,27 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["matches"], 1)
         self.assertEqual(report["mismatches"], 0)
 
+    def test_walk_forward_rejects_sparse_paths_even_when_the_horizon_is_long_enough(self):
+        sparse = path([
+            (0, 1.0, 100_000),
+            (300, 0.99, 100_000),
+            (600, 0.98, 100_000),
+            (900, 0.97, 100_000),
+        ])
+        report = analyze_records([sparse], min_total_paths=1)
+        self.assertEqual(report["usable_paths"], 0)
+        self.assertEqual(report["rejected_or_censored_paths"], 1)
+        self.assertEqual(report["status"], "insufficient_history")
+
+    def test_walk_forward_accepts_a_dense_complete_observed_path(self):
+        dense = path([
+            (seconds, 1.0 - 0.0001 * seconds, 100_000)
+            for seconds in range(0, 901, 30)
+        ])
+        report = analyze_records([dense], min_total_paths=1)
+        self.assertEqual(report["usable_paths"], 1)
+        self.assertEqual(report["rejected_or_censored_paths"], 0)
+
     def test_empty_history_never_selects_or_approves_a_rule(self):
         report = analyze_records([], min_total_paths=50)
         self.assertEqual(report["status"], "insufficient_history")
