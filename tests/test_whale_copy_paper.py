@@ -173,6 +173,132 @@ class WhaleCopyPaperTests(unittest.TestCase):
         selected = follower.select_wallets(watch, {"wallets": {}}, limit=1)
         self.assertEqual(selected, ["accumulator"])
 
+    def test_wallet_selection_finishes_started_backfills_before_new_wallets(self):
+        watch = {"wallets": {
+            "partial": {
+                "confirmed_sell_pressure_events": 0,
+                "observed_balance_drops": 0,
+                "confirmed_buy_pressure_events": 0,
+                "observed_balance_increases": 0,
+                "tokens_seen": [],
+            },
+            "new-hot-wallet": {
+                "confirmed_sell_pressure_events": 0,
+                "observed_balance_drops": 0,
+                "confirmed_buy_pressure_events": 100,
+                "observed_balance_increases": 100,
+                "tokens_seen": ["mint-a", "mint-b", "mint-c"],
+            },
+        }}
+        research = {"wallet_cursor": 0, "wallets": {
+            "partial": {
+                "normalized_history_initialized": True,
+                "history_cursor": "oldest-known-signature",
+                "history_complete": False,
+                "history_truncated": False,
+                "backfill_visits": 3,
+                "normalized_swaps": [{"signature": "known-swap"}],
+                "metrics": {},
+            },
+        }}
+        self.assertEqual(
+            follower.select_wallets(watch, research, limit=1),
+            ["partial"],
+        )
+
+    def test_rate_limit_response_exposes_retry_after_metadata(self):
+        response = Mock()
+        response.status_code = 429
+        response.headers = {"Retry-After": "45"}
+        response.raise_for_status.side_effect = follower.requests.HTTPError(
+            "too many requests", response=response
+        )
+        with patch.object(follower.requests, "get", return_value=response):
+            result = follower.fetch_wallet_transactions(
+                WALLET, "test-key", return_metadata=True
+            )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], "http_429")
+        self.assertEqual(result["retry_after_seconds"], 45.0)
+
+    def test_copy_research_stops_after_http_429_and_persists_backoff(self):
+        now = 1_793_000_000.0
+        research = {"version": 1, "wallets": {}, "wallet_cursor": 0, "scan_count": 2}
+        watch = {"wallets": {"wallet-a": {}, "wallet-b": {}, "wallet-c": {}}}
+        persisted = {}
+        failed_page = {
+            "transactions": [], "last_signature": None, "reached_end": False,
+            "ok": False, "pages_fetched": 0, "error": "http_429",
+            "retry_after_seconds": 45.0,
+        }
+
+        def load_json(path, default=None):
+            if path == "whale_watch_state.json":
+                return watch
+            if path == "whale_copy_state.json":
+                return research
+            return default or {}
+
+        def atomic_json(path, value):
+            persisted[path] = value
+
+        with patch.object(follower.time, "time", return_value=now), \
+             patch.object(follower, "_load_json", side_effect=load_json), \
+             patch.object(follower, "_api_key", return_value="test-key"), \
+             patch.object(follower, "select_wallets", return_value=["wallet-a", "wallet-b", "wallet-c"]), \
+             patch.object(follower, "fetch_wallet_transactions", return_value=failed_page) as fetch, \
+             patch.object(follower, "_atomic_json", side_effect=atomic_json), \
+             patch.object(follower, "run_copy_paper_account", return_value={
+                 "equity": 1000.0, "closed_trades": 0, "wins": 0, "net_pnl_usd": 0.0,
+                 "open_positions": 0, "opened_this_cycle": 0, "closed_this_cycle": 0,
+                 "entry_rejections": {}, "status": "paper_only",
+             }):
+            result = follower.run()
+
+        self.assertEqual(fetch.call_count, 1)
+        self.assertEqual(result["status"], "helius_rate_limit_backoff")
+        self.assertEqual(result["wallets_attempted"], 1)
+        self.assertEqual(
+            persisted["whale_copy_state.json"]["last_scan"]["wallets_attempted"], 1
+        )
+        self.assertAlmostEqual(persisted["whale_copy_state.json"]["api_backoff_until"], now + 45.0)
+
+    def test_copy_research_skips_wallet_fetch_while_backoff_is_active(self):
+        now = 1_793_000_000.0
+        research = {
+            "version": 1, "wallets": {}, "wallet_cursor": 0, "scan_count": 2,
+            "api_backoff_until": now + 120.0,
+        }
+        watch = {"wallets": {"wallet-a": {}}}
+        persisted = {}
+
+        def load_json(path, default=None):
+            if path == "whale_watch_state.json":
+                return watch
+            if path == "whale_copy_state.json":
+                return research
+            return default or {}
+
+        with patch.object(follower.time, "time", return_value=now), \
+             patch.object(follower, "_load_json", side_effect=load_json), \
+             patch.object(follower, "_api_key", return_value="test-key"), \
+             patch.object(follower, "select_wallets", return_value=["wallet-a"]), \
+             patch.object(follower, "fetch_wallet_transactions") as fetch, \
+             patch.object(follower, "_atomic_json", side_effect=lambda path, value: persisted.update({path: value})), \
+             patch.object(follower, "run_copy_paper_account", return_value={
+                 "equity": 1000.0, "closed_trades": 0, "wins": 0, "net_pnl_usd": 0.0,
+                 "open_positions": 0, "opened_this_cycle": 0, "closed_this_cycle": 0,
+                 "entry_rejections": {}, "status": "paper_only",
+             }):
+            result = follower.run()
+
+        fetch.assert_not_called()
+        self.assertEqual(result["status"], "helius_rate_limit_backoff")
+        self.assertEqual(result["wallets_attempted"], 0)
+        self.assertEqual(
+            persisted["whale_copy_state.json"]["last_scan"]["wallets_attempted"], 0
+        )
+
     def test_only_previously_profitable_wallets_emit_fresh_buy_signals(self):
         now = time.time()
         good_history = [{"net_pnl_pct": 10.0} for _ in range(6)] + [
