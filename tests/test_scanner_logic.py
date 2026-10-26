@@ -192,11 +192,11 @@ class ScannerLogicTests(unittest.TestCase):
                 "entry_liquidity": 100000.0,
             }},
         })
-        with patch.object(scanner, "reconcile_learning_from_trade_log"), \\
-             patch.object(scanner, "manage_open_positions"), \\
-             patch.object(scanner, "manage_shadow_positions") as manage_shadow, \\
-             patch.object(scanner, "scan_shadow_candidates") as scan_shadow, \\
-             patch.object(scanner, "save_state"), \\
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \
+             patch.object(scanner, "manage_open_positions"), \
+             patch.object(scanner, "manage_shadow_positions") as manage_shadow, \
+             patch.object(scanner, "scan_shadow_candidates") as scan_shadow, \
+             patch.object(scanner, "save_state"), \
              patch.object(scanner, "log"):
             result = scanner.run_cycle(state, research_shadow=False)
 
@@ -1152,17 +1152,17 @@ class ScannerLogicTests(unittest.TestCase):
             paper.mkdir()
             (root / "meme_scanner_cycle.py").write_text("# test root", encoding="utf-8")
             (root / "shadow_price_paths.jsonl").write_text(
-                record("root-mint", 1_000.0) + "\\n",
+                record("root-mint", 1_000.0) + "\n",
                 encoding="utf-8",
             )
             (paper / "shadow_price_paths.jsonl").write_text(
-                record("paper-mint", 2_000.0) + "\\n",
+                record("paper-mint", 2_000.0) + "\n",
                 encoding="utf-8",
             )
             previous_cwd = Path.cwd()
             try:
                 os.chdir(paper)
-                with patch.object(scanner, "__file__", str(root / "meme_scanner_cycle.py")), \\
+                with patch.object(scanner, "__file__", str(root / "meme_scanner_cycle.py")), \
                      patch.dict("os.environ", {
                          "SHADOW_PRICE_PATH_LOG": str(paper / "shadow_price_paths.jsonl"),
                      }):
