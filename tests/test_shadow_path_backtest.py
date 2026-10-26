@@ -110,6 +110,26 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["matches"], 1)
         self.assertEqual(report["mismatches"], 0)
 
+    def test_baseline_net_performance_is_reported_before_candidate_sample_gate(self):
+        record = path([
+            (seconds, 1.0 if seconds == 0 else 1.2, 100_000)
+            for seconds in range(0, 901, 100)
+        ], benchmark_exit={
+            "reason": "max_hold_timeout",
+            "timestamp": 1600.0,
+            "price_usd": 1.2,
+            "liquidity_usd": 100_000.0,
+            "after_slippage_pnl_pct": 17.6,
+        })
+        report = analyze_records([record], min_total_paths=50)
+        self.assertEqual(report["status"], "insufficient_history")
+        self.assertIsNone(report["selected_config"])
+        self.assertEqual(report["baseline_performance"]["n"], 1)
+        self.assertAlmostEqual(
+            report["baseline_performance"]["mean_pnl_pct"], 16.6, places=6
+        )
+        self.assertEqual(report["baseline_performance"]["wins"], 1)
+
     def test_walk_forward_rejects_sparse_paths_even_when_the_horizon_is_long_enough(self):
         sparse = path([
             (0, 1.0, 100_000),
