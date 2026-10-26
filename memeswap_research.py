@@ -114,9 +114,11 @@ def normalize_token_profile(payload, expected_mint, now=None):
     def bool_from(*values):
         return _source_boolean(_first_value(*values))
 
-    # Source fields can be absent. A missing field stays None and later causes
-    # that particular risk filter to fail closed.
-    return {
+    # A syntactically valid token row is not proof that the provider returned
+    # holder/security/liquidity-lock risk data. Preserve availability separately
+    # from risk-data coverage so downstream filters cannot interpret a basic
+    # chain+dexscreener lookup as a clean risk assessment.
+    result = {
         "memeswap_available": 1.0,
         "memeswap_price_age_seconds": _age_seconds(price_timestamp, now_seconds),
         "memeswap_profile_age_seconds": _age_seconds(profile_timestamp, now_seconds),
@@ -140,6 +142,40 @@ def normalize_token_profile(payload, expected_mint, now=None):
         "memeswap_sell_tax_value": number_from(security.get("sellTax")),
         "memeswap_gate_pass": bool_from(_first_value(row.get("gatePass"), profile.get("gatePass"))),
     }
+    risk_fields = (
+        "memeswap_top1_pct",
+        "memeswap_top5_pct",
+        "memeswap_top10_pct",
+        "memeswap_top20_pct",
+        "memeswap_lp_locked_pct",
+        "memeswap_lp_locked",
+        "memeswap_fake_score",
+        "memeswap_honeypot",
+        "memeswap_mintable",
+        "memeswap_buy_tax_value",
+        "memeswap_sell_tax_value",
+    )
+    result["memeswap_risk_data_available"] = (
+        1.0 if any(result[name] is not None for name in risk_fields) else 0.0
+    )
+    # The strict screen requires holder concentration, LP lock, fake score,
+    # mintability/honeypot flags, and both tax fields. Missing fields remain
+    # unknown and cannot qualify for the risk-screened research cohort.
+    full_screen_fields = (
+        "memeswap_top1_pct",
+        "memeswap_top10_pct",
+        "memeswap_top20_pct",
+        "memeswap_lp_locked_pct",
+        "memeswap_fake_score",
+        "memeswap_honeypot",
+        "memeswap_mintable",
+        "memeswap_buy_tax_value",
+        "memeswap_sell_tax_value",
+    )
+    result["memeswap_full_risk_screen_available"] = (
+        1.0 if all(result[name] is not None for name in full_screen_fields) else 0.0
+    )
+    return result
 
 
 def fetch_token_profile(mint, now=None, enabled=None, session=None):

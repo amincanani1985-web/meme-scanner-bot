@@ -97,10 +97,14 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertLess(initial, scan)
         self.assertLess(scan, post_entry)
         self.assertLess(post_entry, refresh)
-        self.assertIn("for check in 1 2 3 4 5 6; do", workflow)
-        self.assertIn('Monitor-only check $check/6', workflow)
-        self.assertIn("for check in 1 2 3 4; do", workflow)
-        self.assertIn('Immediate post-entry check $check/4', workflow)
+        # Shift monitoring time from before candidate discovery to the fresh
+        # positions opened by that discovery. This keeps the total polling
+        # budget nearly constant but reduces the first unobserved entry gap.
+        self.assertIn("for check in 1 2; do", workflow)
+        self.assertIn('Monitor-only check $check/2', workflow)
+        self.assertIn("for check in 1 2 3 4 5 6 7 8; do", workflow)
+        self.assertIn('Immediate post-entry check $check/8', workflow)
+        self.assertNotIn("for check in 1 2 3 4 5 6; do", workflow)
         self.assertIn("python paper_position_monitor.py", workflow)
         self.assertIn("sleep 30", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)

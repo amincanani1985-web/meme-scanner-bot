@@ -58,6 +58,8 @@ class MemeSwapResearchTests(unittest.TestCase):
         self.assertEqual(result["memeswap_sell_tax_value"], 1.0)
         self.assertEqual(result["memeswap_price_age_seconds"], 12.0)
         self.assertEqual(result["memeswap_profile_age_seconds"], 20.0)
+        self.assertEqual(result["memeswap_risk_data_available"], 1.0)
+        self.assertEqual(result["memeswap_full_risk_screen_available"], 1.0)
 
     def test_missing_risk_fields_remain_unknown_instead_of_becoming_zero(self):
         payload = {
@@ -75,6 +77,26 @@ class MemeSwapResearchTests(unittest.TestCase):
         self.assertIsNone(result["memeswap_honeypot"])
         self.assertIsNone(result["memeswap_price_age_seconds"])
         self.assertIsNone(result["memeswap_profile_age_seconds"])
+        self.assertEqual(result["memeswap_risk_data_available"], 0.0)
+        self.assertEqual(result["memeswap_full_risk_screen_available"], 0.0)
+
+    def test_basic_lookup_row_is_not_mistaken_for_security_risk_data(self):
+        payload = {
+            "chain": "solana",
+            "token": MINT,
+            "row": {
+                "chain": "solana",
+                "address": MINT,
+                "gatePass": False,
+            },
+            "lookup": "chain+dexscreener",
+        }
+        result = research.normalize_token_profile(payload, MINT, now=2_000.0)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["memeswap_available"], 1.0)
+        self.assertEqual(result["memeswap_gate_pass"], 0.0)
+        self.assertEqual(result["memeswap_risk_data_available"], 0.0)
+        self.assertEqual(result["memeswap_full_risk_screen_available"], 0.0)
 
     def test_rejects_wrong_mint_or_non_solana_payload(self):
         self.assertIsNone(

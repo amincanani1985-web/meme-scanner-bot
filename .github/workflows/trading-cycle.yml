@@ -84,9 +84,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for check in 1 2 3 4 5 6; do
+          for check in 1 2; do
             sleep 30
-            echo "Monitor-only check $check/6"
+            echo "Monitor-only check $check/2"
             python paper_position_monitor.py
           done
 
@@ -264,9 +264,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for check in 1 2 3 4; do
+          # Reallocate the monitor budget to the freshly opened positions:
+          # the pre-scan pass is shorter, while new entries get 4 minutes of
+          # real quotes sampled every 30 seconds before the cycle finishes.
+          for check in 1 2 3 4 5 6 7 8; do
             sleep 30
-            echo "Immediate post-entry check $check/4"
+            echo "Immediate post-entry check $check/8"
             python paper_position_monitor.py
           done
 
