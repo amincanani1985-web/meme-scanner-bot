@@ -186,6 +186,7 @@ jobs:
           print("## Transaction-level whale-copy paper research")
           print(f"- Status: **{report.get('status', 'unknown')}**")
           print(f"- Wallets selected / tracked: {report.get('wallets_selected', 0)} / {report.get('wallets_tracked', 0)}")
+          print(f"- Fetch error categories: {report.get('fetch_error_reasons', {})}")
           print(f"- Swap transactions parsed this cycle: {report.get('swaps_seen', 0)}")
           print(f"- Newly closed wallet trades reconstructed: {report.get('new_closed_wallet_trades', 0)}")
           print(f"- Wallets qualifying on realized history: {report.get('qualifying_wallets', 0)}")
@@ -237,14 +238,14 @@ jobs:
         if: github.event_name != 'pull_request'
         run: python meme_scanner_cycle.py
 
-      - name: Monitor existing paper positions with 60-second gaps
+      - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          for check in 1 2; do
-            sleep 60
-            echo "Monitor-only check $check/2"
+          for check in 1 2 3 4; do
+            sleep 30
+            echo "Monitor-only check $check/4"
             python paper_position_monitor.py
           done
 
