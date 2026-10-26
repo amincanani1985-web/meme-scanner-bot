@@ -265,6 +265,8 @@ def candidate_entry_filters():
     """Finite, predeclared entry filters; every value must be known at entry time."""
     return [
         {"name": "all_research_candidates"},
+        {"name": "score_at_least_40", "score_min": 40.0},
+        {"name": "score_at_least_50", "score_min": 50.0},
         {"name": "score_at_least_60", "score_min": 60.0},
         {"name": "score_at_least_70", "score_min": 70.0},
         {"name": "hourly_momentum_0_to_30", "h1_min": 0.0, "h1_max": 30.0},
