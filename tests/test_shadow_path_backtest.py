@@ -198,6 +198,7 @@ class ShadowPathBacktestTests(unittest.TestCase):
         names = [item["name"] for item in filters]
         self.assertGreaterEqual(len(filters), 5)
         self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(backtest.MIN_TRAIN_ROWS, 20)
         self.assertIn("score_at_least_40", names)
         self.assertIn("score_at_least_50", names)
         record = path([(0, 1.0, 100_000), (30, 0.99, 100_000)])
