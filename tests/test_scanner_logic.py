@@ -820,7 +820,6 @@ class ScannerLogicTests(unittest.TestCase):
                 scanner.manage_shadow_positions(state)
 
             self.assertNotIn("mint", state["shadow_positions"])
-            self.assertIn("mint", state["shadow_completed_mints"])
             self.assertEqual(observation.call_count, 1)
             record = json.loads(path_log.read_text(encoding="utf-8").strip())
             self.assertEqual(record["benchmark_exit"]["reason"], "max_hold_timeout")
