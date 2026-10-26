@@ -11,6 +11,8 @@ import io
 import json
 import os
 import requests
+from memeswap_research import fetch_token_profile as fetch_memeswap_token_profile
+from memeswap_research import is_enabled as memeswap_research_enabled
 from whale_monitor import fetch_whale_balances, helius_configured, confirmed_whale_dump, whale_accumulation_confirmed
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -40,6 +42,8 @@ SHADOW_STALE_OBSERVATION_SECONDS = MAX_HOLD_SECONDS + 300
 SHADOW_PATH_MIN_SAMPLES = 9
 SHADOW_PATH_MAX_SAMPLE_GAP_SECONDS = 240.0
 MAX_SHADOW_COMPLETED_MINTS = 5000
+# Optional external risk data is read only and capped to protect cycle time and API budgets.
+MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE = 4
 HTTP_TIMEOUT_SECONDS = 10
 
 
@@ -1373,6 +1377,8 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     opened = []
     rejections = {}
     filter_passed = 0
+    memeswap_profile_requests = 0
+    memeswap_enabled = memeswap_research_enabled()
     # Shadow samples cover a broad score range; this never changes live entry rules.
     threshold = SHADOW_MIN_SCORE
     for mint in candidates:
@@ -1411,6 +1417,25 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
             continue
         if not math.isfinite(price) or price <= 0 or not math.isfinite(liquidity) or liquidity <= 0:
             continue
+        # Optional, bounded, read-only risk enrichment. This runs only after a
+        # virtual candidate has passed the research gate; it never affects live
+        # entries, sizing, or transaction execution.
+        if memeswap_enabled and memeswap_profile_requests < MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE:
+            memeswap_profile_requests += 1
+            try:
+                risk_features = fetch_memeswap_token_profile(mint)
+            except Exception as exc:
+                risk_features = None
+                log(f"[MEMESWAP RESEARCH] {mint[:8]} profile fetch failed: {type(exc).__name__}")
+            if isinstance(risk_features, dict):
+                # Only allow finite scalar features from the normalizer into the
+                # stored entry snapshot. Unknown values remain absent/None.
+                for feature_name, feature_value in risk_features.items():
+                    if feature_name.startswith("memeswap_") and (
+                        feature_value is None
+                        or isinstance(feature_value, (int, float)) and math.isfinite(float(feature_value))
+                    ):
+                        components[feature_name] = feature_value
         entry_price = price * (1.0 + ENTRY_SLIPPAGE_BPS / 10000.0)
         opened_at = time.time()
         state["shadow_positions"][mint] = {
