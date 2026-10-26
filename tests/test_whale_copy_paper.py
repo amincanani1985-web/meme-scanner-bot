@@ -257,7 +257,10 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
         self.assertEqual(fetch.call_count, 1)
         self.assertEqual(result["status"], "helius_rate_limit_backoff")
-        self.assertEqual(result["last_scan"]["wallets_attempted"], 1)
+        self.assertEqual(result["wallets_attempted"], 1)
+        self.assertEqual(
+            persisted["whale_copy_state.json"]["last_scan"]["wallets_attempted"], 1
+        )
         self.assertAlmostEqual(persisted["whale_copy_state.json"]["api_backoff_until"], now + 45.0)
 
     def test_copy_research_skips_wallet_fetch_while_backoff_is_active(self):
