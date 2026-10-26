@@ -36,7 +36,7 @@ class WorkflowSafetyTests(unittest.TestCase):
 
     def test_shadow_path_writer_loader_backtest_and_commit_share_both_log_locations(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
-        self.assertIn("SHADOW_PRICE_PATH_LOG: paper_account/shadow_price_paths.jsonl", workflow)
+        self.assertIn('SHADOW_PRICE_PATH_LOG: "${{ github.workspace }}/paper_account/shadow_price_paths.jsonl"', workflow)
         self.assertIn(
             "python shadow_path_backtest.py --paths shadow_price_paths.jsonl "
             "paper_account/shadow_price_paths.jsonl",
