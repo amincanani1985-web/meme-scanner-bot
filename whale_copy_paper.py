@@ -21,8 +21,11 @@ import meme_scanner_cycle as scanner
 
 HELIUS_ENHANCED_URL = "https://api-mainnet.helius-rpc.com/v0/addresses/{wallet}/transactions"
 REQUEST_TIMEOUT_SECONDS = 8
-MAX_WALLETS_PER_CYCLE = 16
+MAX_WALLETS_PER_CYCLE = 8
 MAX_TRANSACTIONS_PER_WALLET = 100
+REQUEST_MIN_INTERVAL_SECONDS = 0.25
+DEFAULT_RATE_LIMIT_BACKOFF_SECONDS = 60.0
+MAX_RATE_LIMIT_BACKOFF_SECONDS = 300.0
 MAX_STORED_SIGNATURES = 1500
 MAX_STORED_CLOSED_TRADES = 250
 MAX_NORMALIZED_SWAPS = 600
@@ -512,6 +515,7 @@ def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET
         "ok": True,
         "pages_fetched": 0,
         "error": "",
+        "retry_after_seconds": None,
     }
     if not wallet or not api_key:
         result["ok"] = False
@@ -538,8 +542,18 @@ def fetch_wallet_transactions(wallet, api_key, limit=MAX_TRANSACTIONS_PER_WALLET
             response.raise_for_status()
             payload = response.json()
         except requests.HTTPError as exc:
-            status = getattr(getattr(exc, "response", None), "status_code", None)
+            error_response = getattr(exc, "response", None) or response
+            status = getattr(error_response, "status_code", None)
             result["error"] = f"http_{status}" if status else "http_error"
+            if status == 429:
+                headers = getattr(error_response, "headers", {}) or {}
+                retry_after = _finite_number(headers.get("Retry-After")) if hasattr(headers, "get") else None
+                if retry_after is None or retry_after <= 0:
+                    retry_after = DEFAULT_RATE_LIMIT_BACKOFF_SECONDS
+                result["retry_after_seconds"] = min(
+                    MAX_RATE_LIMIT_BACKOFF_SECONDS,
+                    max(1.0, float(retry_after)),
+                )
             result["ok"] = False
             break
         except requests.Timeout:
@@ -638,11 +652,47 @@ def select_wallets(watch_state, research_state, limit=MAX_WALLETS_PER_CYCLE):
     qualified = [item[0] for item in valid if wallet_qualifies(item[2])]
     chosen = qualified[:limit]
     chosen_set = set(chosen)
-    remaining = [item[0] for item in valid if item[0] not in chosen_set]
+    remaining_items = [item for item in valid if item[0] not in chosen_set]
+
+    # Finish bounded history backfills in small batches before rotating across
+    # never-initialized wallets. Otherwise a 200-wallet universe and one-page
+    # polling would revisit each partial wallet too rarely to establish realized PnL.
+    def history_phase(item):
+        record = research_wallets.get(item[0]) or {}
+        if (
+            record.get("normalized_history_initialized")
+            and record.get("history_cursor")
+            and not record.get("history_complete", False)
+            and not record.get("history_truncated", False)
+        ):
+            return 0
+        if not record.get("normalized_history_initialized") or not record.get("history_cursor"):
+            return 1
+        return 2
+
+    partial_backfills = [item for item in remaining_items if history_phase(item) == 0]
+    partial_backfills.sort(key=lambda item: (
+        -int((research_wallets.get(item[0]) or {}).get("backfill_visits", 0) or 0),
+        -item[1],
+        item[0],
+    ))
     slots = max(0, limit - len(chosen))
+    selected_backfills = partial_backfills[:slots]
+    chosen.extend(item[0] for item in selected_backfills)
+    slots -= len(selected_backfills)
+
+    # Fill remaining slots using the existing evidence ranking and cursor rotation.
+    chosen_set = set(chosen)
+    remaining = [
+        item[0] for item in remaining_items
+        if item[0] not in chosen_set and history_phase(item) != 0
+    ]
     if slots and remaining:
         cursor = int(research_state.get("wallet_cursor", 0) or 0) % len(remaining)
-        picked = [remaining[(cursor + offset) % len(remaining)] for offset in range(min(slots, len(remaining)))]
+        picked = [
+            remaining[(cursor + offset) % len(remaining)]
+            for offset in range(min(slots, len(remaining)))
+        ]
         chosen.extend(picked)
         research_state["wallet_cursor"] = (cursor + len(picked)) % len(remaining)
     return chosen
@@ -919,11 +969,21 @@ def run():
     fetch_errors = 0
     fetch_error_reasons = {}
 
+    wallets_attempted = 0
+    rate_limit_backoff_until = _finite_number(research_state.get("api_backoff_until")) or 0.0
+
     if not api_key:
         status = "helius_api_key_not_configured"
+    elif now < rate_limit_backoff_until:
+        status = "helius_rate_limit_backoff"
+        fetch_error_reasons["backoff_active"] = 1
     else:
+        research_state.pop("api_backoff_until", None)
         status = "ok"
         for owner in selected:
+            if wallets_attempted:
+                time.sleep(REQUEST_MIN_INTERVAL_SECONDS)
+            wallets_attempted += 1
             record = research_state["wallets"].setdefault(owner, {
                 "positions": {}, "seen_signatures": [], "closed_trades": [], "metrics": {},
             })
@@ -956,24 +1016,40 @@ def run():
                 )
                 fetched_mode = "backfill"
 
+            retry_delay = None
             if not fetched["ok"] and not fetched["transactions"]:
                 fetch_errors += 1
                 reason = fetched.get("error") or "empty_or_failed_response"
                 fetch_error_reasons[reason] = fetch_error_reasons.get(reason, 0) + 1
+                if reason == "http_429":
+                    retry_delay = _finite_number(fetched.get("retry_after_seconds"))
+                    if retry_delay is None or retry_delay <= 0:
+                        retry_delay = DEFAULT_RATE_LIMIT_BACKOFF_SECONDS
+                    retry_delay = min(MAX_RATE_LIMIT_BACKOFF_SECONDS, max(1.0, retry_delay))
+                    research_state["api_backoff_until"] = now + retry_delay
+                    status = "helius_rate_limit_backoff"
+                    break
                 continue
             if not fetched["ok"]:
                 fetch_errors += 1
                 reason = fetched.get("error") or "partial_response"
                 fetch_error_reasons[reason] = fetch_error_reasons.get(reason, 0) + 1
+                if reason == "http_429":
+                    retry_delay = _finite_number(fetched.get("retry_after_seconds"))
+                    if retry_delay is None or retry_delay <= 0:
+                        retry_delay = DEFAULT_RATE_LIMIT_BACKOFF_SECONDS
+                    retry_delay = min(MAX_RATE_LIMIT_BACKOFF_SECONDS, max(1.0, retry_delay))
 
             transaction_batch = list(fetched["transactions"])
             if fetched_mode == "backfill" and fetched["ok"]:
+                record["backfill_visits"] = int(record.get("backfill_visits", 0) or 0) + 1
                 if fetched["last_signature"]:
                     record["history_cursor"] = fetched["last_signature"]
                 if fetched["reached_end"]:
                     record["history_complete"] = True
             elif fetched_mode == "seed" and fetched["ok"]:
                 record["normalized_history_initialized"] = True
+                record["backfill_visits"] = int(record.get("backfill_visits", 0) or 0) + 1
                 if fetched["last_signature"]:
                     record["history_cursor"] = fetched["last_signature"]
                 if fetched["reached_end"]:
@@ -993,15 +1069,23 @@ def run():
             new_closed += result["new_closed_trades"]
             buy_signals.extend(result["buy_signals"])
             sell_signals.extend(result["sell_signals"])
-        if selected and fetch_errors == len(selected):
+            if retry_delay is not None:
+                research_state["api_backoff_until"] = now + retry_delay
+                status = "helius_rate_limit_backoff"
+                break
+        if status == "ok" and wallets_attempted and fetch_errors == wallets_attempted:
             status = "helius_wallet_history_unavailable"
 
     research_state["scan_count"] = int(research_state.get("scan_count", 0) or 0) + 1
     research_state["last_run"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
     research_state["last_scan"] = {
         "wallets_selected": len(selected),
+        "wallets_attempted": wallets_attempted,
         "wallets_with_fetch_errors": fetch_errors,
         "fetch_error_reasons": fetch_error_reasons,
+        "api_backoff_seconds_remaining": max(
+            0, int(((_finite_number(research_state.get("api_backoff_until")) or 0.0) - now))
+        ),
         "swaps_seen": swaps_seen,
         "new_closed_wallet_trades": new_closed,
         "fresh_profitable_wallet_buys": len(buy_signals),
@@ -1030,8 +1114,12 @@ def run():
         "research_only": True,
         "wallets_tracked": len(research_state["wallets"]),
         "wallets_selected": len(selected),
+        "wallets_attempted": wallets_attempted,
         "wallets_with_fetch_errors": fetch_errors,
         "fetch_error_reasons": fetch_error_reasons,
+        "api_backoff_seconds_remaining": max(
+            0, int(((_finite_number(research_state.get("api_backoff_until")) or 0.0) - now))
+        ),
         "swaps_seen": swaps_seen,
         "new_closed_wallet_trades": new_closed,
         "qualifying_wallets": len(qualifying),
