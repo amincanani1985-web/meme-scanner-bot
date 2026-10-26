@@ -421,7 +421,10 @@ def load_paths(paths):
 
 def run(paths=None, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         round_trip_cost_pct=ROUND_TRIP_COST_PCT):
-    paths = paths or ["shadow_price_paths.jsonl", "paper_account/shadow_price_paths.jsonl"]
+    # Candidate selection uses only the isolated paper account. The legacy
+    # account can share tokens and market windows, so mixing its paths into the
+    # training sample would inflate sample size with correlated observations.
+    paths = paths or ["paper_account/shadow_price_paths.jsonl"]
     records, diagnostics = load_paths(paths)
     report = analyze_records(
         records,
@@ -440,7 +443,7 @@ def run(paths=None, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--paths", nargs="*", default=["shadow_price_paths.jsonl", "paper_account/shadow_price_paths.jsonl"],
+        "--paths", nargs="*", default=["paper_account/shadow_price_paths.jsonl"],
         help="JSONL path logs created from real sampled paper quotes.",
     )
     parser.add_argument("--min-total-paths", type=int, default=DEFAULT_MIN_TOTAL_PATHS)
