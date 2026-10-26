@@ -820,6 +820,7 @@ class ScannerLogicTests(unittest.TestCase):
                 scanner.manage_shadow_positions(state)
 
             self.assertNotIn("mint", state["shadow_positions"])
+            self.assertIn("mint", state["shadow_completed_mints"])
             self.assertEqual(observation.call_count, 1)
             record = json.loads(path_log.read_text(encoding="utf-8").strip())
             self.assertEqual(record["benchmark_exit"]["reason"], "max_hold_timeout")
@@ -1000,6 +1001,28 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["scan_count"], 1)
         self.assertEqual(state["positions"], {})
 
+
+    def test_shadow_research_can_observe_tokens_blacklisted_by_the_live_strategy(self):
+        state = scanner.normalize_state({})
+        state["blacklist"] = ["mint"]
+        with patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(state)
+        self.assertEqual(result["shadow_opened"], ["mint"])
+        self.assertIn("mint", state["shadow_positions"])
+
+    def test_shadow_research_does_not_reopen_a_mint_with_a_complete_saved_path(self):
+        state = scanner.normalize_state({})
+        state["shadow_completed_mints"] = ["mint"]
+        with patch.object(scanner, "fetch_candidate_mints", return_value=["mint"]), \
+             patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(state)
+        self.assertEqual(result["shadow_opened"], [])
+        self.assertNotIn("mint", state["shadow_positions"])
 
     def test_shadow_scan_rejects_bearish_signals_clamped_to_zero_score(self):
         state = scanner.normalize_state({})
