@@ -235,7 +235,7 @@ jobs:
 
       - name: Apply bounded adaptive strategy update to isolated paper account
         if: github.event_name != 'pull_request'
-        run: python learn_agent.py --state paper_account/state.json --observations paper_account/whale_strategy_observations.csv --apply
+        run: python learn_agent.py --state paper_account/state.json --observations paper_account/strategy_observations.csv --apply
 
       - name: Run one discovery and entry cycle
         if: github.event_name != 'pull_request'
@@ -260,7 +260,8 @@ jobs:
           set -euo pipefail
           python strategy_backtest.py > /tmp/backtest-report-fresh.json
           python shadow_learning.py > /tmp/shadow-learning-report-fresh.json
-          python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-backtest-report.json
+          python strategy_backtest.py --observations paper_account/strategy_observations.csv > /tmp/paper-backtest-report.json
+          python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-whale-backtest-report.json
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
           python - <<'PY'
           import json
@@ -268,11 +269,13 @@ jobs:
           strategy = json.loads(Path("/tmp/backtest-report-fresh.json").read_text(encoding="utf-8"))
           shadow = json.loads(Path("/tmp/shadow-learning-report-fresh.json").read_text(encoding="utf-8"))
           paper_strategy = json.loads(Path("/tmp/paper-backtest-report.json").read_text(encoding="utf-8"))
+          paper_whale_strategy = json.loads(Path("/tmp/paper-whale-backtest-report.json").read_text(encoding="utf-8"))
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           report = {
               "strategy": strategy,
               "shadow": shadow,
               "paper_strategy": paper_strategy,
+              "paper_whale_strategy": paper_whale_strategy,
               "paper_shadow": paper_shadow,
           }
           Path("dashboard/backtest-data.js").write_text(
@@ -283,6 +286,7 @@ jobs:
               f"Refreshed dashboard: historical strategy={strategy.get('rows', 0)} rows, "
               f"historical shadow={shadow.get('rows', 0)} rows, "
               f"paper strategy={paper_strategy.get('rows', 0)} rows, "
+              f"paper whale experiment={paper_whale_strategy.get('rows', 0)} rows, "
               f"paper shadow={paper_shadow.get('rows', 0)} rows."
           )
           PY
