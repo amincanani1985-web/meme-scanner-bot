@@ -379,7 +379,7 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(cohort["status"], "insufficient_history")
         self.assertIsNone(cohort["selected_config"])
 
-    def test_prospective_cohort_registry_contains_all_eleven_preregistered_tags(self):
+    def test_prospective_cohort_registry_contains_all_thirteen_preregistered_tags(self):
         import shadow_path_backtest as backtest
 
         expected = {
@@ -394,6 +394,8 @@ class ShadowPathBacktestTests(unittest.TestCase):
             "continuation_cooldown_v1",
             "weak_trend_recovery_v1",
             "risk_screened_pullback_v1",
+            "rugcheck_screened_pullback_v1",
+            "rugcheck_no_warning_pullback_v1",
         }
         self.assertEqual(set(backtest.PROSPECTIVE_ENTRY_TAGS), expected)
         reports = backtest.analyze_prospective_cohorts([], min_total_paths=1)
@@ -411,6 +413,49 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["train_rows"], 0)
         self.assertEqual(report["validation_rows"], 0)
 
+
+
+    def test_rugcheck_entry_filters_fail_closed_when_report_is_missing_stale_or_risky(self):
+        import shadow_path_backtest as backtest
+
+        filters = {item["name"]: item for item in backtest.candidate_entry_filters()}
+        record = path([(0, 1.0, 100_000), (300, 0.99, 100_000), (600, 0.98, 100_000),
+                       (900, 0.97, 100_000)])
+        record["score"] = 75.0
+        safe = {
+            "rugcheck_available": 1.0,
+            "rugcheck_risk_data_available": 1.0,
+            "rugcheck_full_risk_screen_available": 1.0,
+            "rugcheck_report_age_seconds": 300.0,
+            "rugcheck_mint_authority_active": 0.0,
+            "rugcheck_freeze_authority_active": 0.0,
+            "rugcheck_rugged": 0.0,
+            "rugcheck_danger_risk_count": 0.0,
+            "rugcheck_critical_risk_count": 0.0,
+            "rugcheck_warning_risk_count": 0.0,
+            "rugcheck_top10_pct": 20.0,
+            "rugcheck_top20_pct": 34.0,
+            "rugcheck_lp_locked_pct": 65.0,
+        }
+        record["entry_components"] = safe
+        self.assertTrue(backtest.entry_filter_matches(record, filters["rugcheck_full_profile"]))
+        self.assertTrue(backtest.entry_filter_matches(record, filters["rugcheck_no_danger_or_critical"]))
+        self.assertTrue(backtest.entry_filter_matches(record, filters["rugcheck_low_concentration_locked_lp"]))
+        self.assertTrue(backtest.entry_filter_matches(record, filters["rugcheck_no_warning_risk"]))
+        for field, value in (
+            ("rugcheck_full_risk_screen_available", 0.0),
+            ("rugcheck_danger_risk_count", 1.0),
+            ("rugcheck_rugged", 1.0),
+            ("rugcheck_report_age_seconds", 25000.0),
+        ):
+            bad = dict(safe)
+            bad[field] = value
+            record["entry_components"] = bad
+            self.assertFalse(backtest.entry_filter_matches(record, filters["rugcheck_no_danger_or_critical"]))
+        missing = dict(safe)
+        missing.pop("rugcheck_top20_pct")
+        record["entry_components"] = missing
+        self.assertFalse(backtest.entry_filter_matches(record, filters["rugcheck_low_concentration_locked_lp"]))
 
 if __name__ == "__main__":
     unittest.main()
