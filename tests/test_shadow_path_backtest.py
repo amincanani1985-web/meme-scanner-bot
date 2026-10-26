@@ -295,7 +295,7 @@ class ShadowPathBacktestTests(unittest.TestCase):
             shift = i * 1_000.0
             record = path([
                 (seconds, 1.0, 100_000.0)
-                for seconds in range(0, 901, 112)
+                for seconds in (0, 112.5, 225, 337.5, 450, 562.5, 675, 787.5, 900)
             ])
             record["mint"] = f"prospective-test-{i}"
             record["entry_timestamp"] += shift
