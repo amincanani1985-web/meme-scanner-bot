@@ -623,6 +623,11 @@ PROSPECTIVE_ENTRY_TAGS = (
     "continuation_cooldown_v1",
     "weak_trend_recovery_v1",
     "risk_screened_pullback_v1",
+    "score_band_35_50_v1",
+    "score_band_50_60_v1",
+    "score_band_60_70_v1",
+    "score_band_70_80_v1",
+    "score_band_80_100_v1",
 )
 
 
