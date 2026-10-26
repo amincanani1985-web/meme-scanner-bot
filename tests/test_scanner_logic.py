@@ -1151,6 +1151,9 @@ class ScannerLogicTests(unittest.TestCase):
             paper = root / "paper_account"
             paper.mkdir()
             (root / "meme_scanner_cycle.py").write_text("# test root", encoding="utf-8")
+            (root / "state.json").write_text(json.dumps({
+                "shadow_positions": {"active-root-mint": {"symbol": "ACTIVE"}},
+            }), encoding="utf-8")
             (root / "shadow_price_paths.jsonl").write_text(
                 record("root-mint", 1_000.0) + "\n",
                 encoding="utf-8",
@@ -1170,7 +1173,7 @@ class ScannerLogicTests(unittest.TestCase):
             finally:
                 os.chdir(previous_cwd)
 
-        self.assertEqual(set(completed), {"root-mint", "paper-mint"})
+        self.assertEqual(set(completed), {"root-mint", "paper-mint", "active-root-mint"})
 
     def test_completed_mint_loader_reads_only_quality_paths_from_both_logs(self):
         def record(mint, entry, sample_count=9):
