@@ -37,6 +37,9 @@ WHALE_SNAPSHOT_INTERVAL_SECONDS = 300
 # Do not label shadow outcomes from stale prices after the intended hold window.
 # A 5-minute scheduling tolerance is allowed beyond the 10-minute maximum hold.
 SHADOW_STALE_OBSERVATION_SECONDS = MAX_HOLD_SECONDS + 300
+SHADOW_PATH_MIN_SAMPLES = 9
+SHADOW_PATH_MAX_SAMPLE_GAP_SECONDS = 240.0
+MAX_SHADOW_COMPLETED_MINTS = 5000
 HTTP_TIMEOUT_SECONDS = 10
 
 
@@ -88,6 +91,31 @@ MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for
 # STATE MANAGEMENT
 # ============================================================================
 
+def _load_shadow_completed_mints():
+    """Migrate completed quote-path mints so old paths are not sampled again."""
+    path = Path("shadow_price_paths.jsonl")
+    if not path.is_file():
+        return []
+    completed = []
+    seen = set()
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                mint = str(record.get("mint") or "").strip() if isinstance(record, dict) else ""
+                if mint and mint not in seen:
+                    seen.add(mint)
+                    completed.append(mint)
+    except OSError:
+        return []
+    return completed[-MAX_SHADOW_COMPLETED_MINTS:]
+
+
 def normalize_state(state):
     """Validate and normalize persisted state without discarding valid values."""
     if not isinstance(state, dict):
@@ -113,6 +141,13 @@ def normalize_state(state):
             state[key] = {}
     if not isinstance(state.get("blacklist"), list):
         state["blacklist"] = []
+    if "shadow_completed_mints" not in state:
+        state["shadow_completed_mints"] = _load_shadow_completed_mints()
+    elif not isinstance(state.get("shadow_completed_mints"), list):
+        state["shadow_completed_mints"] = []
+    state["shadow_completed_mints"] = list(dict.fromkeys(
+        str(mint).strip() for mint in state["shadow_completed_mints"] if str(mint).strip()
+    ))[-MAX_SHADOW_COMPLETED_MINTS:]
     for key in ("trade_count", "scan_count"):
         try:
             state[key] = max(0, int(state.get(key, 0)))
@@ -1070,6 +1105,41 @@ def _append_shadow_price_path(mint, position, observed_at=None):
         return False
 
 
+def _shadow_path_meets_research_quality(position):
+    """Return true only for a dense, full-horizon path usable in independent backtests."""
+    history = position.get("price_history") if isinstance(position, dict) else None
+    if not isinstance(history, list) or len(history) < SHADOW_PATH_MIN_SAMPLES:
+        return False
+    try:
+        entry_time = float(position.get("entry_time", 0) or 0)
+        timestamps = [float(sample["timestamp"]) for sample in history if isinstance(sample, dict)]
+        if not math.isfinite(entry_time) or len(timestamps) != len(history):
+            return False
+        if any(not math.isfinite(ts) or ts < entry_time for ts in timestamps):
+            return False
+        gaps = [timestamps[i] - timestamps[i - 1] for i in range(1, len(timestamps))]
+        return bool(
+            timestamps
+            and max(timestamps) - entry_time >= SHADOW_STALE_OBSERVATION_SECONDS
+            and gaps
+            and all(gap >= 0 for gap in gaps)
+            and max(gaps) <= SHADOW_PATH_MAX_SAMPLE_GAP_SECONDS
+        )
+    except (TypeError, ValueError, KeyError, OverflowError):
+        return False
+
+
+def _mark_shadow_mint_completed(state, mint):
+    """Prevent repeated windows on one token from masquerading as independent samples."""
+    if not isinstance(state.get("shadow_completed_mints"), list):
+        state["shadow_completed_mints"] = []
+    mint = str(mint or "").strip()
+    completed = state["shadow_completed_mints"]
+    if mint and mint not in completed:
+        completed.append(mint)
+    state["shadow_completed_mints"] = completed[-MAX_SHADOW_COMPLETED_MINTS:]
+
+
 def manage_shadow_positions(state):
     """Label the existing exit once, then retain quotes for research through the full horizon."""
     for mint in list(state.get("shadow_positions", {}).keys()):
@@ -1100,8 +1170,10 @@ def manage_shadow_positions(state):
         pair = fetch_dex_pair(mint)
         if not pair:
             if age_seconds >= SHADOW_STALE_OBSERVATION_SECONDS and benchmark_reason:
-                _append_shadow_price_path(mint, pos, observed_at=now)
+                saved = _append_shadow_price_path(mint, pos, observed_at=now)
                 state["shadow_positions"].pop(mint, None)
+                if saved and _shadow_path_meets_research_quality(pos):
+                    _mark_shadow_mint_completed(state, mint)
             continue
         try:
             price = float(pair.get("priceUsd") or 0)
@@ -1163,10 +1235,16 @@ def manage_shadow_positions(state):
         if age_seconds >= SHADOW_STALE_OBSERVATION_SECONDS:
             saved = _append_shadow_price_path(mint, pos, observed_at=now)
             state["shadow_positions"].pop(mint, None)
-            if saved:
+            if saved and _shadow_path_meets_research_quality(pos):
+                _mark_shadow_mint_completed(state, mint)
                 log(
                     f"[SHADOW PATH SAVED] {pos.get('symbol', '?')} "
-                    f"samples={len(pos.get('price_history', []))} horizon={age_seconds:.0f}s"
+                    f"samples={len(pos.get('price_history', []))} horizon={age_seconds:.0f}s; mint marked complete"
+                )
+            elif saved:
+                log(
+                    f"[SHADOW PATH REJECTED FOR RESEARCH] {pos.get('symbol', '?')} "
+                    f"samples={len(pos.get('price_history', []))}; token remains eligible for a later clean sample"
                 )
 
 def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
@@ -1184,7 +1262,15 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     for mint in candidates:
         if len(state["shadow_positions"]) >= MAX_SHADOW_POSITIONS:
             break
-        if mint in state["shadow_positions"] or mint in state["blacklist"]:
+        if not isinstance(state.get("shadow_completed_mints"), list):
+            state["shadow_completed_mints"] = []
+        if not state["shadow_completed_mints"]:
+            state["shadow_completed_mints"] = _load_shadow_completed_mints()
+        completed_mints = set(state["shadow_completed_mints"])
+        # A live strategy blacklist is not a research filter. Shadow-only outcomes
+        # need to include prior live losers so the model can learn from them; each
+        # mint is sampled at most once after a quality-complete path has been saved.
+        if mint in state["shadow_positions"] or mint in completed_mints:
             continue
         pair = fetch_dex_pair(mint)
         if not pair:
