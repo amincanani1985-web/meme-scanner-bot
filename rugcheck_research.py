@@ -11,7 +11,7 @@ TRUE_VALUES = {"1", "true", "yes", "y"}
 
 
 def is_enabled():
-    return str(os.environ.get("RUGCHECK_RESEARCH_ENABLED", "1")).strip().lower() in TRUE_VALUES
+    return str(os.environ.get("RUGCHECK_RESEARCH_ENABLED", "0")).strip().lower() in TRUE_VALUES
 
 
 def _num(value):
@@ -38,6 +38,15 @@ def _active(value):
     return 1.0
 
 
+def _active_field(mapping, key):
+    """Treat an explicit JSON null authority as disabled, but absent fields as unknown."""
+    if not isinstance(mapping, dict) or key not in mapping:
+        return None
+    if mapping[key] is None:
+        return 0.0
+    return _active(mapping[key])
+
+
 def _timestamp(value):
     if not isinstance(value, str):
         return None
@@ -54,6 +63,7 @@ def normalize_token_report(payload, expected_mint, now=None):
         return None
     token = _mapping(payload.get("token"))
     ext = _mapping(payload.get("token_extensions"))
+    token_meta = _mapping(payload.get("tokenMeta"))
     risks = payload.get("risks")
     risks = risks if isinstance(risks, list) else None
     holders = payload.get("topHolders")
@@ -73,22 +83,30 @@ def normalize_token_report(payload, expected_mint, now=None):
             if u is not None: locked_usd.append(u)
     detected = _timestamp(payload.get("detectedAt"))
     now = time.time() if now is None else float(now)
-    full = bool(holders) and risks is not None and bool(markets) and all(
-        k in token for k in ("mintAuthority", "freezeAuthority")
-    ) and "mintCloseAuthority" in ext and "tokenMetadata" in ext
+    full = (
+        holders is not None and len(holder_pct or []) >= 20
+        and risks is not None and bool(markets)
+        and _num(payload.get("totalHolders")) is not None
+        and all(k in token for k in ("mintAuthority", "freezeAuthority"))
+        and "mintCloseAuthority" in ext
+        and "tokenMetadata" in ext
+        and "mutable" in token_meta
+    )
     return {
         "rugcheck_available": 1.0,
         "rugcheck_risk_data_available": 1.0 if risks is not None and "rugged" in payload else 0.0,
         "rugcheck_full_risk_screen_available": 1.0 if full else 0.0,
-        "rugcheck_mint_authority_active": _active(token.get("mintAuthority")),
-        "rugcheck_freeze_authority_active": _active(token.get("freezeAuthority")),
-        "rugcheck_mint_close_authority_active": _active(ext.get("mintCloseAuthority")),
+        "rugcheck_mint_authority_active": _active_field(token, "mintAuthority"),
+        "rugcheck_freeze_authority_active": _active_field(token, "freezeAuthority"),
+        "rugcheck_mint_close_authority_active": _active_field(ext, "mintCloseAuthority"),
+        "rugcheck_metadata_mutable": _active_field(token_meta, "mutable"),
+        "rugcheck_holder_count": _num(payload.get("totalHolders")),
         "rugcheck_top1_pct": sum(holder_pct[:1]) if holder_pct is not None else None,
         "rugcheck_top10_pct": sum(holder_pct[:10]) if holder_pct is not None else None,
         "rugcheck_top20_pct": sum(holder_pct[:20]) if holder_pct is not None else None,
         "rugcheck_insider_pct": sum((_num(h.get("pct")) or 0.0) for h in holders if h.get("insider") is True) if holders is not None else None,
-        "rugcheck_lp_locked_pct": max(locked_pct) if locked_pct else (None if markets is None else 0.0),
-        "rugcheck_lp_locked_usd": max(locked_usd) if locked_usd else (None if markets is None else 0.0),
+        "rugcheck_lp_locked_pct": max(locked_pct) if locked_pct else None,
+        "rugcheck_lp_locked_usd": max(locked_usd) if locked_usd else None,
         "rugcheck_warning_risk_count": float(sum(x in {"warn", "warning"} for x in risk_levels)) if risk_levels is not None else None,
         "rugcheck_danger_risk_count": float(sum(x == "danger" for x in risk_levels)) if risk_levels is not None else None,
         "rugcheck_critical_risk_count": float(sum(x == "critical" for x in risk_levels)) if risk_levels is not None else None,
