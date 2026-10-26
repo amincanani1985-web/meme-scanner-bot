@@ -1379,6 +1379,7 @@ def _prospective_shadow_entry_filters(components):
             and volume is not None and volume >= 10_000.0):
         tags.append("volume_confirmed_pullback_v1")
     if (0.0 <= h1 <= 30.0 and -2.0 <= m5 <= 5.0 and 1.2 <= ratio <= 4.0
+            and liquidity is not None and liquidity >= 10_000.0
             and volume is not None and volume >= 10_000.0):
         tags.append("steady_pressure_v1")
     if (5.0 <= h1 <= 60.0 and -10.0 <= m5 <= 0.0 and 1.2 <= ratio <= 6.0
