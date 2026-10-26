@@ -298,8 +298,20 @@ def candidate_entry_filters():
         {
             "name": "memeswap_profile_fresh",
             "memeswap_available_min": 1.0,
+            "memeswap_risk_data_available_min": 1.0,
+            "memeswap_full_risk_screen_available_min": 1.0,
             "memeswap_price_age_seconds_max": 60.0,
             "memeswap_profile_age_seconds_max": 300.0,
+        },
+        {"name": "memeswap_risk_data_present", "memeswap_risk_data_available_min": 1.0},
+        {
+            "name": "memeswap_full_risk_screen_complete",
+            "memeswap_full_risk_screen_available_min": 1.0,
+        },
+        {
+            "name": "memeswap_gate_pass_true",
+            "memeswap_full_risk_screen_available_min": 1.0,
+            "memeswap_gate_pass_min": 1.0,
         },
         {"name": "memeswap_top1_at_most_10", "memeswap_top1_pct_max": 10.0},
         {"name": "memeswap_top10_at_most_35", "memeswap_top10_pct_max": 35.0},
@@ -329,6 +341,9 @@ def entry_filter_matches(record, entry_filter):
         ("liquidity_min", components.get("liquidity_usd")),
         ("volume_min", components.get("volume_h1_usd")),
         ("memeswap_available_min", components.get("memeswap_available")),
+        ("memeswap_risk_data_available_min", components.get("memeswap_risk_data_available")),
+        ("memeswap_full_risk_screen_available_min", components.get("memeswap_full_risk_screen_available")),
+        ("memeswap_gate_pass_min", components.get("memeswap_gate_pass")),
         ("memeswap_price_age_seconds_max", components.get("memeswap_price_age_seconds")),
         ("memeswap_profile_age_seconds_max", components.get("memeswap_profile_age_seconds")),
         ("memeswap_top1_pct_max", components.get("memeswap_top1_pct")),
@@ -602,6 +617,12 @@ PROSPECTIVE_ENTRY_TAGS = (
     "liquid_pullback_v1",
     "tight_pullback_v1",
     "recovery_pullback_v1",
+    "broad_moderate_momentum_v2",
+    "volume_confirmed_pullback_v1",
+    "steady_pressure_v1",
+    "continuation_cooldown_v1",
+    "weak_trend_recovery_v1",
+    "risk_screened_pullback_v1",
 )
 
 
