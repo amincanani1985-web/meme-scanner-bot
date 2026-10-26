@@ -94,10 +94,13 @@ MAX_SHADOW_POSITIONS = 24                   # Broader isolated shadow cohort for
 def _load_shadow_completed_mints():
     """Load completed mints from the canonical paper log and legacy root log."""
     configured = os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")
+    workspace = Path(__file__).resolve().parent
     candidates = [
         Path(configured),
         Path("shadow_price_paths.jsonl"),
         Path("paper_account/shadow_price_paths.jsonl"),
+        workspace / "shadow_price_paths.jsonl",
+        workspace / "paper_account" / "shadow_price_paths.jsonl",
     ]
     completed = []
     seen = set()
@@ -1625,8 +1628,8 @@ __all__ = [
 ]
 
 
-def run_cycle(state=None, require_whale_accumulation=False):
-    """Run a scan cycle; the isolated paper account can require whale-accumulation evidence."""
+def run_cycle(state=None, require_whale_accumulation=False, research_shadow=True):
+    """Run a scan cycle; shadow discovery can be isolated from historical-account monitoring."""
     # The process runs the historical and isolated paper accounts sequentially.
     # Clear between cycles, then share each fresh pair response between shadow and
     # strategy evaluation so the same token is not fetched/scored twice inconsistently.
@@ -1656,9 +1659,12 @@ def run_cycle(state=None, require_whale_accumulation=False):
         return {"scanned": 0, "opened": opened, "open_positions": len(state["positions"]), "equity": state["equity"], "target_reached": True}
     risk = update_risk_control(state)
     if risk["status"] == "halted":
-        # No account entries. Continue scans with isolated shadow positions to gather
-        # labeled evidence without risking the already impaired paper account.
-        shadow = scan_shadow_candidates(state)
+        # No account entries. The historical account still manages any already-open
+        # shadow positions, but only the isolated paper cycle discovers new research mints.
+        shadow = (
+            scan_shadow_candidates(state)
+            if research_shadow else {"scanned": 0, "shadow_opened": []}
+        )
         state["last_run"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         save_state(state)
         log(f"[RISK HALT] drawdown={risk['drawdown_pct']:.2f}% exceeded max {risk['max_drawdown_pct']:.2f}%; account entries blocked; shadow_scanned={shadow['scanned']} shadow_opened={len(shadow['shadow_opened'])}")
@@ -1666,10 +1672,11 @@ def run_cycle(state=None, require_whale_accumulation=False):
     candidates = fetch_candidate_mints()
     fetch_dex_pairs(candidates)
     log(f"[DISCOVERY] selected={LAST_DISCOVERY_DIAGNOSTICS.get('selected', len(candidates))} source_counts={LAST_DISCOVERY_DIAGNOSTICS.get('source_counts', {})}")
-    # Keep a research-only cohort running even while the paper account is healthy.
-    # Without this, the independent account would produce no labeled outcomes until
-    # a drawdown halt, leaving the active strategy without current-market evidence.
-    scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
+    # The historical account can discover/evaluate entries, but only the independent
+    # paper account creates new shadow research paths. This avoids duplicate token
+    # windows across two accounts sharing the same discovery stream.
+    if research_shadow:
+        scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
     diagnostics = {
         "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "candidate_count": len(candidates),
@@ -1859,8 +1866,19 @@ def run_isolated_paper_cycle(root_dir=None):
 
 if __name__ == "__main__":
     try:
-        run_cycle()  # Preserve the historical account and its existing risk lock.
-        paper_result = run_isolated_paper_cycle(Path(__file__).resolve().parent)
+        workspace = Path(__file__).resolve().parent
+        previous_shadow_path_log = os.environ.get("SHADOW_PRICE_PATH_LOG")
+        # Keep the historical account's remaining open shadow paths in its legacy
+        # ledger. New research entries belong only to the isolated paper cohort.
+        os.environ["SHADOW_PRICE_PATH_LOG"] = str(workspace / "shadow_price_paths.jsonl")
+        try:
+            run_cycle(research_shadow=False)
+        finally:
+            if previous_shadow_path_log is None:
+                os.environ.pop("SHADOW_PRICE_PATH_LOG", None)
+            else:
+                os.environ["SHADOW_PRICE_PATH_LOG"] = previous_shadow_path_log
+        paper_result = run_isolated_paper_cycle(workspace)
         log(
             "[PAPER ACCOUNT] independent cycle complete | "
             f"equity=${float(paper_result.get('equity', 0.0)):.2f} "
