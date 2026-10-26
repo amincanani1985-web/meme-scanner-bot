@@ -24,7 +24,9 @@ MIN_TRAIN_ROWS = 30
 MIN_VALIDATION_ROWS = 15
 DEFAULT_MIN_TOTAL_PATHS = 50
 MIN_PRICE_PATH_SAMPLES = 9
-MAX_SAMPLE_GAP_SECONDS = 120.0
+# The scheduled paper cycle has a measured boundary gap near 205 seconds.
+# A 240-second cap admits these observed paths but still rejects hidden multi-minute gaps.
+MAX_SAMPLE_GAP_SECONDS = 240.0
 MIN_PATH_DURATION_SECONDS = 900.0
 OUTLIER_ABS_PNL_PCT = 100.0
 
@@ -293,6 +295,7 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                     round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     """Chronological 70/30 walk-forward selection; no promotion on training profit alone."""
     normalized, rejected, sparse_or_short = [], 0, 0
+    observed_gaps = []
     for record in records:
         candidate, error = _normalized_path(record)
         if error:
@@ -303,6 +306,7 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             history[i]["timestamp"] - history[i - 1]["timestamp"]
             for i in range(1, len(history))
         ]
+        observed_gaps.extend(gaps)
         # A long elapsed duration with only an entry/exit quote is not a usable
         # path for testing stop rules. Require a full 15-minute horizon, enough
         # actual samples, and no multi-minute gaps that hide stop crossings.
@@ -323,6 +327,12 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         "usable_paths": len(normalized),
         "rejected_or_censored_paths": rejected,
         "sparse_or_short_paths_rejected": sparse_or_short,
+        "observed_sample_gaps": {
+            "count": len(observed_gaps),
+            "median_seconds": median(observed_gaps) if observed_gaps else None,
+            "maximum_seconds": max(observed_gaps) if observed_gaps else None,
+            "over_120_seconds": sum(gap > 120.0 for gap in observed_gaps),
+        },
         "path_quality_policy": {
             "minimum_duration_seconds": MIN_PATH_DURATION_SECONDS,
             "minimum_samples": MIN_PRICE_PATH_SAMPLES,
