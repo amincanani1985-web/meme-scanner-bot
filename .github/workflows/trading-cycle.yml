@@ -127,14 +127,12 @@ jobs:
           set -euo pipefail
           python strategy_backtest.py | tee /tmp/backtest-report.json
           python shadow_learning.py | tee /tmp/shadow-learning-report.json
-          python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
           python - <<'PY'
           import json
           from pathlib import Path
           strategy = json.loads(Path("/tmp/backtest-report.json").read_text(encoding="utf-8"))
           shadow = json.loads(Path("/tmp/shadow-learning-report.json").read_text(encoding="utf-8"))
-          paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
-          report = {"strategy": strategy, "shadow": shadow, "paper_simulator": paper_simulator}
+          report = {"strategy": strategy, "shadow": shadow}
           Path("dashboard/backtest-data.js").write_text("window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n", encoding="utf-8")
           PY
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
@@ -288,6 +286,7 @@ jobs:
           python strategy_backtest.py --observations paper_account/strategy_observations.csv > /tmp/paper-backtest-report.json
           python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-whale-backtest-report.json
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
+          python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -296,12 +295,14 @@ jobs:
           paper_strategy = json.loads(Path("/tmp/paper-backtest-report.json").read_text(encoding="utf-8"))
           paper_whale_strategy = json.loads(Path("/tmp/paper-whale-backtest-report.json").read_text(encoding="utf-8"))
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
+          paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
           report = {
               "strategy": strategy,
               "shadow": shadow,
               "paper_strategy": paper_strategy,
               "paper_whale_strategy": paper_whale_strategy,
               "paper_shadow": paper_shadow,
+              "paper_simulator": paper_simulator,
           }
           Path("dashboard/backtest-data.js").write_text(
               "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
