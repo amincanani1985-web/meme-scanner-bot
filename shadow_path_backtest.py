@@ -292,6 +292,24 @@ def candidate_entry_filters():
             "name": "score60_liquidity_25000",
             "score_min": 60.0, "liquidity_min": 25_000.0,
         },
+        # These constraints are eligible only for prospectively captured, fresh
+        # MemeSwap profiles. The matcher rejects missing fields rather than
+        # interpreting them as safe/zero.
+        {
+            "name": "memeswap_profile_fresh",
+            "memeswap_available_min": 1.0,
+            "memeswap_price_age_seconds_max": 60.0,
+            "memeswap_profile_age_seconds_max": 300.0,
+        },
+        {"name": "memeswap_top1_at_most_10", "memeswap_top1_pct_max": 10.0},
+        {"name": "memeswap_top10_at_most_35", "memeswap_top10_pct_max": 35.0},
+        {"name": "memeswap_top20_at_most_60", "memeswap_top20_pct_max": 60.0},
+        {"name": "memeswap_honeypot_false", "memeswap_honeypot_max": 0.0},
+        {"name": "memeswap_mintable_false", "memeswap_mintable_max": 0.0},
+        {"name": "memeswap_fake_score_at_most_10", "memeswap_fake_score_max": 10.0},
+        {"name": "memeswap_lp_locked_at_least_50", "memeswap_lp_locked_pct_min": 50.0},
+        {"name": "memeswap_no_reported_buy_tax", "memeswap_buy_tax_value_max": 0.0},
+        {"name": "memeswap_no_reported_sell_tax", "memeswap_sell_tax_value_max": 0.0},
     ]
 
 
@@ -310,6 +328,18 @@ def entry_filter_matches(record, entry_filter):
         ("ratio_min", components.get("buy_sell_ratio")),
         ("liquidity_min", components.get("liquidity_usd")),
         ("volume_min", components.get("volume_h1_usd")),
+        ("memeswap_available_min", components.get("memeswap_available")),
+        ("memeswap_price_age_seconds_max", components.get("memeswap_price_age_seconds")),
+        ("memeswap_profile_age_seconds_max", components.get("memeswap_profile_age_seconds")),
+        ("memeswap_top1_pct_max", components.get("memeswap_top1_pct")),
+        ("memeswap_top10_pct_max", components.get("memeswap_top10_pct")),
+        ("memeswap_top20_pct_max", components.get("memeswap_top20_pct")),
+        ("memeswap_honeypot_max", components.get("memeswap_honeypot")),
+        ("memeswap_mintable_max", components.get("memeswap_mintable")),
+        ("memeswap_fake_score_max", components.get("memeswap_fake_score")),
+        ("memeswap_lp_locked_pct_min", components.get("memeswap_lp_locked_pct")),
+        ("memeswap_buy_tax_value_max", components.get("memeswap_buy_tax_value")),
+        ("memeswap_sell_tax_value_max", components.get("memeswap_sell_tax_value")),
     )
     for requirement, observed in requirements:
         if requirement not in entry_filter:
