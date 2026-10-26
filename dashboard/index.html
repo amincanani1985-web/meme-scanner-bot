@@ -98,6 +98,15 @@
  <div class="tablewrap" style="margin-top:14px"><table class="live-table"><thead><tr><th>ویژگی ورودی</th><th>نمونهٔ دارای داده</th><th>همبستگی با سودوزیان</th><th>توضیح</th></tr></thead><tbody id="shFeatureTable"><tr><td colspan="4" class="live-empty">ویژگی‌های ورودی در انتظار دادهٔ جدید هستند.</td></tr></tbody></table></div>
  <p class="small" id="shNote">کارمزد اضافهٔ پیش‌فرض پس از لغزش شبیه‌سازی‌شده ۲٪ رفت‌وبرگشت فقط فرض آزمایشی است، نه اندازه‌گیری دقیق کارمزد و لغزش هر توکن.</p>
  <p class="small" id="btNote">بک‌تست زمانی بر داده‌های ثبت‌شده اجرا می‌شود. واجد شرایط بودن آماری به‌تنهایی تضمین سودآوری نیست؛ این بخش معاملات زنده را فعال نمی‌کند.</p>
+ <div class="cardhead" style="margin-top:18px"><b>🧭 بک‌تست خروج روی مسیر قیمت مشاهده‌شده</b><span class="live-pill" id="pathBtStatus">در انتظار مسیر کافی</span></div>
+ <div class="live-kpis">
+  <div class="live-kpi"><span>مسیر قابل استفاده / دریافت‌شده</span><b id="pathBtPaths">—</b></div>
+  <div class="live-kpi"><span>آموزش / آزمون زمانی</span><b id="pathBtSplit">—</b></div>
+  <div class="live-kpi"><span>تطابق خروج پایه</span><b id="pathBtBaseline">—</b></div>
+  <div class="live-kpi"><span>قانون انتخاب‌شده از آموزش</span><b id="pathBtConfig">—</b></div>
+  <div class="live-kpi"><span>بازده خالص آزمون نگه‌داشته‌شده</span><b id="pathBtHoldout">—</b></div>
+ </div>
+ <p class="small" id="pathBtNote">این آزمون به مسیرهای قیمت واقعی از حساب پیپر نیاز دارد. مسیر کوتاه یا نمونهٔ ناکافی به‌عنوان سوددهی تأیید نمی‌شود.</p>
 </section>
 
 <section class="card section" id="agentOpsPanel">
@@ -297,11 +306,12 @@ async function loadگردش‌کارActivity(){
  }catch(e){status.textContent='وضعیت در دسترس نیست';status.style.color='var(--red)';body.innerHTML='<tr><td colspan="5" class="live-empty">دریافت وضعیت GitHub Actions ممکن نشد. پیوند اجرای گردش‌کارها را در بالا باز کنید.</td></tr>';note.textContent=String(e.message||e);}
 }
 load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);loadPaperAccount();setInterval(loadPaperAccount,30000);loadWhaleCopyAccount();setInterval(loadWhaleCopyAccount,30000);loadگردش‌کارActivity();setInterval(loadگردش‌کارActivity,120000);
-</script><script src="./backtest-data.js"></script><script>
+</script><script src="./backtest-data.js"></script><script src="./exit-path-backtest-data.js"></script><script>
 (function(){
  const report=window.BACKTEST_REPORT||{};
  const r=report.strategy||report;
  const sh=report.shadow||null;
+ const pathReport=window.EXIT_PATH_BACKTEST||null;
  const $=id=>document.getElementById(id);
  const pct=v=>(Number(v||0)*100).toFixed(1)+'%';
  const statusLabel=s=>({'ok':'نمونه کافی برای بررسی','insufficient_history':'تاریخچه ناکافی','insufficient_validation_history':'نمونه آزمون ناکافی','insufficient_threshold_samples':'نمونه کافی برای هیچ حدنصابی نیست','no_validated_bucket':'هیچ بازه‌ای سودآوری خالص را تأیید نکرد','no_validated_threshold':'هیچ حدنصابی سود خالص و اطمینان کافی را نگذراند'})[s]||s||'نامشخص';
@@ -327,5 +337,32 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
  const features=Object.entries(sh.feature_associations||{});
  $('shFeatureTable').innerHTML=features.map(([key,m])=>'<tr><td>'+(featureLabels[key]||key)+'</td><td>'+m.n+'</td><td class="'+(m.correlation>0?'up':m.correlation<0?'down':'')+'">'+Number(m.correlation||0).toFixed(3)+'</td><td>همبستگی توصیفی، نه رابطهٔ علّی</td></tr>').join('')||'<tr><td colspan="4" class="live-empty">دادهٔ ویژگی برای محاسبه کافی نیست؛ نمونه‌های قدیمی ویژگی ثبت نکرده‌اند.</td></tr>';
  $('shNote').textContent='وضعیت: '+sh.status+'؛ آموزش '+(sh.train_rows||0)+' ردیف، آزمون زمانی '+(sh.validation_rows||0)+' ردیف؛ هزینهٔ پیش‌فرض '+Number(sh.assumed_round_trip_cost_pct||0).toFixed(1)+'% فرضی است. پذیرش اکنون علاوه بر سود خالص، حد پایین اطمینان ۹۵٪ نرخ برد خالص حداقل ۵۰٪ می‌خواهد. همبستگی ویژگی‌ها فقط روی آزمون زمانی محاسبه می‌شود و اثبات رابطهٔ علّی نیست. هیچ حدنصابی خودکار وارد معاملات واقعی نمی‌شود.';
-})();;
+ const pathBtStatusLabels={
+  insufficient_history:'نمونهٔ مسیر کافی نیست',
+  no_profitable_training_candidate:'در آموزش قانون سوددهی پیدا نشد',
+  holdout_not_profitable:'آزمون خارج از نمونه رد شد',
+  validated_profitable_out_of_sample:'سودآوری خارج از نمونه تأیید شد'
+ };
+ if(pathReport){
+  const status=pathReport.status||'unknown';
+  $('pathBtStatus').textContent=pathBtStatusLabels[status]||status;
+  $('pathBtStatus').style.color=status==='validated_profitable_out_of_sample'?'var(--green)':status==='insufficient_history'?'var(--yellow)':'var(--red)';
+  $('pathBtPaths').textContent=(pathReport.usable_paths||0)+' / '+(pathReport.paths_received||0);
+  $('pathBtSplit').textContent=(pathReport.train_rows||0)+' / '+(pathReport.validation_rows||0);
+  const baseline=pathReport.baseline_consistency||{};
+  $('pathBtBaseline').textContent=(baseline.matches||0)+' / '+(baseline.checked||0);
+  const cfg=pathReport.selected_config;
+  $('pathBtConfig').textContent=cfg
+   ? 'حدضرر '+(Number(cfg.hard_stop_pct)*100).toFixed(0)+'٪، تریل '+(Number(cfg.trailing_stop_pct)*100).toFixed(0)+'٪، نگهداری '+Number(cfg.max_hold_seconds).toFixed(0)+' ثانیه'
+   : 'هنوز انتخاب نشده';
+  const hold=pathReport.holdout;
+  $('pathBtHoldout').textContent=hold
+   ? Number(hold.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(hold.profit_factor||0).toFixed(2)
+   : 'داده کافی نیست';
+  $('pathBtNote').textContent='منبع: مسیرهای نمونه‌برداری‌شده از قیمت‌های پیپر، نه شمع‌های ساختگی. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
+ }else{
+  $('pathBtStatus').textContent='گزارش در دسترس نیست';
+  $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
+ }
+})();
 </script><script src="./market-live.js"></script></body></html>
