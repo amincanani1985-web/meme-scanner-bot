@@ -230,6 +230,12 @@ class ShadowPathBacktestTests(unittest.TestCase):
             "memeswap_available": 1.0,
             "memeswap_price_age_seconds": 12.0,
             "memeswap_profile_age_seconds": 20.0,
+            "memeswap_risk_data_available": 1.0,
+            "memeswap_full_risk_screen_available": 1.0,
+            "memeswap_gate_pass": 1.0,
+            "memeswap_fake_score": 3.0,
+            "memeswap_buy_tax_value": 0.0,
+            "memeswap_sell_tax_value": 0.0,
             "memeswap_top1_pct": 9.0,
             "memeswap_top10_pct": 29.0,
             "memeswap_top20_pct": 55.0,
@@ -240,6 +246,11 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_top10_at_most_35"]))
         self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_honeypot_false"]))
         self.assertTrue(backtest.entry_filter_matches(record, filters["memeswap_profile_fresh"]))
+        record["entry_components"]["memeswap_risk_data_available"] = 0.0
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_profile_fresh"]))
+        record["entry_components"]["memeswap_risk_data_available"] = 1.0
+        record["entry_components"]["memeswap_full_risk_screen_available"] = 0.0
+        self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_profile_fresh"]))
 
         record["entry_components"].pop("memeswap_top10_pct")
         self.assertFalse(backtest.entry_filter_matches(record, filters["memeswap_top10_at_most_35"]))
@@ -368,7 +379,7 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(cohort["status"], "insufficient_history")
         self.assertIsNone(cohort["selected_config"])
 
-    def test_prospective_cohort_registry_contains_all_five_preregistered_tags(self):
+    def test_prospective_cohort_registry_contains_all_eleven_preregistered_tags(self):
         import shadow_path_backtest as backtest
 
         expected = {
@@ -377,6 +388,12 @@ class ShadowPathBacktestTests(unittest.TestCase):
             "liquid_pullback_v1",
             "tight_pullback_v1",
             "recovery_pullback_v1",
+            "broad_moderate_momentum_v2",
+            "volume_confirmed_pullback_v1",
+            "steady_pressure_v1",
+            "continuation_cooldown_v1",
+            "weak_trend_recovery_v1",
+            "risk_screened_pullback_v1",
         }
         self.assertEqual(set(backtest.PROSPECTIVE_ENTRY_TAGS), expected)
         reports = backtest.analyze_prospective_cohorts([], min_total_paths=1)
