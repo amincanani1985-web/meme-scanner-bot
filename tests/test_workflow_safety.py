@@ -105,6 +105,14 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("sleep 30", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)
 
+    def test_pull_request_runs_cannot_block_the_main_paper_cycle(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn(
+            "group: trading-cycle-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}",
+            workflow,
+        )
+        self.assertIn("cancel-in-progress: false", workflow)
+
     def test_trading_cycle_cannot_recursively_start_the_validation_loop(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertNotIn("gh workflow run paper-profit-loop.yml", workflow)
