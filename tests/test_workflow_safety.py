@@ -34,6 +34,23 @@ class WorkflowSafetyTests(unittest.TestCase):
             workflow,
         )
 
+    def test_shadow_path_writer_loader_backtest_and_commit_share_both_log_locations(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn("SHADOW_PRICE_PATH_LOG: paper_account/shadow_price_paths.jsonl", workflow)
+        self.assertIn(
+            "python shadow_path_backtest.py --paths shadow_price_paths.jsonl "
+            "paper_account/shadow_price_paths.jsonl",
+            workflow,
+        )
+        self.assertIn(
+            "if [ -f paper_account/shadow_price_paths.jsonl ]; then "
+            "git add paper_account/shadow_price_paths.jsonl; fi",
+            workflow,
+        )
+        scanner_source = (ROOT / "meme_scanner_cycle.py").read_text(encoding="utf-8")
+        self.assertIn('os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")', scanner_source)
+        self.assertIn('Path("paper_account/shadow_price_paths.jsonl")', scanner_source)
+
     def test_exit_monitoring_samples_positions_for_four_minutes_without_rediscovery(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn("- name: Run one discovery and entry cycle", workflow)
