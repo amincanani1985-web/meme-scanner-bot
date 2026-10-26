@@ -39,6 +39,14 @@ def report_payload(mint=MINT):
             {"pct": 0.1, "insider": False},
             {"pct": 0.08, "insider": False},
             {"pct": 0.07, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
+            {"pct": 0.01, "insider": False},
         ],
         "risks": [
             {"name": "Copycat token", "level": "warn", "score": 2000},
@@ -67,8 +75,8 @@ class RugCheckResearchTests(unittest.TestCase):
         self.assertEqual(result["rugcheck_freeze_authority_active"], 0.0)
         self.assertEqual(result["rugcheck_mint_close_authority_active"], 0.0)
         self.assertAlmostEqual(result["rugcheck_top1_pct"], 6.0)
-        self.assertAlmostEqual(result["rugcheck_top10_pct"], 10.6)
-        self.assertAlmostEqual(result["rugcheck_top20_pct"], 10.75)
+        self.assertAlmostEqual(result["rugcheck_top10_pct"], 10.7)
+        self.assertAlmostEqual(result["rugcheck_top20_pct"], 10.93)
         self.assertAlmostEqual(result["rugcheck_insider_pct"], 1.0)
         self.assertAlmostEqual(result["rugcheck_lp_locked_pct"], 100.0)
         self.assertAlmostEqual(result["rugcheck_lp_locked_usd"], 64000.0)
