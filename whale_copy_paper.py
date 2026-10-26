@@ -398,9 +398,10 @@ def select_wallets(watch_state, research_state, limit=MAX_WALLETS_PER_CYCLE):
         -item[1],
         item[0],
     ))
-    qualified = [owner for owner, _, stats in valid if wallet_qualifies(stats)]
+    qualified = [item[0] for item in valid if wallet_qualifies(item[2])]
     chosen = qualified[:limit]
-    remaining = [owner for owner, _, _ in valid if owner not in set(chosen)]
+    chosen_set = set(chosen)
+    remaining = [item[0] for item in valid if item[0] not in chosen_set]
     slots = max(0, limit - len(chosen))
     if slots and remaining:
         cursor = int(research_state.get("wallet_cursor", 0) or 0) % len(remaining)
