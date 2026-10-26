@@ -1414,10 +1414,12 @@ class ScannerLogicTests(unittest.TestCase):
             response.json.return_value = {"pairs": []}
             empty_searches.append(response)
 
-        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(
-            scanner.requests, "get",
-            side_effect=[empty_feed, empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
-        ):
+        with patch.object(scanner, "PAIR_CACHE", {}), \
+             patch.object(scanner, "DISCOVERY_SEARCH_TERMS", ("BONK",)), \
+             patch.object(
+                 scanner.requests, "get",
+                 side_effect=[empty_feed, empty_feed, empty_feed, empty_feed, search_result],
+             ):
             candidates = scanner.fetch_candidate_mints(limit=10)
 
         self.assertIn("shadow-only-bonk", candidates)
