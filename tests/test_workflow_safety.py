@@ -59,6 +59,10 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn('Monitor-only check $check/8', workflow)
         self.assertIn("python paper_position_monitor.py", workflow)
         self.assertIn("sleep 30", workflow)
+        monitor_at = workflow.index("- name: Monitor existing paper positions")
+        self.assertLess(monitor_at, workflow.index("- name: Run scanner tests 10 times"))
+        self.assertLess(monitor_at, workflow.index("- name: Observe whale wallet behavior"))
+        self.assertLess(monitor_at, workflow.index("- name: Run one discovery and entry cycle"))
         self.assertNotIn("for check in 1 2 3 4; do", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)
 
