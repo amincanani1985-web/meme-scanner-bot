@@ -28,9 +28,9 @@ class ScannerSimulatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "paths.jsonl"
             path.write_text(
-                json.dumps(record("mint-a", 1000)) + "\\n"
-                + json.dumps(record("mint-a", 2000)) + "\\n"
-                + "{not-json\\n",
+                json.dumps(record("mint-a", 1000)) + "\n"
+                + json.dumps(record("mint-a", 2000)) + "\n"
+                + "{not-json\n",
                 encoding="utf-8",
             )
             records, rejected = simulator.load_paths([str(path)])
