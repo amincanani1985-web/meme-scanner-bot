@@ -21,6 +21,9 @@ class WorkflowSafetyTests(unittest.TestCase):
             "python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv",
             workflow,
         )
+        self.assertIn('"paper_whale_strategy": paper_whale_strategy', workflow)
+        self.assertIn('Path("dashboard/backtest-data.js").write_text', workflow)
+        self.assertIn('"paper_strategy": paper_strategy', workflow)
         self.assertNotIn(
             "python learn_agent.py --state paper_account/state.json "
             "--observations paper_account/whale_strategy_observations.csv --apply",
