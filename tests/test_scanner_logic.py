@@ -1389,6 +1389,41 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(diagnostics["rejections"], {"low_liquidity:9000": 1})
 
 
+    def test_search_discovery_includes_shadow_eligible_tokens_below_live_floors(self):
+        empty_feed = Mock()
+        empty_feed.raise_for_status.return_value = None
+        empty_feed.json.return_value = []
+        search_result = Mock()
+        search_result.raise_for_status.return_value = None
+        shadow_only_pair = {
+            "chainId": "solana",
+            "baseToken": {"address": "shadow-only-bonk", "symbol": "BONK", "name": "Bonk"},
+            "quoteToken": {"address": "usdc-mint", "symbol": "USDC", "name": "USD Coin"},
+            "priceUsd": "0.001",
+            "liquidity": {"usd": 5000},
+            "volume": {"h1": 5000},
+            "marketCap": 100000,
+            "txns": {"m5": {"buys": 30, "sells": 10}},
+            "pairCreatedAt": 1760000000000,
+        }
+        search_result.json.return_value = {"pairs": [shadow_only_pair]}
+        empty_searches = []
+        for _ in range(len(scanner.DISCOVERY_SEARCH_TERMS) - 1):
+            response = Mock()
+            response.raise_for_status.return_value = None
+            response.json.return_value = {"pairs": []}
+            empty_searches.append(response)
+
+        with patch.object(scanner, "PAIR_CACHE", {}), patch.object(
+            scanner.requests, "get",
+            side_effect=[empty_feed, empty_feed, empty_feed, empty_feed, search_result, *empty_searches],
+        ):
+            candidates = scanner.fetch_candidate_mints(limit=10)
+
+        self.assertIn("shadow-only-bonk", candidates)
+        self.assertTrue(scanner.passes_shadow_market_filter(shadow_only_pair)[0])
+        self.assertFalse(scanner.passes_market_filter(shadow_only_pair)[0])
+
     def test_candidate_discovery_includes_established_meme_search_results(self):
         empty_feed = Mock()
         empty_feed.raise_for_status.return_value = None
