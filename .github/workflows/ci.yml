@@ -14,6 +14,7 @@ on:
       - "run_tests.py"
       - "requirements.txt"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/trading-cycle.yml"
       - ".github/workflows/schedule-watchdog.yml"
   push:
     branches-ignore: [main]
@@ -29,6 +30,7 @@ on:
       - "run_tests.py"
       - "requirements.txt"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/trading-cycle.yml"
 
 permissions:
   contents: read
