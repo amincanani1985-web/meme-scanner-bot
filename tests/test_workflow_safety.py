@@ -66,6 +66,27 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("--state paper_account/state.json", workflow)
         self.assertIn("--observations paper_account/strategy_observations.csv", workflow)
 
+    def test_memeswap_enrichment_is_read_only_optional_and_in_the_test_gate(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('MEMESWAP_RESEARCH_ENABLED: "1"', workflow)
+        ci_workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        compile_step = next(
+            line for line in ci_workflow.splitlines()
+            if "python -m py_compile" in line and "meme_scanner_cycle.py" in line
+        )
+        self.assertIn("memeswap_research.py", compile_step)
+        self.assertIn("tests/test_memeswap_research.py", compile_step)
+
+        scanner_source = (ROOT / "meme_scanner_cycle.py").read_text(encoding="utf-8")
+        self.assertIn("MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE", scanner_source)
+        self.assertIn("fetch_memeswap_token_profile", scanner_source)
+        self.assertIn("scan_shadow_candidates", scanner_source)
+        live_open = scanner_source[scanner_source.index("def open_position("):
+            scanner_source.index("def close_position(")
+        ]
+        self.assertNotIn("fetch_memeswap_token_profile", live_open)
+        self.assertNotIn("MEMESWAP_API_KEY", scanner_source)
+
     def test_existing_and_new_paper_positions_are_monitored_in_the_same_cycle(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         initial = workflow.index("- name: Monitor existing paper positions with 30-second gaps")
