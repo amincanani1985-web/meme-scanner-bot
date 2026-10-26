@@ -54,6 +54,28 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn('os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")', scanner_source)
         self.assertIn('Path("paper_account/shadow_price_paths.jsonl")', scanner_source)
 
+    def test_memeswap_enrichment_is_read_only_optional_and_in_the_test_gate(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('MEMESWAP_RESEARCH_ENABLED: "1"', workflow)
+        compile_step = next(
+            line for line in workflow.splitlines()
+            if "python -m py_compile meme_scanner_cycle.py" in line
+        )
+        self.assertIn("memeswap_research.py", compile_step)
+        self.assertIn("tests/test_memeswap_research.py", compile_step)
+
+        scanner_source = (ROOT / "meme_scanner_cycle.py").read_text(encoding="utf-8")
+        self.assertIn("MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE", scanner_source)
+        self.assertIn("fetch_memeswap_token_profile", scanner_source)
+        self.assertIn("scan_shadow_candidates", scanner_source)
+        # Profile enrichment must remain on the virtual research path, not the
+        # live open_position call or any transaction-building/execution route.
+        live_open = scanner_source[scanner_source.index("def open_position("):
+            scanner_source.index("def close_position(")
+        ]
+        self.assertNotIn("fetch_memeswap_token_profile", live_open)
+        self.assertNotIn("MEMESWAP_API_KEY", scanner_source)
+
     def test_exit_monitoring_samples_positions_for_four_minutes_without_rediscovery(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn("- name: Run one discovery and entry cycle", workflow)
