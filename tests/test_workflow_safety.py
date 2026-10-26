@@ -54,6 +54,18 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn('os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl")', scanner_source)
         self.assertIn('Path("paper_account/shadow_price_paths.jsonl")', scanner_source)
 
+    def test_discovery_cycle_runs_in_the_same_isolated_paper_account_as_monitoring(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        marker = "- name: Run one discovery and entry cycle"
+        self.assertIn(marker, workflow)
+        section = workflow.split(marker, 1)[1].split("# Recompute after the scan", 1)[0]
+        self.assertIn("working-directory: paper_account", section)
+        self.assertIn("run: python ../meme_scanner_cycle.py", section)
+        self.assertNotIn("run: python meme_scanner_cycle.py", section)
+        self.assertIn("python paper_position_monitor.py", workflow)
+        self.assertIn("--state paper_account/state.json", workflow)
+        self.assertIn("--observations paper_account/strategy_observations.csv", workflow)
+
     def test_memeswap_enrichment_is_read_only_optional_and_in_the_test_gate(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn('MEMESWAP_RESEARCH_ENABLED: "1"', workflow)
@@ -69,27 +81,28 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("MAX_MEMESWAP_RESEARCH_PROFILES_PER_CYCLE", scanner_source)
         self.assertIn("fetch_memeswap_token_profile", scanner_source)
         self.assertIn("scan_shadow_candidates", scanner_source)
-        # Profile enrichment must remain on the virtual research path, not the
-        # live open_position call or any transaction-building/execution route.
         live_open = scanner_source[scanner_source.index("def open_position("):
             scanner_source.index("def close_position(")
         ]
         self.assertNotIn("fetch_memeswap_token_profile", live_open)
         self.assertNotIn("MEMESWAP_API_KEY", scanner_source)
 
-    def test_exit_monitoring_samples_positions_for_four_minutes_without_rediscovery(self):
+    def test_existing_and_new_paper_positions_are_monitored_in_the_same_cycle(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
-        self.assertIn("- name: Run one discovery and entry cycle", workflow)
-        self.assertIn("- name: Monitor existing paper positions with 30-second gaps", workflow)
-        self.assertIn("for check in 1 2 3 4 5 6 7 8", workflow)
-        self.assertIn('Monitor-only check $check/8', workflow)
+        initial = workflow.index("- name: Monitor existing paper positions with 30-second gaps")
+        scan = workflow.index("- name: Run one discovery and entry cycle")
+        post_entry = workflow.index("- name: Monitor newly opened paper positions immediately")
+        refresh = workflow.index("- name: Refresh learning reports after the latest outcomes")
+        self.assertLess(initial, workflow.index("- name: Run scanner tests 10 times"))
+        self.assertLess(initial, scan)
+        self.assertLess(scan, post_entry)
+        self.assertLess(post_entry, refresh)
+        self.assertIn("for check in 1 2 3 4 5 6; do", workflow)
+        self.assertIn('Monitor-only check $check/6', workflow)
+        self.assertIn("for check in 1 2 3 4; do", workflow)
+        self.assertIn('Immediate post-entry check $check/4', workflow)
         self.assertIn("python paper_position_monitor.py", workflow)
         self.assertIn("sleep 30", workflow)
-        monitor_at = workflow.index("- name: Monitor existing paper positions")
-        self.assertLess(monitor_at, workflow.index("- name: Run scanner tests 10 times"))
-        self.assertLess(monitor_at, workflow.index("- name: Observe whale wallet behavior"))
-        self.assertLess(monitor_at, workflow.index("- name: Run one discovery and entry cycle"))
-        self.assertNotIn("for check in 1 2 3 4; do", workflow)
         self.assertNotIn("for cycle in 1 2 3", workflow)
 
     def test_trading_cycle_cannot_recursively_start_the_validation_loop(self):
