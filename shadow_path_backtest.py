@@ -295,11 +295,13 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                     round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     """Chronological 70/30 walk-forward selection; no promotion on training profit alone."""
     normalized, rejected, sparse_or_short = [], 0, 0
-    observed_gaps = []
+    observed_gaps, accepted_gaps = [], []
+    rejection_reasons = {}
     for record in records:
         candidate, error = _normalized_path(record)
         if error:
             rejected += 1
+            rejection_reasons[error] = rejection_reasons.get(error, 0) + 1
             continue
         history = candidate["price_history"]
         gaps = [
@@ -310,13 +312,22 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         # A long elapsed duration with only an entry/exit quote is not a usable
         # path for testing stop rules. Require a full 15-minute horizon, enough
         # actual samples, and no multi-minute gaps that hide stop crossings.
-        if (candidate["observed_duration_seconds"] < MIN_PATH_DURATION_SECONDS
-                or len(history) < MIN_PRICE_PATH_SAMPLES
-                or not gaps
-                or max(gaps) > MAX_SAMPLE_GAP_SECONDS):
+        reasons = []
+        if candidate["observed_duration_seconds"] < MIN_PATH_DURATION_SECONDS:
+            reasons.append("duration_under_900_seconds")
+        if len(history) < MIN_PRICE_PATH_SAMPLES:
+            reasons.append("fewer_than_9_observed_samples")
+        if not gaps:
+            reasons.append("no_observed_gaps")
+        elif max(gaps) > MAX_SAMPLE_GAP_SECONDS:
+            reasons.append("sample_gap_over_240_seconds")
+        if reasons:
             rejected += 1
             sparse_or_short += 1
+            for reason in reasons:
+                rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
             continue
+        accepted_gaps.extend(gaps)
         normalized.append(candidate)
     normalized.sort(key=lambda item: (item["entry_timestamp"], str(item.get("mint", ""))))
     result = {
@@ -327,11 +338,18 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         "usable_paths": len(normalized),
         "rejected_or_censored_paths": rejected,
         "sparse_or_short_paths_rejected": sparse_or_short,
+        "path_rejection_reasons": rejection_reasons,
         "observed_sample_gaps": {
             "count": len(observed_gaps),
             "median_seconds": median(observed_gaps) if observed_gaps else None,
             "maximum_seconds": max(observed_gaps) if observed_gaps else None,
             "over_120_seconds": sum(gap > 120.0 for gap in observed_gaps),
+        },
+        "accepted_sample_gaps": {
+            "count": len(accepted_gaps),
+            "median_seconds": median(accepted_gaps) if accepted_gaps else None,
+            "maximum_seconds": max(accepted_gaps) if accepted_gaps else None,
+            "over_120_seconds": sum(gap > 120.0 for gap in accepted_gaps),
         },
         "path_quality_policy": {
             "minimum_duration_seconds": MIN_PATH_DURATION_SECONDS,
@@ -346,6 +364,11 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         "training": None,
         "holdout": None,
     }
+    baseline_outcomes = [
+        simulate_exit(record, BASELINE_CONFIG, fee_reserve_pct=round_trip_cost_pct)
+        for record in normalized
+    ]
+    result["baseline_performance"] = calculate_metrics(baseline_outcomes)
     if len(normalized) < int(min_total_paths):
         return result
 
