@@ -1205,7 +1205,7 @@ class ScannerLogicTests(unittest.TestCase):
         with patch.object(scanner, "fetch_candidate_mints", return_value=candidates), \
              patch.object(scanner, "fetch_dex_pairs", return_value={}), \
              patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
-             patch.object(scanner, "score_shadow_opportunity", return_value=(75.0, {"momentum_h1_pct": 12.0})), \
+             patch.object(scanner, "score_shadow_opportunity", side_effect=lambda *args: (75.0, {"momentum_h1_pct": 12.0})), \
              patch.object(scanner, "memeswap_research_enabled", return_value=True), \
              patch.object(scanner, "fetch_memeswap_token_profile", return_value=risk_features) as fetch_profile, \
              patch.object(scanner, "log"):
