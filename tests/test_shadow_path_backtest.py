@@ -122,6 +122,19 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["rejected_or_censored_paths"], 1)
         self.assertEqual(report["status"], "insufficient_history")
 
+    def test_walk_forward_accepts_observed_paths_with_maximum_gap_under_four_minutes(self):
+        samples = (
+            [(seconds, 1.0, 100_000) for seconds in range(0, 301, 30)]
+            + [(seconds, 0.99, 100_000) for seconds in range(480, 901, 30)]
+        )
+        observed = path(samples)
+        report = analyze_records([observed], min_total_paths=1)
+        self.assertEqual(report["usable_paths"], 1)
+        self.assertEqual(report["rejected_or_censored_paths"], 0)
+        self.assertEqual(
+            report["path_quality_policy"]["maximum_sample_gap_seconds"], 240.0
+        )
+
     def test_walk_forward_accepts_a_dense_complete_observed_path(self):
         dense = path([
             (seconds, 1.0 - 0.0001 * seconds, 100_000)
