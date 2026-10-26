@@ -1,6 +1,7 @@
 import csv
 from contextlib import ExitStack
 import json
+import os
 import time
 import unittest
 import tempfile
@@ -174,6 +175,35 @@ class ScannerLogicTests(unittest.TestCase):
         self.assertEqual(state["risk_control"]["status"], "halted")
         self.assertAlmostEqual(state["risk_control"]["drawdown_pct"], 30.0)
         self.assertFalse(scanner.open_position(state, "mint", pair(), {}, 95, {}))
+
+    def test_historical_risk_halt_manages_old_paths_without_opening_new_shadow_research(self):
+        state = scanner.normalize_state({})
+        state.update({
+            "equity": 250.0,
+            "initial_equity": 1000.0,
+            "peak_equity": 1000.0,
+            "trade_count": 53,
+            "positions": {},
+            "shadow_positions": {"existing-mint": {
+                "symbol": "OLD",
+                "entry_price": 1.0,
+                "entry_time": time.time() - 100,
+                "peak_price": 1.0,
+                "entry_liquidity": 100000.0,
+            }},
+        })
+        with patch.object(scanner, "reconcile_learning_from_trade_log"), \\
+             patch.object(scanner, "manage_open_positions"), \\
+             patch.object(scanner, "manage_shadow_positions") as manage_shadow, \\
+             patch.object(scanner, "scan_shadow_candidates") as scan_shadow, \\
+             patch.object(scanner, "save_state"), \\
+             patch.object(scanner, "log"):
+            result = scanner.run_cycle(state, research_shadow=False)
+
+        manage_shadow.assert_called_once()
+        scan_shadow.assert_not_called()
+        self.assertTrue(result["risk_halted"])
+        self.assertEqual(result["shadow_opened"], [])
 
     def test_risk_halt_continues_shadow_scanning_without_account_entries(self):
         state = scanner.normalize_state({"equity": 293.36, "initial_equity": 1000.0})
@@ -1098,6 +1128,49 @@ class ScannerLogicTests(unittest.TestCase):
             result = scanner.scan_shadow_candidates(state)
         self.assertEqual(result["shadow_opened"], [])
         self.assertNotIn("mint", state["shadow_positions"])
+
+    def test_completed_mint_loader_finds_root_ledger_when_running_inside_paper_account(self):
+        def record(mint, entry):
+            history = [
+                {
+                    "timestamp": entry + i * 112.5,
+                    "price_usd": 1.0,
+                    "liquidity_usd": 100_000.0,
+                }
+                for i in range(9)
+            ]
+            return json.dumps({
+                "mint": mint,
+                "entry_timestamp": entry,
+                "price_history": history,
+                "observed_duration_seconds": 900.0,
+            })
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paper = root / "paper_account"
+            paper.mkdir()
+            (root / "meme_scanner_cycle.py").write_text("# test root", encoding="utf-8")
+            (root / "shadow_price_paths.jsonl").write_text(
+                record("root-mint", 1_000.0) + "\\n",
+                encoding="utf-8",
+            )
+            (paper / "shadow_price_paths.jsonl").write_text(
+                record("paper-mint", 2_000.0) + "\\n",
+                encoding="utf-8",
+            )
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(paper)
+                with patch.object(scanner, "__file__", str(root / "meme_scanner_cycle.py")), \\
+                     patch.dict("os.environ", {
+                         "SHADOW_PRICE_PATH_LOG": str(paper / "shadow_price_paths.jsonl"),
+                     }):
+                    completed = scanner._load_shadow_completed_mints()
+            finally:
+                os.chdir(previous_cwd)
+
+        self.assertEqual(set(completed), {"root-mint", "paper-mint"})
 
     def test_completed_mint_loader_reads_only_quality_paths_from_both_logs(self):
         def record(mint, entry, sample_count=9):
