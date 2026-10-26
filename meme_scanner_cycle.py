@@ -870,7 +870,7 @@ def fetch_dex_pairs(mints):
     return {mint: PAIR_CACHE.get(mint) for mint in unique}
 
 
-def fetch_candidate_mints(limit=80):
+def fetch_candidate_mints(limit=120):
     """Fetch a bounded, interleaved Solana candidate list from boost, profile, and search feeds."""
     global LAST_DISCOVERY_DIAGNOSTICS
     if limit <= 0:
