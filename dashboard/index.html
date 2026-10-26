@@ -359,7 +359,10 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   $('pathBtHoldout').textContent=hold
    ? Number(hold.mean_pnl_pct||0).toFixed(2)+'٪ · PF '+Number(hold.profit_factor||0).toFixed(2)
    : 'داده کافی نیست';
-  $('pathBtNote').textContent='منبع: مسیرهای نمونه‌برداری‌شده از قیمت‌های پیپر، نه شمع‌های ساختگی. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
+  const gaps=pathReport.observed_sample_gaps||{};
+  const maxGap=Number(gaps.maximum_seconds||0);
+  const medianGap=Number(gaps.median_seconds||0);
+  $('pathBtNote').textContent='منبع: قیمت‌های واقعیِ نمونه‌برداری‌شده از حساب پیپر؛ هیچ قیمت بین دو نمونه ساخته نمی‌شود. شکاف مشاهده‌شده: میانه '+medianGap.toFixed(0)+' ثانیه، بیشینه '+maxGap.toFixed(0)+' ثانیه؛ '+Number(gaps.over_120_seconds||0)+' شکاف بیش از ۱۲۰ ثانیه بوده است. سقف پذیرش هر مسیر '+Number((pathReport.path_quality_policy||{}).maximum_sample_gap_seconds||240).toFixed(0)+' ثانیه است. هزینهٔ اضافهٔ رفت‌وبرگشت '+Number(pathReport.round_trip_cost_pct||0).toFixed(1)+'٪ در سود خالص اعمال می‌شود. حدنصاب لازم حداقل '+Number(pathReport.required_total_paths||50)+' مسیر کامل، آموزش مثبت و آزمون زمانی مستقل مثبت است. '+(status==='validated_profitable_out_of_sample'?'قانون خروج روی آزمون خارج از نمونه تأیید شده است؛ این نتیجه به‌تنهایی سوددهی آینده را تضمین نمی‌کند.':'هنوز هیچ قانون خروجی به‌عنوان سودده خارج از نمونه تأیید نشده است.');
  }else{
   $('pathBtStatus').textContent='گزارش در دسترس نیست';
   $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
