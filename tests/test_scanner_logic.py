@@ -571,6 +571,29 @@ class ScannerLogicTests(unittest.TestCase):
         trade.assert_called_once()
         learning.assert_called_once()
 
+    def test_hard_stop_executes_before_slow_whale_rpc(self):
+        entry_time = time.time() - scanner.WHALE_SNAPSHOT_INTERVAL_SECONDS - 5
+        state = {
+            "equity": 1000.0, "initial_equity": 1000.0, "trade_count": 0,
+            "blacklist": [], "cooldowns": {}, "positions": {
+                "mint": {
+                    "symbol": "TEST", "entry_price": 1.0, "peak_price": 1.0,
+                    "entry_time": entry_time, "last_whale_check_at": entry_time,
+                    "entry_liquidity": 100000, "amount_usd": 10.0,
+                    "signal_score": 85, "trailing_armed": False,
+                },
+            },
+        }
+        live_pair = {"priceUsd": "0.85", "liquidity": {"usd": 100000}}
+        with patch.object(scanner, "fetch_dex_pair", return_value=live_pair), \\
+             patch.object(scanner, "helius_configured", return_value=True), \\
+             patch.object(scanner, "fetch_whale_balances", side_effect=AssertionError("risk exit must not wait for whale RPC")), \\
+             patch.object(scanner, "append_trade"), \\
+             patch.object(scanner, "append_learning_observation"):
+            scanner.manage_open_positions(state)
+        self.assertNotIn("mint", state["positions"])
+        self.assertEqual(state["trade_count"], 1)
+
     def test_manage_positions_uses_live_price_for_hard_stop(self):
         state = {
             "equity": 1000.0, "trade_count": 0, "blacklist": [], "cooldowns": {},
