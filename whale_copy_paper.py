@@ -219,100 +219,198 @@ def signal_is_fresh(timestamp, now=None, max_age_seconds=MAX_SIGNAL_AGE_SECONDS)
     return 0 <= now - ts <= age
 
 
-def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_FEE_RESERVE_PCT):
-    """Idempotently replay normalized swaps into realized wallet PnL and fresh signals."""
+def _prepare_wallet_record_for_replay(wallet_record):
+    """Initialize a replayable event ledger; quarantine legacy state with unknown order."""
     if not isinstance(wallet_record, dict):
         raise TypeError("wallet_record must be a dictionary")
-    wallet_record.setdefault("positions", {})
-    wallet_record.setdefault("seen_signatures", [])
-    wallet_record.setdefault("closed_trades", [])
-    wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
-    seen_order = [str(signature) for signature in wallet_record["seen_signatures"]]
-    seen = set(seen_order)
-    buy_signals, sell_signals = [], []
-    new_closed = 0
+    if "trade_events" in wallet_record and isinstance(wallet_record.get("trade_events"), list):
+        wallet_record.setdefault("positions", {})
+        wallet_record.setdefault("closed_trades", [])
+        wallet_record.setdefault("seen_signatures", [])
+        return
+
+    legacy_positions = wallet_record.get("positions") or {}
+    legacy_signatures = wallet_record.get("seen_signatures") or []
+    legacy_closed = wallet_record.get("closed_trades") or []
+    legacy_metrics = wallet_record.get("metrics") or {}
+    if legacy_signatures or legacy_positions:
+        # Old records were mutated as pages arrived, so a later older-page
+        # backfill can invalidate their realized PnL and open cost basis. Preserve
+        # a small audit summary but never let the unreplayable metrics qualify a
+        # wallet for copy trading.
+        wallet_record["legacy_unreconstructed"] = {
+            "closed_trades": len(legacy_closed),
+            "open_positions": len(legacy_positions) if isinstance(legacy_positions, dict) else 0,
+            "seen_signatures": len(legacy_signatures) if isinstance(legacy_signatures, list) else 0,
+            "prior_metrics": dict(legacy_metrics) if isinstance(legacy_metrics, dict) else {},
+            "reason": "missing_normalized_event_archive",
+        }
+        wallet_record["legacy_baseline_closed_trades"] = []
+        wallet_record["positions"] = {}
+        wallet_record["closed_trades"] = []
+        wallet_record["seen_signatures"] = []
+        # Rebuild from the newest page and walk back again in timestamp order.
+        wallet_record.pop("history_cursor", None)
+        wallet_record["history_complete"] = False
+    else:
+        # An explicit seeded ledger with no prior signature/position state can be
+        # used as a baseline (for tests or imported closed-trade summaries).
+        wallet_record["legacy_baseline_closed_trades"] = [
+            dict(trade) for trade in legacy_closed if isinstance(trade, dict)
+        ]
+        wallet_record.setdefault("positions", {})
+        wallet_record.setdefault("closed_trades", [])
+        wallet_record.setdefault("seen_signatures", [])
+    wallet_record["trade_events"] = []
+
+
+def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_FEE_RESERVE_PCT):
+    """Rebuild realized wallet PnL chronologically from normalized, deduplicated swap events."""
+    _prepare_wallet_record_for_replay(wallet_record)
+    archived = list(wallet_record.get("trade_events") or [])
+    archived_signatures = {
+        str(event.get("signature"))
+        for event in archived
+        if isinstance(event, dict) and event.get("signature")
+    }
+
+    new_signatures = set()
+    new_events = []
     valid_trades = [trade for trade in (trades or []) if isinstance(trade, dict)]
-    valid_trades.sort(key=lambda trade: (_finite_number(trade.get("timestamp")) or 0.0, str(trade.get("signature", ""))))
+    valid_trades.sort(key=lambda trade: (
+        _finite_number(trade.get("timestamp")) or 0.0,
+        str(trade.get("signature", "")),
+    ))
 
     for trade in valid_trades:
-        signature = trade.get("signature")
-        mint = trade.get("mint")
+        signature = str(trade.get("signature") or "").strip()
+        mint = str(trade.get("mint") or "").strip()
         side = trade.get("side")
         timestamp = _finite_number(trade.get("timestamp"))
         token_amount = _finite_number(trade.get("token_amount"))
         quote_amount = _finite_number(trade.get("quote_amount"))
         quote_symbol = trade.get("quote_symbol")
-        if not signature or str(signature) in seen or not mint or timestamp is None:
+        if (not signature or signature in archived_signatures or not mint or timestamp is None
+                or side not in ("buy", "sell") or token_amount is None or quote_amount is None
+                or token_amount <= 0 or quote_amount <= 0
+                or quote_symbol not in ("SOL", "USDC", "USDT")):
             continue
-        signature = str(signature)
-        seen.add(signature)
-        seen_order.append(signature)
-        if side not in ("buy", "sell") or token_amount is None or quote_amount is None:
-            continue
-        if token_amount <= 0 or quote_amount <= 0 or quote_symbol not in ("SOL", "USDC", "USDT"):
+        event = {
+            "signature": signature,
+            "mint": mint,
+            "side": side,
+            "timestamp": timestamp,
+            "token_amount": token_amount,
+            "quote_amount": quote_amount,
+            "quote_symbol": str(quote_symbol),
+            "wallet": str(trade.get("wallet") or ""),
+        }
+        new_events.append(event)
+        new_signatures.add(signature)
+        archived_signatures.add(signature)
+
+    # Backfilled older swaps are inserted before recent swaps during replay. Keep
+    # the newest bounded event window in event-time order, not API arrival order.
+    events = archived + new_events
+    events.sort(key=lambda event: (
+        _finite_number(event.get("timestamp")) or 0.0,
+        str(event.get("signature") or ""),
+    ))
+    events = events[-MAX_STORED_SIGNATURES:]
+    wallet_record["trade_events"] = events
+
+    positions = {}
+    closed_trades = [
+        dict(trade) for trade in (wallet_record.get("legacy_baseline_closed_trades") or [])
+        if isinstance(trade, dict)
+    ]
+    new_closed = 0
+    buy_signals, sell_signals = [], []
+    current_time = time.time() if now is None else float(now)
+
+    for trade in events:
+        signature = str(trade.get("signature") or "")
+        mint = str(trade.get("mint") or "")
+        side = trade.get("side")
+        timestamp = _finite_number(trade.get("timestamp"))
+        token_amount = _finite_number(trade.get("token_amount"))
+        quote_amount = _finite_number(trade.get("quote_amount"))
+        quote_symbol = trade.get("quote_symbol")
+        wallet = str(trade.get("wallet") or "")
+        if (not signature or not mint or timestamp is None or token_amount is None
+                or quote_amount is None or token_amount <= 0 or quote_amount <= 0):
             continue
 
+        is_new = signature in new_signatures
         if side == "buy":
-            current_metrics = calculate_wallet_metrics(wallet_record["closed_trades"])
-            if wallet_qualifies(current_metrics) and signal_is_fresh(timestamp, now=now):
+            # Wallet qualification is based only on earlier realized events in this
+            # chronological replay. Old backfill buys cannot qualify themselves.
+            current_metrics = calculate_wallet_metrics(closed_trades)
+            if is_new and wallet_qualifies(current_metrics) and signal_is_fresh(timestamp, now=current_time):
                 buy_signals.append({
-                    "wallet": str(trade.get("wallet") or ""),
-                    "mint": str(mint),
+                    "wallet": wallet,
+                    "mint": mint,
                     "timestamp": timestamp,
-                    "signature": str(signature),
+                    "signature": signature,
                     "quote_symbol": str(quote_symbol),
                     "leader_price_quote": quote_amount / token_amount,
                     "wallet_metrics": current_metrics,
                 })
-            position = wallet_record["positions"].get(mint)
-            if not isinstance(position, dict):
+            position = positions.get(mint)
+            if not isinstance(position, dict) or position.get("quote_symbol") != quote_symbol:
                 position = {
-                    "token_amount": 0.0, "cost_quote": 0.0,
-                    "quote_symbol": quote_symbol, "first_buy_timestamp": timestamp,
+                    "token_amount": 0.0,
+                    "cost_quote": 0.0,
+                    "quote_symbol": str(quote_symbol),
+                    "first_buy_timestamp": timestamp,
                 }
-                wallet_record["positions"][mint] = position
-            if position.get("quote_symbol") == quote_symbol:
-                position["token_amount"] = float(position.get("token_amount", 0.0)) + token_amount
-                position["cost_quote"] = float(position.get("cost_quote", 0.0)) + quote_amount
-        else:
-            position = wallet_record["positions"].get(mint)
-            if signal_is_fresh(timestamp, now=now):
-                sell_signals.append({
-                    "wallet": str(trade.get("wallet") or ""),
-                    "mint": str(mint),
-                    "timestamp": timestamp,
-                    "signature": str(signature),
-                })
-            if isinstance(position, dict) and position.get("quote_symbol") == quote_symbol:
-                old_qty = _finite_number(position.get("token_amount")) or 0.0
-                old_cost = _finite_number(position.get("cost_quote")) or 0.0
-                sold_qty = min(token_amount, old_qty)
-                if old_qty > 0 and sold_qty > 0 and old_cost > 0:
-                    basis = old_cost * sold_qty / old_qty
-                    proceeds = quote_amount * sold_qty / token_amount
-                    gross_pct = (proceeds / basis - 1.0) * 100.0
-                    net_pct = gross_pct - float(fee_reserve_pct)
-                    wallet_record["closed_trades"].append({
-                        "timestamp": timestamp,
-                        "signature": str(signature),
-                        "mint": str(mint),
-                        "quote_symbol": str(quote_symbol),
-                        "token_amount": sold_qty,
-                        "cost_quote": basis,
-                        "proceeds_quote": proceeds,
-                        "gross_pnl_pct": gross_pct,
-                        "net_pnl_pct": net_pct,
-                    })
-                    new_closed += 1
-                    position["token_amount"] = max(0.0, old_qty - sold_qty)
-                    position["cost_quote"] = max(0.0, old_cost - basis)
-                    if position["token_amount"] <= 1e-12:
-                        wallet_record["positions"].pop(mint, None)
+                positions[mint] = position
+            position["token_amount"] = float(position.get("token_amount", 0.0)) + token_amount
+            position["cost_quote"] = float(position.get("cost_quote", 0.0)) + quote_amount
 
-    wallet_record["seen_signatures"] = seen_order[-MAX_STORED_SIGNATURES:]
-    wallet_record["closed_trades"] = wallet_record["closed_trades"][-MAX_STORED_CLOSED_TRADES:]
+        elif side == "sell":
+            if is_new and signal_is_fresh(timestamp, now=current_time):
+                sell_signals.append({
+                    "wallet": wallet,
+                    "mint": mint,
+                    "timestamp": timestamp,
+                    "signature": signature,
+                })
+            position = positions.get(mint)
+            if not isinstance(position, dict) or position.get("quote_symbol") != quote_symbol:
+                continue
+            old_qty = _finite_number(position.get("token_amount")) or 0.0
+            old_cost = _finite_number(position.get("cost_quote")) or 0.0
+            sold_qty = min(token_amount, old_qty)
+            if old_qty <= 0 or sold_qty <= 0 or old_cost <= 0:
+                continue
+            basis = old_cost * sold_qty / old_qty
+            proceeds = quote_amount * sold_qty / token_amount
+            gross_pct = (proceeds / basis - 1.0) * 100.0
+            net_pct = gross_pct - float(fee_reserve_pct)
+            closed_trades.append({
+                "timestamp": timestamp,
+                "signature": signature,
+                "mint": mint,
+                "quote_symbol": str(quote_symbol),
+                "token_amount": sold_qty,
+                "cost_quote": basis,
+                "proceeds_quote": proceeds,
+                "gross_pnl_pct": gross_pct,
+                "net_pnl_pct": net_pct,
+            })
+            if is_new:
+                new_closed += 1
+            position["token_amount"] = max(0.0, old_qty - sold_qty)
+            position["cost_quote"] = max(0.0, old_cost - basis)
+            if position["token_amount"] <= 1e-12:
+                positions.pop(mint, None)
+
+    wallet_record["positions"] = positions
+    wallet_record["closed_trades"] = closed_trades[-MAX_STORED_CLOSED_TRADES:]
+    wallet_record["seen_signatures"] = [event["signature"] for event in events]
     wallet_record["metrics"] = calculate_wallet_metrics(wallet_record["closed_trades"])
-    wallet_record["last_processed_at"] = time.time() if now is None else float(now)
+    wallet_record["last_processed_at"] = current_time
     return {
         "new_closed_trades": new_closed,
         "buy_signals": buy_signals,
@@ -740,6 +838,9 @@ def run():
         "version": 1, "wallets": {}, "wallet_cursor": 0, "scan_count": 0,
     })
     research_state.setdefault("wallets", {})
+    for wallet_record in research_state["wallets"].values():
+        if isinstance(wallet_record, dict):
+            _prepare_wallet_record_for_replay(wallet_record)
     api_key = _api_key()
     selected = select_wallets(watch_state, research_state)
     buy_signals, sell_signals = [], []
