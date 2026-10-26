@@ -297,7 +297,7 @@ class ScannerLogicTests(unittest.TestCase):
         with patch.object(scanner.requests, "get", side_effect=[boosts, top_boosts, profiles, recent_profiles, *empty_searches]):
             self.assertEqual(scanner.fetch_candidate_mints(limit=10), ["sol-mint", "top-mint", "recent-mint"])
 
-    def test_default_discovery_expands_candidate_universe_to_eighty(self):
+    def test_default_discovery_expands_candidate_universe_to_one_hundred_twenty(self):
         feeds = []
         for prefix in ("boost", "top", "profile", "recent"):
             response = Mock()
@@ -315,9 +315,9 @@ class ScannerLogicTests(unittest.TestCase):
             empty_searches.append(response)
         with patch.object(scanner.requests, "get", side_effect=[*feeds, *empty_searches]):
             candidates = scanner.fetch_candidate_mints()
-        self.assertEqual(len(candidates), 80)
-        self.assertEqual(len(set(candidates)), 80)
-        self.assertEqual(scanner.LAST_DISCOVERY_DIAGNOSTICS["selected"], 80)
+        self.assertEqual(len(candidates), 120)
+        self.assertEqual(len(set(candidates)), 120)
+        self.assertEqual(scanner.LAST_DISCOVERY_DIAGNOSTICS["selected"], 120)
 
     def test_pair_lookup_never_selects_a_non_solana_pair(self):
         scanner.PAIR_CACHE.clear()
