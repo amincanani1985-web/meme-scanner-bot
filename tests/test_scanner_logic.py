@@ -1768,5 +1768,83 @@ class DexScreenerMintAttributionTests(unittest.TestCase):
         self.assertIsNone(selected)
 
 
+
+    def test_rugcheck_profile_requests_are_capped_per_scan_cycle(self):
+        state = scanner.normalize_state({})
+        candidates = [f"rugcheck-mint-{index}" for index in range(6)]
+        risk_features = {
+            "rugcheck_available": 1.0,
+            "rugcheck_risk_data_available": 1.0,
+            "rugcheck_full_risk_screen_available": 1.0,
+            "rugcheck_top10_pct": 25.0,
+        }
+        with patch.object(scanner, "fetch_dex_pairs", return_value={}), \
+             patch.object(scanner, "fetch_dex_pair", return_value=pair()), \
+             patch.object(scanner, "score_shadow_opportunity", side_effect=lambda *args: (75.0, {
+                 "momentum_h1_pct": 12.0, "momentum_m5_pct": -1.0,
+                 "buy_sell_ratio": 1.5, "liquidity_usd": 100000.0, "volume_h1_usd": 50000.0,
+             })), \
+             patch.object(scanner, "memeswap_research_enabled", return_value=False), \
+             patch.object(scanner, "rugcheck_research_enabled", return_value=True), \
+             patch.object(scanner, "fetch_rugcheck_token_report", return_value=risk_features) as fetch_report, \
+             patch.object(scanner, "log"):
+            result = scanner.scan_shadow_candidates(state, candidates=candidates, increment_scan_count=False)
+
+        self.assertEqual(result["shadow_opened"], candidates)
+        self.assertEqual(fetch_report.call_count, scanner.MAX_RUGCHECK_RESEARCH_PROFILES_PER_CYCLE)
+        enriched = sum(
+            "rugcheck_top10_pct" in position["components"]
+            for position in state["shadow_positions"].values()
+        )
+        self.assertEqual(enriched, scanner.MAX_RUGCHECK_RESEARCH_PROFILES_PER_CYCLE)
+        self.assertEqual(state["equity"], 1000.0)
+        self.assertEqual(state["positions"], {})
+
+    def test_rugcheck_research_cohorts_require_complete_recent_safety_data(self):
+        base = {
+            "momentum_h1_pct": 15.0,
+            "momentum_m5_pct": -2.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 100000.0,
+            "volume_h1_usd": 50000.0,
+        }
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({
+                **base, "rugcheck_available": 1.0, "rugcheck_risk_data_available": 1.0,
+            }),
+        )
+        safe = {
+            **base,
+            "rugcheck_available": 1.0,
+            "rugcheck_risk_data_available": 1.0,
+            "rugcheck_full_risk_screen_available": 1.0,
+            "rugcheck_report_age_seconds": 300.0,
+            "rugcheck_mint_authority_active": 0.0,
+            "rugcheck_freeze_authority_active": 0.0,
+            "rugcheck_rugged": 0.0,
+            "rugcheck_danger_risk_count": 0.0,
+            "rugcheck_critical_risk_count": 0.0,
+            "rugcheck_warning_risk_count": 0.0,
+            "rugcheck_top1_pct": 6.0,
+            "rugcheck_top10_pct": 20.0,
+            "rugcheck_top20_pct": 34.0,
+            "rugcheck_lp_locked_pct": 65.0,
+            "rugcheck_holder_count": 1000.0,
+        }
+        self.assertIn("rugcheck_screened_pullback_v1", scanner._prospective_shadow_entry_filters(safe))
+        self.assertIn("rugcheck_no_warning_pullback_v1", scanner._prospective_shadow_entry_filters(safe))
+        warned = {**safe, "rugcheck_warning_risk_count": 1.0}
+        self.assertIn("rugcheck_screened_pullback_v1", scanner._prospective_shadow_entry_filters(warned))
+        self.assertNotIn("rugcheck_no_warning_pullback_v1", scanner._prospective_shadow_entry_filters(warned))
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**safe, "rugcheck_danger_risk_count": 1.0}),
+        )
+        self.assertNotIn(
+            "rugcheck_screened_pullback_v1",
+            scanner._prospective_shadow_entry_filters({**safe, "rugcheck_report_age_seconds": 25000.0}),
+        )
+
 if __name__ == "__main__":
     unittest.main()
