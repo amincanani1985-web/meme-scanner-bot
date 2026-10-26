@@ -414,6 +414,32 @@ class ScannerLogicTests(unittest.TestCase):
                 ["boost-a", "top-a", "profile-a", "shared", "top-b"],
             )
 
+    def test_score_bands_are_tagged_prospectively_at_entry_boundaries(self):
+        components = {
+            "momentum_h1_pct": 10.0,
+            "momentum_m5_pct": 1.0,
+            "buy_sell_ratio": 1.5,
+            "liquidity_usd": 50000.0,
+            "volume_h1_usd": 50000.0,
+        }
+        cases = [
+            (40.0, "score_band_35_50_v1"),
+            (55.0, "score_band_50_60_v1"),
+            (65.0, "score_band_60_70_v1"),
+            (75.0, "score_band_70_80_v1"),
+            (80.0, "score_band_80_100_v1"),
+        ]
+        for score, expected in cases:
+            with self.subTest(score=score):
+                self.assertIn(
+                    expected,
+                    scanner._prospective_shadow_entry_filters(components, score=score),
+                )
+        self.assertNotIn(
+            "score_band_70_80_v1",
+            scanner._prospective_shadow_entry_filters(components, score=80.0),
+        )
+
     def test_shadow_position_captures_preregistered_entry_cohorts(self):
         state = scanner.normalize_state({})
         research_pair = pair(
@@ -454,6 +480,7 @@ class ScannerLogicTests(unittest.TestCase):
                 "steady_pressure_v1",
                 "continuation_cooldown_v1",
                 "weak_trend_recovery_v1",
+                "score_band_70_80_v1",
             },
         )
 
