@@ -297,7 +297,7 @@ jobs:
           from pathlib import Path
           report = json.loads(Path("/tmp/shadow-path-backtest-report.json").read_text(encoding="utf-8"))
           Path("dashboard/exit-path-backtest-data.js").write_text(
-              "window.EXIT_PATH_BACKTEST=" + json.dumps(report, separators=(",", ":"), allow_nan=False) + ";\\n",
+              "window.EXIT_PATH_BACKTEST=" + json.dumps(report, separators=(",", ":"), allow_nan=False) + ";\n",
               encoding="utf-8",
           )
           print("## Sampled quote-path exit backtest")
