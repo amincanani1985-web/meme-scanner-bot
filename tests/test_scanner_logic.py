@@ -250,7 +250,11 @@ class ScannerLogicTests(unittest.TestCase):
              patch.object(scanner, "append_learning_observation") as observation, \
              patch.object(scanner, "log"):
             scanner.manage_shadow_positions(state)
-        self.assertNotIn("mint", state["shadow_positions"])
+        self.assertIn("mint", state["shadow_positions"])
+        self.assertEqual(
+            state["shadow_positions"]["mint"]["benchmark_exit_reason"],
+            "hard_stop_loss",
+        )
         self.assertEqual(state["equity"], 293.36)
         self.assertEqual(state["trade_count"], 53)
         observation.assert_called_once()
