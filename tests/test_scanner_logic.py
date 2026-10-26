@@ -449,6 +449,11 @@ class ScannerLogicTests(unittest.TestCase):
                 "liquid_pullback_v1",
                 "tight_pullback_v1",
                 "recovery_pullback_v1",
+                "broad_moderate_momentum_v2",
+                "volume_confirmed_pullback_v1",
+                "steady_pressure_v1",
+                "continuation_cooldown_v1",
+                "weak_trend_recovery_v1",
             },
         )
 
