@@ -1022,8 +1022,56 @@ def manage_open_positions(state):
 
 
 
+def _append_shadow_price_path(mint, position, observed_at=None):
+    """Persist the sampled quote path for offline, chronological exit-rule research."""
+    if not isinstance(position, dict) or not position.get("benchmark_exit_reason"):
+        return False
+    if position.get("price_path_written"):
+        return True
+    history = position.get("price_history")
+    if not isinstance(history, list) or len(history) < 2:
+        return False
+    try:
+        timestamps = [
+            float(sample["timestamp"]) for sample in history
+            if isinstance(sample, dict) and math.isfinite(float(sample.get("timestamp", 0)))
+        ]
+        if len(timestamps) < 2:
+            return False
+        entry_time = float(position["entry_time"])
+        path = Path(os.environ.get("SHADOW_PRICE_PATH_LOG", "shadow_price_paths.jsonl"))
+        record = {
+            "schema_version": 1,
+            "mint": str(mint),
+            "symbol": str(position.get("symbol", "?")),
+            "score": float(position.get("signal_score", 0) or 0),
+            "entry_timestamp": entry_time,
+            "entry_price": float(position["entry_price"]),
+            "entry_liquidity_usd": float(position.get("entry_liquidity", 0) or 0),
+            "entry_components": position.get("components", {}) if isinstance(position.get("components"), dict) else {},
+            "benchmark_exit": {
+                "reason": str(position["benchmark_exit_reason"]),
+                "timestamp": float(position.get("benchmark_exit_timestamp", timestamps[-1])),
+                "price_usd": float(position.get("benchmark_exit_price_usd", 0) or 0),
+                "liquidity_usd": float(position.get("benchmark_exit_liquidity_usd", 0) or 0),
+                "after_slippage_pnl_pct": float(position.get("benchmark_exit_after_slippage_pnl_pct", 0) or 0),
+            },
+            "observation_end_timestamp": max(timestamps),
+            "observed_duration_seconds": max(0.0, max(timestamps) - entry_time),
+            "price_history": history,
+        }
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\\n")
+        position["price_path_written"] = True
+        return True
+    except (OSError, TypeError, ValueError, OverflowError) as exc:
+        log(f"[SHADOW PATH ERROR] {position.get('symbol', '?')} could not persist sampled path: {type(exc).__name__}")
+        return False
+
+
 def manage_shadow_positions(state):
-    """Close isolated shadow positions using the same price-risk rules, without touching account equity."""
+    """Label the existing exit once, then retain quotes for research through the full horizon."""
     for mint in list(state.get("shadow_positions", {}).keys()):
         pos = state["shadow_positions"].get(mint)
         if not isinstance(pos, dict):
@@ -1039,15 +1087,21 @@ def manage_shadow_positions(state):
         if not all(math.isfinite(v) for v in (entry_price, entry_time, peak_price)) or entry_price <= 0:
             state["shadow_positions"].pop(mint, None)
             continue
-        age_seconds = time.time() - entry_time
-        if age_seconds > SHADOW_STALE_OBSERVATION_SECONDS:
-            # Price is only known at this late scan, not at the intended 10-minute
-            # exit. Recording it would contaminate research with unbounded hold times.
+
+        now = time.time()
+        age_seconds = max(0.0, now - entry_time)
+        benchmark_reason = pos.get("benchmark_exit_reason")
+        if age_seconds > SHADOW_STALE_OBSERVATION_SECONDS and not benchmark_reason:
+            # Never label a price observed after the intended research window as the exit.
             state["shadow_positions"].pop(mint, None)
             log(f"[SHADOW DISCARD] {pos.get('symbol', '?')} stale observation age={age_seconds:.0f}s; excluded from strategy data")
             continue
+
         pair = fetch_dex_pair(mint)
         if not pair:
+            if age_seconds >= SHADOW_STALE_OBSERVATION_SECONDS and benchmark_reason:
+                _append_shadow_price_path(mint, pos, observed_at=now)
+                state["shadow_positions"].pop(mint, None)
             continue
         try:
             price = float(pair.get("priceUsd") or 0)
@@ -1056,26 +1110,64 @@ def manage_shadow_positions(state):
             continue
         if not math.isfinite(price) or price <= 0:
             continue
-        pos["peak_price"] = max(peak_price, price)
-        pnl = (price - entry_price) / entry_price
-        reason = "hard_stop_loss" if pnl <= -HARD_STOP_LOSS_PCT else None
-        if reason is None and pnl >= 0.08:
-            pos["trailing_armed"] = True
-        if reason is None and pos.get("trailing_armed") and pos["peak_price"] > 0:
-            if (pos["peak_price"] - price) / pos["peak_price"] >= TRAILING_STOP_PCT:
-                reason = "trailing_stop"
-        if reason is None and liquidity > 0 and liquidity_drain_detected(pos, liquidity):
-            reason = "liquidity_drained"
-        if reason is None and time.time() - entry_time >= MAX_HOLD_SECONDS:
-            reason = "max_hold_timeout"
-        if reason is None:
-            continue
-        effective_exit = price * (1.0 - EXIT_SLIPPAGE_BPS / 10000.0)
-        net_pnl_pct = (effective_exit - entry_price) / entry_price * 100.0
-        append_learning_observation(pos.get("signal_score"), net_pnl_pct, f"shadow_{reason}", pos.get("components"))
-        state["shadow_positions"].pop(mint, None)
-        log(f"[SHADOW CLOSE] {pos.get('symbol', '?')} {reason} pnl={net_pnl_pct:+.2f}% (isolated; account equity unchanged)")
+        if not math.isfinite(liquidity) or liquidity < 0:
+            liquidity = 0.0
 
+        pos["peak_price"] = max(peak_price, price)
+        history = pos.get("price_history")
+        if not isinstance(history, list):
+            history = []
+            pos["price_history"] = history
+        sample = {"timestamp": now, "price_usd": price, "liquidity_usd": liquidity}
+        if history and isinstance(history[-1], dict) and float(history[-1].get("timestamp", -1)) == now:
+            history[-1] = sample
+        else:
+            history.append(sample)
+        # Each shadow trade is sampled once per monitor pass. Bound state size even
+        # if the process is delayed; never manufacture intermediate candle points.
+        if len(history) > 64:
+            pos["price_history"] = history[-64:]
+
+        if not benchmark_reason:
+            pnl = (price - entry_price) / entry_price
+            reason = "hard_stop_loss" if pnl <= -HARD_STOP_LOSS_PCT else None
+            if reason is None and pnl >= 0.08:
+                pos["trailing_armed"] = True
+            if reason is None and pos.get("trailing_armed") and pos["peak_price"] > 0:
+                if (pos["peak_price"] - price) / pos["peak_price"] >= TRAILING_STOP_PCT:
+                    reason = "trailing_stop"
+            if reason is None and liquidity > 0 and liquidity_drain_detected(pos, liquidity):
+                reason = "liquidity_drained"
+            if reason is None and age_seconds >= MAX_HOLD_SECONDS:
+                reason = "max_hold_timeout"
+
+            if reason:
+                effective_exit = price * (1.0 - EXIT_SLIPPAGE_BPS / 10000.0)
+                net_pnl_pct = (effective_exit - entry_price) / entry_price * 100.0
+                append_learning_observation(
+                    pos.get("signal_score"), net_pnl_pct, f"shadow_{reason}", pos.get("components")
+                )
+                pos["benchmark_exit_reason"] = reason
+                pos["benchmark_exit_timestamp"] = now
+                pos["benchmark_exit_price_usd"] = price
+                pos["benchmark_exit_liquidity_usd"] = liquidity
+                pos["benchmark_exit_after_slippage_pnl_pct"] = net_pnl_pct
+                log(
+                    f"[SHADOW BENCHMARK EXIT] {pos.get('symbol', '?')} {reason} "
+                    f"pnl={net_pnl_pct:+.2f}% (price-path sampling continues; account equity unchanged)"
+                )
+
+        # Preserve the same baseline label in the outcome ledger, but continue
+        # sampling observed quotes until the full 15-minute research horizon.
+        # This allows alternate exit rules to be evaluated on observed prices only.
+        if age_seconds >= SHADOW_STALE_OBSERVATION_SECONDS:
+            saved = _append_shadow_price_path(mint, pos, observed_at=now)
+            state["shadow_positions"].pop(mint, None)
+            if saved:
+                log(
+                    f"[SHADOW PATH SAVED] {pos.get('symbol', '?')} "
+                    f"samples={len(pos.get('price_history', []))} horizon={age_seconds:.0f}s"
+                )
 
 def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
     """Collect labeled virtual-trade samples independently of account entry eligibility."""
@@ -1118,15 +1210,21 @@ def scan_shadow_candidates(state, candidates=None, increment_scan_count=True):
         if not math.isfinite(price) or price <= 0 or not math.isfinite(liquidity) or liquidity <= 0:
             continue
         entry_price = price * (1.0 + ENTRY_SLIPPAGE_BPS / 10000.0)
+        opened_at = time.time()
         state["shadow_positions"][mint] = {
             "symbol": (pair.get("baseToken") or {}).get("symbol", "?"),
             "entry_price": entry_price,
-            "entry_time": time.time(),
+            "entry_time": opened_at,
             "entry_liquidity": liquidity,
             "peak_price": entry_price,
             "signal_score": score,
             "trailing_armed": False,
             "components": components,
+            "price_history": [{
+                "timestamp": opened_at,
+                "price_usd": price,
+                "liquidity_usd": liquidity,
+            }],
         }
         opened.append(mint)
     if increment_scan_count:
