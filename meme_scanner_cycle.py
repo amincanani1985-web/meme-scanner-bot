@@ -1829,10 +1829,10 @@ def run_isolated_paper_cycle(root_dir=None):
                 active_threshold = float(strategy.get("active_threshold", OPPORTUNITY_ENTRY_THRESHOLD))
             except (TypeError, ValueError, OverflowError):
                 active_threshold = float("nan")
-            if not math.isfinite(active_threshold) or active_threshold != OPPORTUNITY_ENTRY_THRESHOLD:
+            if not math.isfinite(active_threshold) or active_threshold != LEGACY_BASELINE_ENTRY_THRESHOLD:
                 strategy.update({
-                    "active_threshold": OPPORTUNITY_ENTRY_THRESHOLD,
-                    "rollback_threshold": OPPORTUNITY_ENTRY_THRESHOLD,
+                    "active_threshold": LEGACY_BASELINE_ENTRY_THRESHOLD,
+                    "rollback_threshold": LEGACY_BASELINE_ENTRY_THRESHOLD,
                     "candidate_threshold": None,
                     "status": "rolled_back",
                     "validation_status": "rolled_back",
