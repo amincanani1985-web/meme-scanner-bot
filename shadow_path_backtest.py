@@ -261,6 +261,67 @@ def candidate_configs():
     ]
 
 
+def candidate_entry_filters():
+    """Finite, predeclared entry filters; every value must be known at entry time."""
+    return [
+        {"name": "all_research_candidates"},
+        {"name": "score_at_least_60", "score_min": 60.0},
+        {"name": "score_at_least_70", "score_min": 70.0},
+        {"name": "hourly_momentum_0_to_30", "h1_min": 0.0, "h1_max": 30.0},
+        {"name": "hourly_momentum_5_to_30", "h1_min": 5.0, "h1_max": 30.0},
+        {"name": "hourly_momentum_0_to_45", "h1_min": 0.0, "h1_max": 45.0},
+        {"name": "m5_momentum_at_most_5", "m5_max": 5.0},
+        {"name": "buy_sell_ratio_at_least_1", "ratio_min": 1.0},
+        {"name": "buy_sell_ratio_at_least_1_2", "ratio_min": 1.2},
+        {"name": "liquidity_at_least_25000", "liquidity_min": 25_000.0},
+        {"name": "liquidity_at_least_50000", "liquidity_min": 50_000.0},
+        {"name": "hourly_volume_at_least_10000", "volume_min": 10_000.0},
+        {"name": "hourly_volume_at_least_25000", "volume_min": 25_000.0},
+        {
+            "name": "score60_hourly_momentum_0_to_45",
+            "score_min": 60.0, "h1_min": 0.0, "h1_max": 45.0,
+        },
+        {
+            "name": "score60_hourly_volume_10000",
+            "score_min": 60.0, "volume_min": 10_000.0,
+        },
+        {
+            "name": "score60_liquidity_25000",
+            "score_min": 60.0, "liquidity_min": 25_000.0,
+        },
+    ]
+
+
+def entry_filter_matches(record, entry_filter):
+    """Apply entry-only constraints to an observed path; missing features never pass."""
+    if not isinstance(record, dict) or not isinstance(entry_filter, dict):
+        return False
+    components = record.get("entry_components")
+    if not isinstance(components, dict):
+        components = {}
+    requirements = (
+        ("score_min", record.get("score")),
+        ("h1_min", components.get("momentum_h1_pct")),
+        ("h1_max", components.get("momentum_h1_pct")),
+        ("m5_max", components.get("momentum_m5_pct")),
+        ("ratio_min", components.get("buy_sell_ratio")),
+        ("liquidity_min", components.get("liquidity_usd")),
+        ("volume_min", components.get("volume_h1_usd")),
+    )
+    for requirement, observed in requirements:
+        if requirement not in entry_filter:
+            continue
+        value = _finite(observed)
+        bound = _finite(entry_filter.get(requirement))
+        if value is None or bound is None:
+            return False
+        if requirement.endswith("_min") and value < bound:
+            return False
+        if requirement.endswith("_max") and value > bound:
+            return False
+    return True
+
+
 def baseline_consistency(records, tolerance_pct=0.05):
     """Check whether replaying today's exit policy matches the saved benchmark labels."""
     checked = matches = 0
@@ -296,7 +357,7 @@ def baseline_consistency(records, tolerance_pct=0.05):
 
 def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
                     round_trip_cost_pct=ROUND_TRIP_COST_PCT):
-    """Chronological 70/30 walk-forward selection; no promotion on training profit alone."""
+    """Select a predeclared entry+exit rule on training data only, then freeze it for holdout."""
     normalized, rejected, sparse_or_short = [], 0, 0
     observed_gaps, accepted_gaps = [], []
     rejection_reasons = {}
@@ -312,9 +373,6 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             for i in range(1, len(history))
         ]
         observed_gaps.extend(gaps)
-        # A long elapsed duration with only an entry/exit quote is not a usable
-        # path for testing stop rules. Require a full 15-minute horizon, enough
-        # actual samples, and no multi-minute gaps that hide stop crossings.
         reasons = []
         if candidate["observed_duration_seconds"] < MIN_PATH_DURATION_SECONDS:
             reasons.append("duration_under_900_seconds")
@@ -332,13 +390,12 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             continue
         accepted_gaps.extend(gaps)
         normalized.append(candidate)
-    # Keep the earliest quality-complete path per mint. Repeated windows on
-    # the same token are correlated observations, not independent samples, and
-    # must not leak the same asset across chronological train/holdout splits.
+
+    # Keep only the first quality-complete path per mint to prevent repeated
+    # windows on one asset appearing on both sides of the chronological split.
     normalized.sort(key=lambda item: (item["entry_timestamp"], str(item.get("mint", ""))))
     quality_usable_path_records = len(normalized)
-    first_path_by_mint = []
-    seen_mints = set()
+    first_path_by_mint, seen_mints = [], set()
     repeated_mint_paths_excluded = 0
     for candidate in normalized:
         mint = str(candidate.get("mint") or "").strip()
@@ -354,9 +411,12 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         for normalized_record in normalized
         for i in range(1, len(normalized_record["price_history"]))
     ]
+
+    entry_filters = candidate_entry_filters()
+    exit_configs = candidate_configs()
     result = {
         "status": "insufficient_history",
-        "mode": "observed_quotes_only_chronological_walk_forward_unique_mint",
+        "mode": "observed_quotes_only_chronological_walk_forward_joint_entry_exit_unique_mint",
         "round_trip_cost_pct": round_trip_cost_pct,
         "paths_received": len(records),
         "quality_usable_path_records": quality_usable_path_records,
@@ -390,13 +450,20 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
             "maximum_sample_gap_seconds": MAX_SAMPLE_GAP_SECONDS,
         },
         "required_total_paths": int(min_total_paths),
-        "train_rows": 0,
-        "validation_rows": 0,
+        "joint_candidate_configs": len(entry_filters) * len(exit_configs),
+        "entry_filter_grid_size": len(entry_filters),
+        "exit_config_grid_size": len(exit_configs),
+        "evaluated_candidate_configs": 0,
+        "eligible_training_candidate_count": 0,
         "eligible_training_candidates": [],
         "selected_config": None,
+        "selected_entry_filter": None,
+        "train_rows": 0,
+        "validation_rows": 0,
         "training": None,
         "holdout": None,
     }
+
     baseline_outcomes = [
         simulate_exit(record, BASELINE_CONFIG, fee_reserve_pct=round_trip_cost_pct)
         for record in normalized
@@ -413,34 +480,54 @@ def analyze_records(records, min_total_paths=DEFAULT_MIN_TOTAL_PATHS,
         return result
 
     eligible = []
-    for config in candidate_configs():
-        outcomes = [simulate_exit(record, config, fee_reserve_pct=round_trip_cost_pct) for record in train]
-        metrics = calculate_metrics(outcomes)
-        if _eligible_train(metrics):
-            eligible.append({"config": config, "metrics": metrics})
-    result["eligible_training_candidates"] = [
-        {"config": item["config"], "metrics": item["metrics"]} for item in eligible
-    ]
+    evaluated = 0
+    for entry_filter in entry_filters:
+        train_subset = [record for record in train if entry_filter_matches(record, entry_filter)]
+        if len(train_subset) < MIN_TRAIN_ROWS:
+            continue
+        for exit_config in exit_configs:
+            evaluated += 1
+            outcomes = [
+                simulate_exit(record, exit_config, fee_reserve_pct=round_trip_cost_pct)
+                for record in train_subset
+            ]
+            metrics = calculate_metrics(outcomes)
+            if _eligible_train(metrics):
+                eligible.append({
+                    "entry_filter": entry_filter,
+                    "exit_config": exit_config,
+                    "train_rows": len(train_subset),
+                    "metrics": metrics,
+                })
+    result["evaluated_candidate_configs"] = evaluated
+    eligible.sort(key=lambda item: (
+        item["metrics"]["mean_pnl_pct"],
+        item["metrics"]["median_pnl_pct"],
+        item["metrics"]["profit_factor"],
+        item["train_rows"],
+    ), reverse=True)
+    result["eligible_training_candidate_count"] = len(eligible)
+    result["eligible_training_candidates"] = eligible[:25]
     if not eligible:
         result["status"] = "no_profitable_training_candidate"
         return result
 
-    selected = max(
-        eligible,
-        key=lambda item: (
-            item["metrics"]["mean_pnl_pct"],
-            item["metrics"]["median_pnl_pct"],
-            item["metrics"]["profit_factor"],
-        ),
-    )
+    selected = eligible[0]
+    selected_filter = selected["entry_filter"]
+    selected_exit = selected["exit_config"]
+    holdout_subset = [
+        record for record in holdout if entry_filter_matches(record, selected_filter)
+    ]
     validation_outcomes = [
-        simulate_exit(record, selected["config"], fee_reserve_pct=round_trip_cost_pct)
-        for record in holdout
+        simulate_exit(record, selected_exit, fee_reserve_pct=round_trip_cost_pct)
+        for record in holdout_subset
     ]
     validation_metrics = calculate_metrics(validation_outcomes)
-    result["selected_config"] = selected["config"]
+    result["selected_config"] = {**selected_exit, "entry_filter": selected_filter}
+    result["selected_entry_filter"] = selected_filter
     result["training"] = selected["metrics"]
     result["holdout"] = validation_metrics
+    result["holdout_entry_rows"] = len(holdout_subset)
     result["status"] = (
         "validated_profitable_out_of_sample"
         if _eligible_holdout(validation_metrics)
