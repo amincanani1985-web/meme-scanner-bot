@@ -69,7 +69,7 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertIsNone(follower.parse_swap_transaction(tx, WALLET))
 
     def test_wallet_ledger_calculates_realized_pnl_after_cost_reserve(self):
-        record = {}
+        record = {"history_complete": True}
         trades = [
             follower.parse_swap_transaction(swap("buy1", 100, "buy", 1000, 100), WALLET),
             follower.parse_swap_transaction(swap("sell1", 200, "sell", 1000, 120), WALLET),
@@ -81,7 +81,7 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertEqual(record["metrics"]["wins"], 1)
 
     def test_wallet_trade_processing_is_idempotent_by_signature(self):
-        record = {}
+        record = {"history_complete": True}
         buy = follower.parse_swap_transaction(swap("buy1", 100, "buy", 1000, 100), WALLET)
         sell = follower.parse_swap_transaction(swap("sell1", 200, "sell", 1000, 110), WALLET)
         follower.apply_wallet_trades(record, [buy, sell])
@@ -102,15 +102,21 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
         # Simulate the scanner fetching a fresh page first, then backfilling an
         # older page on the next cycle. Results must match a full chronological replay.
-        incremental = {}
+        incremental = {"history_complete": False}
         follower.apply_wallet_trades(incremental, [recent_buy, sell], now=400)
+        self.assertEqual(incremental["closed_trades"], [])
+        # The final short page establishes complete history; replay must now
+        # include the delayed older buy in the cost basis of the later sale.
+        incremental["history_complete"] = True
         follower.apply_wallet_trades(incremental, [old_buy], now=400)
 
-        chronological = {}
+        chronological = {"history_complete": True}
         follower.apply_wallet_trades(
             chronological, [old_buy, recent_buy, sell], now=400
         )
 
+        self.assertEqual(len(incremental["closed_trades"]), 1)
+        self.assertAlmostEqual(incremental["closed_trades"][0]["net_pnl_pct"], 59.0)
         self.assertEqual(
             incremental["closed_trades"], chronological["closed_trades"]
         )
