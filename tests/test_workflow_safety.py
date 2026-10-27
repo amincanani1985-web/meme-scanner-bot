@@ -160,6 +160,28 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("if: github.event_name == 'pull_request'", smoke)
         self.assertIn("python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json", smoke)
 
+    def test_whale_event_study_is_descriptive_and_published_with_quote_paths(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_event_study.py"', workflow)
+        self.assertIn("whale_event_study.py tests/test_whale_event_study.py", workflow)
+        self.assertIn(
+            "python whale_event_study.py --paths paper_account/whale_quote_paths.jsonl "
+            "paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json "
+            "--output /tmp/whale-event-study-report.json",
+            workflow,
+        )
+        refresh = workflow.split(
+            "- name: Refresh learning reports after the latest outcomes", 1
+        )[1].split("- name: Summarize whale-follow walk-forward results", 1)[0]
+        self.assertIn('"paper_whale_event_study": paper_whale_event_study', refresh)
+        self.assertIn("python whale_event_study.py", refresh)
+        source = (ROOT / "whale_event_study.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn('"strategy_selected": False', source)
+        self.assertIn("censored_no_observed_quote", source)
+        self.assertNotIn("sendTransaction", source)
+        self.assertNotIn("signTransaction", source)
+
     def test_whale_shadow_capture_uses_observed_quotes_inside_monitor_cycles(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn('"whale_shadow_capture.py"', workflow)
@@ -206,6 +228,27 @@ class WorkflowSafetyTests(unittest.TestCase):
     def test_trading_cycle_cannot_recursively_start_the_validation_loop(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertNotIn("gh workflow run paper-profit-loop.yml", workflow)
+
+    def test_public_dex_risk_screen_runs_each_paper_cycle_without_paid_api_calls(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn("token_quality_screen.py tests/test_token_quality_screen.py", workflow)
+        public_step = workflow.split("- name: Collect multi-provider market evidence (read-only)", 1)[1].split("- name: Collect optional market-provider evidence", 1)[0]
+        self.assertIn("--public-only", public_step)
+        self.assertIn("github.event_name", public_step)
+        self.assertNotIn("MARKET_DATA_CONNECTORS_ENABLED", public_step)
+        optional_step = workflow.split("- name: Collect optional market-provider evidence", 1)[1].split("- name: Screen observed DEX pools", 1)[0]
+        self.assertIn("MARKET_DATA_CONNECTORS_ENABLED", optional_step)
+        self.assertIn("--optional-only", optional_step)
+        screen_step = workflow.split("- name: Screen observed DEX pools for research risk flags", 1)[1].split("- name: Smoke-test whale-follow replay", 1)[0]
+        self.assertIn("python token_quality_screen.py", screen_step)
+        self.assertIn("token_quality_screen", workflow)
+        dashboard = (ROOT / "dashboard/index.html").read_text(encoding="utf-8")
+        self.assertIn('id="tokenRiskPanel"', dashboard)
+        self.assertIn('id="tokenRiskCompareRows"', dashboard)
+        self.assertIn("const quality=report.token_quality_screen||{}", dashboard)
+        source = (ROOT / "token_quality_screen.py").read_text(encoding="utf-8")
+        self.assertIn("eligible_for_entry", source)
+        self.assertNotIn("sendTransaction", source)
 
     def test_validation_loop_is_manual_bounded_and_not_profit_peeking(self):
         workflow = (ROOT / ".github/workflows/paper-profit-loop.yml").read_text(encoding="utf-8")

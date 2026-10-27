@@ -71,6 +71,19 @@
  <div class="tablewrap"><table class="live-table"><thead><tr><th>توکن / جفت‌ارز</th><th>قیمت به دلار</th><th>تغییر ۵ دقیقه‌ای</th><th>نقدینگی</th><th>حجم معاملات ۱ ساعته</th><th>خرید / فروش در ۵ دقیقه</th><th>امتیاز بات</th></tr></thead><tbody id="marketRows"><tr><td colspan="7" class="live-empty">در حال دریافت داده‌های بازار سولانا…</td></tr></tbody></table></div>
  <div class="live-note" id="marketNote">داده‌های بازار مستقیماً از DexScreener دریافت می‌شوند. نامزدهای اسکن از آخرین وضعیت منتشرشده بات می‌آیند. قیمت‌ها هر ۳۰ ثانیه تازه می‌شوند؛ وضعیت اسکنر پس از انتشار هر چرخه جدید به‌روزرسانی می‌شود.</div>
 </section>
+<section class="card section" id="tokenRiskPanel">
+ <div class="cardhead"><b>🛡️ غربال ریسک توکن با دو منبع عمومی</b><span class="live-pill" id="tokenRiskStatus">در انتظار گزارش</span></div>
+ <div class="live-kpis">
+  <div class="live-kpi"><span>استخرهای قابل ارزیابی</span><b id="tokenRiskPairs">—</b></div>
+  <div class="live-kpi"><span>ریسک بسیار بالا</span><b id="tokenRiskVeryHigh">—</b></div>
+  <div class="live-kpi"><span>هشدار / ریسک افزایشی</span><b id="tokenRiskElevated">—</b></div>
+  <div class="live-kpi"><span>مقایسهٔ دو منبع</span><b id="tokenRiskComparisons">—</b></div>
+ </div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>توکن</th><th>منبع</th><th>سطح ریسک</th><th>نقدینگی</th><th>تغییر ۲۴ ساعت</th><th>پرچم‌های هشدار</th></tr></thead><tbody id="tokenRiskRows"><tr><td colspan="6" class="live-empty">گزارش ریسک در اولین چرخهٔ بعدی منتشر می‌شود.</td></tr></tbody></table></div>
+ <div class="cardhead" style="margin-top:16px"><b>اختلاف قیمت و نقدینگی بین منابع</b></div>
+ <div class="tablewrap"><table class="live-table"><thead><tr><th>توکن / Mint</th><th>اختلاف قیمت GeckoTerminal نسبت به DexScreener</th><th>اختلاف نقدینگی</th><th>هشدار</th></tr></thead><tbody id="tokenRiskCompareRows"><tr><td colspan="4" class="live-empty">دادهٔ همسان برای مقایسه در انتظار است.</td></tr></tbody></table></div>
+ <p class="small" id="tokenRiskNote">این غربال ریسک، سیگنال خرید یا فروش نیست. تبلیغ پولی امتیاز مثبت نمی‌دهد و امتیاز پایین هم ایمنی توکن را ثابت نمی‌کند. حساب واقعی همچنان غیرفعال است.</p>
+</section>
 <section class="card section"><div class="cardhead"><b>سلامت بات و راهبرد</b><span class="label" id="version">—</span></div><div class="statusgrid">
  <div class="statusitem"><span class="label">آخرین چرخه تکمیل‌شده</span><strong id="lastRun">—</strong></div>
  <div class="statusitem"><span class="label">وضعیت راهبرد</span><strong id="strategyوضعیت">—</strong></div>
@@ -441,5 +454,38 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   $('pathBtStatus').textContent='گزارش در دسترس نیست';
   $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
  }
+
 })();
-</script><script src="./market-live.js"></script></body></html>
+</script>
+<script>
+(function(){
+ const report=window.BACKTEST_REPORT||{};
+ const quality=report.token_quality_screen||{};
+ const qStatus={screened:'غربال به‌روزرسانی شد',no_public_pool_records:'دادهٔ عمومی برای غربال موجود نیست',not_run_or_disabled:'هنوز اجرا نشده'}[quality.status]||quality.status||'گزارش در دسترس نیست';
+ $('tokenRiskStatus').textContent=qStatus;
+ const qCounts=quality.risk_level_counts||{};
+ $('tokenRiskPairs').textContent=String(quality.pairs_screened||0);
+ $('tokenRiskVeryHigh').textContent=String(qCounts.very_high||0);
+ $('tokenRiskElevated').textContent=String((qCounts.elevated||0)+(qCounts.high||0));
+ $('tokenRiskComparisons').textContent=String((quality.provider_comparisons||[]).length);
+ const safeText=value=>String(value===null||value===undefined?'—':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+ const fmtUsd=value=>value===null||value===undefined||!Number.isFinite(Number(value))?'—':'
++Number(value).toLocaleString('en-US',{maximumFractionDigits:2});
+ const fmtPct=value=>value===null||value===undefined||!Number.isFinite(Number(value))?'—':(Number(value)>0?'+':'')+Number(value).toFixed(1)+'%';
+ const levelLabels={very_high:'بسیار بالا',high:'بالا',elevated:'هشدار',lower_observed_risk:'پایین‌تر در این نمونه',insufficient_data:'داده ناکافی'};
+ const sourceLabels={dexscreener:'DexScreener',geckoterminal:'GeckoTerminal'};
+ const flagLabels={liquidity_below_floor:'نقدینگی زیر حد',very_thin_pool:'استخر بسیار کم‌عمق',missing_liquidity_data:'نقدینگی ناموجود',missing_or_invalid_price:'قیمت نامعتبر',severe_24h_drawdown:'افت شدید روزانه',extreme_24h_pump:'جهش شدید روزانه',extreme_short_term_momentum:'شتاب کوتاه‌مدت شدید',sell_pressure_h6:'فشار فروش ۶ساعته',extreme_24h_turnover:'گردش غیرعادی نسبت به نقدینگی',weak_liquidity_vs_market_cap:'نقدینگی کم نسبت به ارزش بازار',promotion_not_quality_evidence:'تبلیغ پولی، نه کیفیت'};
+ $('tokenRiskRows').innerHTML=(quality.pairs||[]).map(p=>{
+  const flags=(p.flags||[]).map(f=>flagLabels[f.code]||f.code).join('، ')||'پرچم تنظیم‌شده‌ای ثبت نشد';
+  const delta=p.price_change_h24_pct;
+  const cls=Number(p.risk_score)>=60?'down':Number(p.risk_score)>=20?'':'up';
+  return '<tr><td>'+safeText(p.token_symbol||p.token_name||p.mint)+'</td><td>'+safeText(sourceLabels[p.source]||p.source)+'</td><td class="'+cls+'">'+safeText(levelLabels[p.risk_level]||p.risk_level)+' ('+safeText(p.risk_score)+'/100)</td><td>'+safeText(fmtUsd(p.liquidity_usd))+'</td><td class="'+(Number(delta)<0?'down':Number(delta)>0?'up':'')+'">'+safeText(fmtPct(delta))+'</td><td>'+safeText(flags)+'</td></tr>';
+ }).join('')||'<tr><td colspan="6" class="live-empty">دادهٔ عمومی معتبر برای غربال دریافت نشد؛ نبود داده به معنی ایمن بودن نیست.</td></tr>';
+ $('tokenRiskCompareRows').innerHTML=(quality.provider_comparisons||[]).map(row=>{
+  const warnings=(row.flags||[]).map(flag=>flag==='price_divergence_over_8pct'?'اختلاف قیمت بیش از ۸٪':flag==='liquidity_divergence_over_50pct'?'اختلاف نقدینگی بیش از ۵۰٪':flag).join('، ')||'اختلاف بزرگ ثبت نشد';
+  return '<tr><td>'+safeText(row.token_symbol||row.mint)+'</td><td>'+safeText(fmtPct(row.price_divergence_pct_gecko_vs_dex))+'</td><td>'+safeText(fmtPct(row.liquidity_divergence_pct_gecko_vs_dex))+'</td><td>'+safeText(warnings)+'</td></tr>';
+ }).join('')||'<tr><td colspan="4" class="live-empty">برای یک mint، هنوز قیمت و نقدینگی قابل مقایسه از هر دو منبع موجود نیست.</td></tr>';
+ $('tokenRiskNote').textContent='غربال توصیفی است، نه کشف قطعی کلاهبرداری یا سیگنال معامله. تعداد boost از امتیاز ریسک کم نمی‌کند. مقایسهٔ منابع ممکن است به‌دلیل تفاوت استخر و زمان مشاهده اختلاف داشته باشد. '+(quality.limitations||[]).length+' محدودیت در گزارش ثبت شده؛ هیچ معاملهٔ واقعی مجاز نیست.';
+})();
+</script>
+<script src="./market-live.js"></script></body></html>

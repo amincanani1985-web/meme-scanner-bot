@@ -17,6 +17,7 @@ import requests
 TIMEOUT = 10
 MAX_MINTS = 5
 DEXSCREENER_BASE = "https://api.dexscreener.com"
+GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2"
 BIRDEYE_BASE = "https://public-api.birdeye.so"
 DUNE_BASE = "https://api.dune.com/api/v1"
 
@@ -94,22 +95,111 @@ def fetch_dexscreener(session, mint):
     for pair in pairs:
         if not isinstance(pair, dict) or str(pair.get("chainId", "")).lower() != "solana":
             continue
+        base = pair.get("baseToken") or {}
+        quote = pair.get("quoteToken") or {}
+        # DexScreener's priceUsd is the base token price. Ignore pairs where the
+        # requested mint is only the quote token rather than report the wrong price.
+        if str(base.get("address", "")).lower() != mint.lower():
+            continue
+        token = base
+        volume = pair.get("volume") if isinstance(pair.get("volume"), dict) else {}
+        price_change = pair.get("priceChange") if isinstance(pair.get("priceChange"), dict) else {}
+        transactions = pair.get("txns") if isinstance(pair.get("txns"), dict) else {}
+        liquidity = pair.get("liquidity") if isinstance(pair.get("liquidity"), dict) else {}
+        boosts = pair.get("boosts") if isinstance(pair.get("boosts"), dict) else {}
         output.append({
             "mint": mint,
             "pair_address": pair.get("pairAddress"),
+            "pair_url": pair.get("url"),
             "dex_id": pair.get("dexId"),
-            "base_mint": (pair.get("baseToken") or {}).get("address"),
-            "quote_mint": (pair.get("quoteToken") or {}).get("address"),
+            "base_mint": base.get("address"),
+            "base_token_name": base.get("name"),
+            "base_token_symbol": base.get("symbol"),
+            "quote_mint": quote.get("address"),
+            "token_name": token.get("name"),
+            "token_symbol": token.get("symbol"),
             "price_usd": pair.get("priceUsd"),
-            "liquidity_usd": (pair.get("liquidity") or {}).get("usd"),
-            "volume_h1_usd": (pair.get("volume") or {}).get("h1"),
-            "price_change_m5_pct": (pair.get("priceChange") or {}).get("m5"),
-            "txns_m5": pair.get("txns", {}).get("m5") if isinstance(pair.get("txns"), dict) else None,
+            "liquidity_usd": liquidity.get("usd"),
+            "market_cap_usd": pair.get("marketCap") or pair.get("fdv"),
+            "fdv_usd": pair.get("fdv"),
+            "volume_h1_usd": volume.get("h1"),
+            "volume_h6_usd": volume.get("h6"),
+            "volume_h24_usd": volume.get("h24"),
+            "price_change_m5_pct": price_change.get("m5"),
+            "price_change_h1_pct": price_change.get("h1"),
+            "price_change_h6_pct": price_change.get("h6"),
+            "price_change_h24_pct": price_change.get("h24"),
+            "txns_m5": transactions.get("m5"),
+            "txns_h1": transactions.get("h1"),
+            "txns_h6": transactions.get("h6"),
+            "txns_h24": transactions.get("h24"),
+            "pair_created_at": pair.get("pairCreatedAt"),
+            "boosts_active": boosts.get("active", 0),
             "observed_at": datetime.now(timezone.utc).isoformat(),
             "source": "dexscreener",
         })
     return output
 
+
+
+def fetch_geckoterminal(session, mint):
+    """Fetch public GeckoTerminal pools where the requested token is the base token."""
+    payload = _json_request(
+        session, "GET", f"{GECKOTERMINAL_BASE}/networks/solana/tokens/{mint}/pools",
+        params={"page": 1}, headers={"Accept": "application/json"},
+    )
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        return []
+    output = []
+    target_id = f"solana_{mint}".lower()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        relationships = row.get("relationships") if isinstance(row.get("relationships"), dict) else {}
+        base_relationship = relationships.get("base_token") if isinstance(relationships.get("base_token"), dict) else {}
+        base_data = base_relationship.get("data") if isinstance(base_relationship.get("data"), dict) else {}
+        if str(base_data.get("id", "")).lower() != target_id:
+            continue
+        attrs = row.get("attributes") if isinstance(row.get("attributes"), dict) else {}
+        volume = attrs.get("volume_usd") if isinstance(attrs.get("volume_usd"), dict) else {}
+        changes = attrs.get("price_change_percentage") if isinstance(attrs.get("price_change_percentage"), dict) else {}
+        transactions = attrs.get("transactions") if isinstance(attrs.get("transactions"), dict) else {}
+        pool_name = attrs.get("name")
+        dex_relationship = relationships.get("dex") if isinstance(relationships.get("dex"), dict) else {}
+        dex_data = dex_relationship.get("data") if isinstance(dex_relationship.get("data"), dict) else {}
+        output.append({
+            "mint": mint,
+            "pair_address": attrs.get("address") or str(row.get("id", "")).removeprefix("solana_"),
+            "pair_url": None,
+            "dex_id": dex_data.get("id"),
+            "base_mint": mint,
+            "base_token_name": str(pool_name).split(" / ", 1)[0] if pool_name else None,
+            "base_token_symbol": None,
+            "quote_mint": None,
+            "token_name": str(pool_name).split(" / ", 1)[0] if pool_name else None,
+            "token_symbol": None,
+            "price_usd": attrs.get("base_token_price_usd") or attrs.get("token_price_usd"),
+            "liquidity_usd": attrs.get("reserve_in_usd"),
+            "market_cap_usd": attrs.get("market_cap_usd") or attrs.get("fdv_usd"),
+            "fdv_usd": attrs.get("fdv_usd"),
+            "volume_h1_usd": volume.get("h1"),
+            "volume_h6_usd": volume.get("h6"),
+            "volume_h24_usd": volume.get("h24"),
+            "price_change_m5_pct": changes.get("m5"),
+            "price_change_h1_pct": changes.get("h1"),
+            "price_change_h6_pct": changes.get("h6"),
+            "price_change_h24_pct": changes.get("h24"),
+            "txns_m5": transactions.get("m5"),
+            "txns_h1": transactions.get("h1"),
+            "txns_h6": transactions.get("h6"),
+            "txns_h24": transactions.get("h24"),
+            "pair_created_at": attrs.get("pool_created_at"),
+            "boosts_active": 0,
+            "observed_at": datetime.now(timezone.utc).isoformat(),
+            "source": "geckoterminal",
+        })
+    return output
 
 def fetch_birdeye(session, mint, api_key):
     payload = _json_request(
@@ -216,50 +306,80 @@ def fetch_dune_saved_query(session, api_key, query_id):
 
 
 def collect(mints=None, swaps_path="whale_copy_state.json", balances_path="whale_watch_state.json",
-            session=None, environ=None):
+            session=None, environ=None, include_public=True, include_optional=True):
     env = os.environ if environ is None else environ
     session = session or requests.Session()
     mints = list(dict.fromkeys(mints or _extract_mints(swaps_path, balances_path)))[:MAX_MINTS]
     providers = []
 
-    providers.append(_provider_result(
-        "dexscreener", bool(mints),
-        lambda: [record for mint in mints for record in fetch_dexscreener(session, mint)],
-    ))
+    if include_public and mints:
+        providers.append(_provider_result(
+            "dexscreener", True,
+            lambda: [record for mint in mints for record in fetch_dexscreener(session, mint)],
+        ))
+        providers.append(_provider_result(
+            "geckoterminal", True,
+            lambda: [record for mint in mints for record in fetch_geckoterminal(session, mint)],
+        ))
+    elif include_public:
+        providers.append({"provider": "dexscreener", "status": "no_candidate_mints", "records": [], "error": None})
+        providers.append({"provider": "geckoterminal", "status": "no_candidate_mints", "records": [], "error": None})
+    else:
+        providers.append({"provider": "dexscreener", "status": "not_run_by_policy", "records": [], "error": None})
+        providers.append({"provider": "geckoterminal", "status": "not_run_by_policy", "records": [], "error": None})
+
     birdeye_key = (env.get("BIRDEYE_API_KEY") or "").strip()
-    providers.append(_provider_result(
-        "birdeye", bool(birdeye_key and mints),
-        lambda: [record for mint in mints for record in fetch_birdeye(session, mint, birdeye_key)],
-    ))
     dune_key = (env.get("DUNE_API_KEY") or "").strip()
     dune_query = (env.get("DUNE_SOLANA_TRADES_QUERY_ID") or "").strip()
-    providers.append(_provider_result(
-        "dune", bool(dune_key and dune_query),
-        lambda: fetch_dune_saved_query(session, dune_key, dune_query),
-    ))
     helius_configured = bool((env.get("HELIUS_API_KEY") or "").strip() or (env.get("HELIUS_RPC_URL") or "").strip())
-    providers.append({
-        "provider": "helius",
-        "status": "configured_existing_pipeline" if helius_configured else "not_configured",
-        "records": [],
-        "error": None,
-        "note": "Wallet transaction parsing remains in whale_copy_paper.py; avoid double-counting its events.",
-    })
     nansen_key = (env.get("NANSEN_API_KEY") or "").strip()
     tracked_wallets = _extract_wallet_addresses(swaps_path, limit=5)
-    if nansen_key and tracked_wallets:
+
+    if include_optional:
         providers.append(_provider_result(
-            "nansen", True,
-            lambda: [record for wallet in tracked_wallets
-                     for record in fetch_nansen_dex_trades(session, wallet, nansen_key)],
+            "birdeye", bool(birdeye_key and mints),
+            lambda: [record for mint in mints for record in fetch_birdeye(session, mint, birdeye_key)],
         ))
-    else:
+        providers.append(_provider_result(
+            "dune", bool(dune_key and dune_query),
+            lambda: fetch_dune_saved_query(session, dune_key, dune_query),
+        ))
         providers.append({
-            "provider": "nansen",
-            "status": "not_configured" if not nansen_key else "no_tracked_wallets",
+            "provider": "helius",
+            "status": "configured_existing_pipeline" if helius_configured else "not_configured",
             "records": [],
             "error": None,
-            "note": "Uses the official profiler DEX-trades endpoint for tracked Solana wallets over the latest seven days.",
+            "note": "Wallet transaction parsing remains in whale_copy_paper.py; avoid double-counting its events.",
+        })
+        if nansen_key and tracked_wallets:
+            providers.append(_provider_result(
+                "nansen", True,
+                lambda: [record for wallet in tracked_wallets
+                         for record in fetch_nansen_dex_trades(session, wallet, nansen_key)],
+            ))
+        else:
+            providers.append({
+                "provider": "nansen",
+                "status": "not_configured" if not nansen_key else "no_tracked_wallets",
+                "records": [],
+                "error": None,
+                "note": "Uses the official profiler DEX-trades endpoint for tracked Solana wallets over the latest seven days.",
+            })
+    else:
+        for name in ("birdeye", "dune", "nansen"):
+            providers.append({
+                "provider": name,
+                "status": "disabled_by_policy",
+                "records": [],
+                "error": None,
+                "note": "Optional provider calls are disabled for this public-data-only cycle.",
+            })
+        providers.append({
+            "provider": "helius",
+            "status": "configured_existing_pipeline" if helius_configured else "not_configured",
+            "records": [],
+            "error": None,
+            "note": "Helius parsing remains in the existing pipeline; no duplicate request is made here.",
         })
 
     all_records = []
@@ -292,9 +412,16 @@ def main():
     parser.add_argument("--balances", default="whale_watch_state.json")
     parser.add_argument("--mints", default="", help="Comma-separated Solana mint addresses (optional)")
     parser.add_argument("--output", default="/tmp/market-data-connectors-report.json")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--public-only", action="store_true", help="Use only free public DexScreener data; do not query optional providers.")
+    mode.add_argument("--optional-only", action="store_true", help="Skip public DexScreener; query optional providers only when configured.")
     args = parser.parse_args()
     mints = [item.strip() for item in args.mints.split(",") if item.strip()] or None
-    report = collect(mints=mints, swaps_path=args.swaps, balances_path=args.balances)
+    report = collect(
+        mints=mints, swaps_path=args.swaps, balances_path=args.balances,
+        include_public=not args.optional_only,
+        include_optional=not args.public_only,
+    )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")

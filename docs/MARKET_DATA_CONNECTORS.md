@@ -1,10 +1,11 @@
 # Multi-provider market data connectors
 
-The connector job is read-only. It never creates trade signals, changes strategy thresholds, signs transactions, or submits orders.
+The connector job is read-only. It never creates trade signals, changes strategy thresholds, signs transactions, or submits orders. Both public endpoints run in the free public-data path; optional providers remain behind the explicit `MARKET_DATA_CONNECTORS_ENABLED=true` opt-in.
 
 ## Providers
 
-- **DexScreener:** public pair snapshots for up to five mints discovered from the existing tracked-wallet state.
+- **DexScreener:** public pair snapshots for up to five mints discovered from the existing tracked-wallet state. Pairs are normalized only when the tracked token is the base token, because the provider’s `priceUsd` is the base-token price.
+- **GeckoTerminal:** a second public pool snapshot for the same mints, filtered to pools where the tracked mint is the base token. The risk report keeps the deepest pool per source and flags material price/liquidity disagreements instead of silently picking one.
 - **Birdeye:** optional recent token-trade feed. Configure `BIRDEYE_API_KEY`.
 - **Dune:** optional saved-query execution. Configure `DUNE_API_KEY` and `DUNE_SOLANA_TRADES_QUERY_ID`. The saved query should target Solana DEX trade data (for example, `dex_solana.trades`) and return the fields needed for analysis. Dune rows are retained as source records and are not automatically treated as verified wallet PnL.
 - **Helius:** the existing wallet transaction parser remains in `whale_copy_paper.py`; the connector report only shows whether Helius is configured, to avoid double-counting its swap events.
