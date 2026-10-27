@@ -80,6 +80,33 @@ class MarketDataConnectorTests(unittest.TestCase):
             found = connectors._extract_mints(str(swaps), limit=5)
         self.assertEqual(found, ["M" * 44, "N" * 44])
 
+    def test_nansen_dex_trades_uses_read_only_profiler_endpoint(self):
+        session = Mock()
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"data": [{
+            "transaction_hash": "sig-1",
+            "block_timestamp": "2026-10-26T12:00:00Z",
+            "trade_type": "buy",
+            "token_bought_address": "mint-a",
+            "token_sold_address": "mint-b",
+            "trade_value_usd": 250.0,
+        }]}
+        session.request.return_value = response
+        records = connectors.fetch_nansen_dex_trades(
+            session, "W" * 44, "nansen-key"
+        )
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["signature"], "sig-1")
+        self.assertEqual(records[0]["mint"], "mint-a")
+        self.assertEqual(records[0]["source"], "nansen")
+        args = session.request.call_args
+        self.assertEqual(args.args[0], "POST")
+        self.assertIn("/api/v1/profiler/dex-trades", args.args[1])
+        self.assertEqual(args.kwargs["headers"]["apikey"], "nansen-key")
+        self.assertEqual(args.kwargs["json"]["chain"], "solana")
+        self.assertEqual(args.kwargs["json"]["pagination"]["per_page"], 100)
+
     def test_dune_saved_query_executes_and_fetches_results(self):
         session = Mock()
         def response(payload):
