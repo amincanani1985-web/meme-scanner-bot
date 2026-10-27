@@ -292,6 +292,56 @@ def _token_flow(mint, events):
     }
 
 
+
+def _wallet_relationships(by_mint):
+    """Find repeated close-in-time token entries within tracked histories.
+
+    These are temporal overlaps, not proof that addresses share an owner or
+    coordinated intent. Equal-time buys are not assigned an invented leader.
+    """
+    pairs = defaultdict(lambda: {"shared_tokens": set(), "lags": []})
+    for mint, events in by_mint.items():
+        first_buy = {}
+        for event in events:
+            if event["side"] != "buy":
+                continue
+            first_buy[event["wallet"]] = min(
+                first_buy.get(event["wallet"], event["timestamp"]), event["timestamp"]
+            )
+        rows = sorted(first_buy.items(), key=lambda item: (item[1], item[0]))
+        for index, (leader, leader_time) in enumerate(rows):
+            for follower, follower_time in rows[index + 1:]:
+                lag = follower_time - leader_time
+                if lag > FOLLOW_WINDOW_SECONDS:
+                    break
+                if lag <= 0:
+                    continue
+                edge = pairs[(leader, follower)]
+                edge["shared_tokens"].add(mint)
+                edge["lags"].append(lag)
+
+    relationships = []
+    for (leader, follower), info in pairs.items():
+        tokens = sorted(info["shared_tokens"])
+        lags = info["lags"]
+        relationships.append({
+            "earlier_observed_wallet": leader,
+            "later_observed_wallet": follower,
+            "shared_token_count": len(tokens),
+            "shared_tokens": tokens[:10],
+            "mean_lead_lag_seconds": round(statistics.mean(lags), 3) if lags else None,
+            "min_lead_lag_seconds": round(min(lags), 3) if lags else None,
+            "max_lead_lag_seconds": round(max(lags), 3) if lags else None,
+            "relationship_label": "repeated_timing_overlap" if len(tokens) >= 2 else "single_token_timing_overlap",
+            "coordination_proven": False,
+        })
+    relationships.sort(key=lambda item: (
+        item["shared_token_count"], -float(item["mean_lead_lag_seconds"] or 0),
+        item["earlier_observed_wallet"], item["later_observed_wallet"]
+    ), reverse=True)
+    return relationships
+
+
 def analyze_behavior(swap_state, watch_state=None, now=None):
     """Summarize observed wallet styles and multi-wallet token flows without trade actions."""
     events, rejected = _normalize_swaps(swap_state)
@@ -342,6 +392,22 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
         item["crowding_risk"], item["latest_window_unique_buyers"],
         item["unique_wallets"], item["observed_swaps"]
     ), reverse=True)
+    relationships = _wallet_relationships(by_mint)
+    relationship_counts = defaultdict(int)
+    for relationship in relationships:
+        relationship_counts[relationship["earlier_observed_wallet"]] += relationship["shared_token_count"]
+        relationship_counts[relationship["later_observed_wallet"]] += relationship["shared_token_count"]
+    for profile in wallet_profiles:
+        profile["temporal_overlap_score"] = relationship_counts.get(profile["wallet"], 0)
+        if profile["observed_follower_count"] >= 2:
+            profile["behavior_tags"].append("repeated_observed_follower")
+        if (profile["median_observed_hold_seconds"] is not None
+                and profile["median_observed_hold_seconds"] <= 120
+                and profile["matched_sell_inventory_units"] > 0):
+            profile["behavior_tags"].append("short_horizon_trade_pattern")
+        if (profile["unique_tokens"] >= 3 and profile["buy_count"] >= 3
+                and profile["sell_count"] >= 3):
+            profile["behavior_tags"].append("multi_token_rotator")
 
     all_metrics = [item["realized_performance"] for item in wallet_profiles
                    if item["realized_performance"]["closed_trades"] > 0]
@@ -362,6 +428,8 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
                                                   if item["flow_label"] == "multi_wallet_buy_consensus"),
         "multi_wallet_distribution_tokens": sum(1 for item in token_flows
                                                  if item["flow_label"] == "multi_wallet_distribution"),
+        "repeated_timing_overlap_pairs": sum(1 for item in relationships
+                                               if item["shared_token_count"] >= 2),
     }
     return {
         "status": "ok" if events else "insufficient_swap_history",
@@ -376,12 +444,14 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
         "statistics": stats,
         "wallet_profiles": wallet_profiles[:50],
         "token_flows": token_flows[:50],
+        "wallet_relationships": relationships[:100],
         "interpretation_limits": [
             "Observed wallet histories may be incomplete; missing transactions can change timing and inferred style.",
             "First observed buyer means first in this tracked dataset, not first on the market.",
             "Balance changes are not treated as swaps; transfer attribution remains unresolved.",
             "Quote notionals stay separated by SOL, USDC and USDT and are not added across currencies.",
             "Behavior classifications are descriptive research, not proof of intent, future return, or a trade recommendation.",
+            "Repeated same-token timing overlap does not establish common ownership or coordination.",
             "This module never changes entry thresholds or authorizes live trading.",
         ],
     }
