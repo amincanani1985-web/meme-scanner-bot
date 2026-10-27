@@ -17,6 +17,7 @@ import requests
 TIMEOUT = 10
 MAX_MINTS = 5
 DEXSCREENER_BASE = "https://api.dexscreener.com"
+GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2"
 BIRDEYE_BASE = "https://public-api.birdeye.so"
 DUNE_BASE = "https://api.dune.com/api/v1"
 
@@ -96,7 +97,11 @@ def fetch_dexscreener(session, mint):
             continue
         base = pair.get("baseToken") or {}
         quote = pair.get("quoteToken") or {}
-        token = base if str(base.get("address", "")).lower() == mint.lower() else quote
+        # DexScreener's priceUsd is the base token price. Ignore pairs where the
+        # requested mint is only the quote token rather than report the wrong price.
+        if str(base.get("address", "")).lower() != mint.lower():
+            continue
+        token = base
         volume = pair.get("volume") if isinstance(pair.get("volume"), dict) else {}
         price_change = pair.get("priceChange") if isinstance(pair.get("priceChange"), dict) else {}
         transactions = pair.get("txns") if isinstance(pair.get("txns"), dict) else {}
@@ -135,6 +140,66 @@ def fetch_dexscreener(session, mint):
         })
     return output
 
+
+
+def fetch_geckoterminal(session, mint):
+    """Fetch public GeckoTerminal pools where the requested token is the base token."""
+    payload = _json_request(
+        session, "GET", f"{GECKOTERMINAL_BASE}/networks/solana/tokens/{mint}/pools",
+        params={"page": 1}, headers={"Accept": "application/json"},
+    )
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        return []
+    output = []
+    target_id = f"solana_{mint}".lower()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        relationships = row.get("relationships") if isinstance(row.get("relationships"), dict) else {}
+        base_relationship = relationships.get("base_token") if isinstance(relationships.get("base_token"), dict) else {}
+        base_data = base_relationship.get("data") if isinstance(base_relationship.get("data"), dict) else {}
+        if str(base_data.get("id", "")).lower() != target_id:
+            continue
+        attrs = row.get("attributes") if isinstance(row.get("attributes"), dict) else {}
+        volume = attrs.get("volume_usd") if isinstance(attrs.get("volume_usd"), dict) else {}
+        changes = attrs.get("price_change_percentage") if isinstance(attrs.get("price_change_percentage"), dict) else {}
+        transactions = attrs.get("transactions") if isinstance(attrs.get("transactions"), dict) else {}
+        pool_name = attrs.get("name")
+        dex_relationship = relationships.get("dex") if isinstance(relationships.get("dex"), dict) else {}
+        dex_data = dex_relationship.get("data") if isinstance(dex_relationship.get("data"), dict) else {}
+        output.append({
+            "mint": mint,
+            "pair_address": attrs.get("address") or str(row.get("id", "")).removeprefix("solana_"),
+            "pair_url": None,
+            "dex_id": dex_data.get("id"),
+            "base_mint": mint,
+            "base_token_name": str(pool_name).split(" / ", 1)[0] if pool_name else None,
+            "base_token_symbol": None,
+            "quote_mint": None,
+            "token_name": str(pool_name).split(" / ", 1)[0] if pool_name else None,
+            "token_symbol": None,
+            "price_usd": attrs.get("base_token_price_usd") or attrs.get("token_price_usd"),
+            "liquidity_usd": attrs.get("reserve_in_usd"),
+            "market_cap_usd": attrs.get("market_cap_usd") or attrs.get("fdv_usd"),
+            "fdv_usd": attrs.get("fdv_usd"),
+            "volume_h1_usd": volume.get("h1"),
+            "volume_h6_usd": volume.get("h6"),
+            "volume_h24_usd": volume.get("h24"),
+            "price_change_m5_pct": changes.get("m5"),
+            "price_change_h1_pct": changes.get("h1"),
+            "price_change_h6_pct": changes.get("h6"),
+            "price_change_h24_pct": changes.get("h24"),
+            "txns_m5": transactions.get("m5"),
+            "txns_h1": transactions.get("h1"),
+            "txns_h6": transactions.get("h6"),
+            "txns_h24": transactions.get("h24"),
+            "pair_created_at": attrs.get("pool_created_at"),
+            "boosts_active": 0,
+            "observed_at": datetime.now(timezone.utc).isoformat(),
+            "source": "geckoterminal",
+        })
+    return output
 
 def fetch_birdeye(session, mint, api_key):
     payload = _json_request(
@@ -252,10 +317,16 @@ def collect(mints=None, swaps_path="whale_copy_state.json", balances_path="whale
             "dexscreener", True,
             lambda: [record for mint in mints for record in fetch_dexscreener(session, mint)],
         ))
+        providers.append(_provider_result(
+            "geckoterminal", True,
+            lambda: [record for mint in mints for record in fetch_geckoterminal(session, mint)],
+        ))
     elif include_public:
         providers.append({"provider": "dexscreener", "status": "no_candidate_mints", "records": [], "error": None})
+        providers.append({"provider": "geckoterminal", "status": "no_candidate_mints", "records": [], "error": None})
     else:
         providers.append({"provider": "dexscreener", "status": "not_run_by_policy", "records": [], "error": None})
+        providers.append({"provider": "geckoterminal", "status": "not_run_by_policy", "records": [], "error": None})
 
     birdeye_key = (env.get("BIRDEYE_API_KEY") or "").strip()
     dune_key = (env.get("DUNE_API_KEY") or "").strip()
