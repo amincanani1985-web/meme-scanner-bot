@@ -23,6 +23,7 @@ def main():
              "learn_agent.py", "strategy_backtest.py", "shadow_path_backtest.py",
              "scanner_simulator.py", "tests/test_scanner_simulator.py",
              "whale_behavior_lab.py", "tests/test_whale_behavior_lab.py",
+             "market_data_connectors.py", "tests/test_market_data_connectors.py",
              "whale_follow_backtest.py", "tests/test_whale_follow_backtest.py",
              "tests/test_scanner_logic.py", "tests/test_adaptive.py",
              "tests/test_v17_improvements.py", "tests/test_shadow_path_backtest.py"],
