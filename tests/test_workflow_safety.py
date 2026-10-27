@@ -229,6 +229,23 @@ class WorkflowSafetyTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertNotIn("gh workflow run paper-profit-loop.yml", workflow)
 
+    def test_public_dex_risk_screen_runs_each_paper_cycle_without_paid_api_calls(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn("token_quality_screen.py tests/test_token_quality_screen.py", workflow)
+        public_step = workflow.split("- name: Collect multi-provider market evidence (read-only)", 1)[1].split("- name: Collect optional market-provider evidence", 1)[0]
+        self.assertIn("--public-only", public_step)
+        self.assertIn("github.event_name", public_step)
+        self.assertNotIn("MARKET_DATA_CONNECTORS_ENABLED", public_step)
+        optional_step = workflow.split("- name: Collect optional market-provider evidence", 1)[1].split("- name: Screen observed DEX pools", 1)[0]
+        self.assertIn("MARKET_DATA_CONNECTORS_ENABLED", optional_step)
+        self.assertIn("--optional-only", optional_step)
+        screen_step = workflow.split("- name: Screen observed DEX pools for research risk flags", 1)[1].split("- name: Smoke-test whale-follow replay", 1)[0]
+        self.assertIn("python token_quality_screen.py", screen_step)
+        self.assertIn("token_quality_screen", workflow)
+        source = (ROOT / "token_quality_screen.py").read_text(encoding="utf-8")
+        self.assertIn("eligible_for_entry", source)
+        self.assertNotIn("sendTransaction", source)
+
     def test_validation_loop_is_manual_bounded_and_not_profit_peeking(self):
         workflow = (ROOT / ".github/workflows/paper-profit-loop.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
