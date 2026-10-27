@@ -41,7 +41,8 @@ def _extract_mints(*paths, limit=MAX_MINTS):
             continue
         candidates = []
         if isinstance(state, dict):
-            for key in ("wallets", "tokens", "positions", "open_positions"):
+            candidates.extend([state.get("mint"), state.get("token_mint"), state.get("token_address")])
+            for key in ("tokens", "positions", "open_positions"):
                 value = state.get(key)
                 if isinstance(value, dict):
                     candidates.extend(value.keys())
@@ -50,7 +51,18 @@ def _extract_mints(*paths, limit=MAX_MINTS):
                             candidates.extend([item.get("mint"), item.get("token_mint"), item.get("token_address")])
                 elif isinstance(value, list):
                     candidates.extend(value)
-            candidates.extend([state.get("mint"), state.get("token_mint"), state.get("token_address")])
+            wallets = state.get("wallets")
+            if isinstance(wallets, dict):
+                for wallet_state in wallets.values():
+                    if not isinstance(wallet_state, dict):
+                        continue
+                    candidates.extend([wallet_state.get("mint"), wallet_state.get("token_mint"), wallet_state.get("token_address")])
+                    for field in ("normalized_swaps", "recent_events", "events"):
+                        events = wallet_state.get(field)
+                        if isinstance(events, list):
+                            for event in events:
+                                if isinstance(event, dict):
+                                    candidates.extend([event.get("mint"), event.get("token_mint"), event.get("token_address")])
         for candidate in candidates:
             if isinstance(candidate, dict):
                 candidate = candidate.get("mint") or candidate.get("address") or candidate.get("token_address")
