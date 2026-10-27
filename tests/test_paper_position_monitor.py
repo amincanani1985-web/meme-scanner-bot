@@ -30,6 +30,38 @@ class PaperPositionMonitorTests(unittest.TestCase):
                 paper_position_monitor.run(tmp)
             batch.assert_called_once_with(["mint-a", "mint-b"])
 
+    def test_monitor_prefetches_and_samples_bounded_whale_quote_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paper_dir = Path(tmp) / "paper_account"
+            paper_dir.mkdir()
+            (paper_dir / "state.json").write_text(json.dumps({
+                "equity": 1000.0, "initial_equity": 1000.0,
+                "positions": {}, "shadow_positions": {}, "trade_count": 0,
+                "strategy": {"active_threshold": 80, "status": "baseline"},
+            }), encoding="utf-8")
+            capture_result = {
+                "active_paths": 1, "new_paths_started": 1, "paths_completed": 0,
+                "paths_rejected": 0, "quotes_failed": 0,
+            }
+            with patch.object(scanner, "fetch_dex_pairs") as batch, \
+                 patch.object(scanner, "fetch_dex_pair", return_value={
+                     "priceUsd": "1.0", "liquidity": {"usd": 100000},
+                     "baseToken": {"symbol": "TEST"},
+                 }), \
+                 patch.object(scanner, "manage_open_positions"), \
+                 patch.object(scanner, "manage_shadow_positions"), \
+                 patch.object(whale_position_capture := paper_position_monitor.whale_shadow_capture,
+                              "monitored_mints", return_value=["mint-c"]), \
+                 patch.object(whale_position_capture, "sample", return_value=capture_result) as sample, \
+                 patch.object(scanner, "fetch_candidate_mints", side_effect=AssertionError("monitor must not discover scanner candidates")), \
+                 patch.object(scanner, "open_position", side_effect=AssertionError("monitor must not open trades")):
+                result = paper_position_monitor.run(tmp)
+
+            batch.assert_called_once_with(["mint-c"])
+            sample.assert_called_once()
+            self.assertEqual(result["whale_capture_started"], 1)
+            self.assertEqual(result["whale_capture_active_paths"], 1)
+
     def test_monitor_only_persists_state_without_discovery_or_entry(self):
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / "paper_account").mkdir()

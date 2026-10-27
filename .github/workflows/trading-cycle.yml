@@ -14,6 +14,10 @@ on:
       - "shadow_path_backtest.py"
       - "scanner_simulator.py"
       - "whale_research.py"
+      - "whale_behavior_lab.py"
+      - "market_data_connectors.py"
+      - "whale_follow_backtest.py"
+      - "whale_shadow_capture.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   push:
@@ -30,6 +34,10 @@ on:
       - "shadow_path_backtest.py"
       - "scanner_simulator.py"
       - "whale_research.py"
+      - "whale_behavior_lab.py"
+      - "market_data_connectors.py"
+      - "whale_follow_backtest.py"
+      - "whale_shadow_capture.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   # Keep periodic paper scans; push-triggered runs also kick off an immediate cycle.
@@ -55,6 +63,10 @@ env:
   NOTIFY_ISSUE: "1"
   HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
   HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+  BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+  DUNE_API_KEY: ${{ secrets.DUNE_API_KEY }}
+  DUNE_SOLANA_TRADES_QUERY_ID: ${{ secrets.DUNE_SOLANA_TRADES_QUERY_ID }}
+  NANSEN_API_KEY: ${{ secrets.NANSEN_API_KEY }}
   SHADOW_PRICE_PATH_LOG: "${{ github.workspace }}/paper_account/shadow_price_paths.jsonl"
   # Optional read-only token risk profiles; no swap/transaction endpoint is used.
   MEMESWAP_RESEARCH_ENABLED: "1"
@@ -79,7 +91,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -223,6 +235,67 @@ jobs:
               print(f"- Wallet {wallet['owner']}: closed={wallet['closed_trades']}, win rate={wallet['win_rate']:.1%}, PF={wallet['profit_factor']:.2f}, mean net={wallet['mean_net_pnl_pct']:+.2f}%, qualified={wallet['qualified']}")
           PY
 
+      - name: Analyze observed whale behaviour and token consensus (research only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python whale_behavior_lab.py --swaps whale_copy_state.json --balances whale_watch_state.json --output /tmp/whale-behavior-report.json | tee /tmp/whale-behavior-report.stdout.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-behavior-report.json").read_text(encoding="utf-8"))
+          stats = report.get("statistics", {})
+          print("## Tracked whale behaviour patterns (research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Valid swaps / observed wallets / tokens: {stats.get('swap_events_used', 0)} / {stats.get('wallets_with_valid_swaps', 0)} / {stats.get('tokens_with_observed_swaps', 0)}")
+          print(f"- Complete wallet histories: {stats.get('wallets_with_complete_history', 0)}")
+          print(f"- Wallets with realised outcomes / passing paper-copy gates: {stats.get('wallets_with_realized_outcomes', 0)} / {stats.get('wallets_meeting_copy_paper_gates', 0)}")
+          print(f"- Multi-wallet buy consensus / distribution tokens: {stats.get('multi_wallet_buy_consensus_tokens', 0)} / {stats.get('multi_wallet_distribution_tokens', 0)}")
+          print(f"- Malformed or unsupported events ignored: {stats.get('rejected_malformed_or_unsupported_events', 0)}")
+          for wallet in report.get("wallet_profiles", [])[:10]:
+              print(f"- Wallet {wallet['wallet'][:8]}…: style={wallet['observed_style']}, confidence={wallet['confidence']}, swaps={wallet['swap_count']}, leader/follower={wallet['observed_leader_count']}/{wallet['observed_follower_count']}, copy-paper-qualified={wallet['copy_paper_qualified']}")
+          for token in report.get("token_flows", [])[:10]:
+              print(f"- Token {token['mint'][:8]}…: flow={token['flow_label']}, recent unique buyers/sellers={token['latest_window_unique_buyers']}/{token['latest_window_unique_sellers']}, crowding-risk={token['crowding_risk']}")
+          print("- Observed leadership is relative to monitored histories; these labels never authorize trades or change strategy thresholds.")
+          PY
+
+      - name: Collect multi-provider market evidence (read-only)
+        if: github.event_name != 'pull_request' && vars.MARKET_DATA_CONNECTORS_ENABLED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python market_data_connectors.py --swaps whale_copy_state.json --balances whale_watch_state.json --output /tmp/market-data-connectors-report.json | tee /tmp/market-data-connectors-summary.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/market-data-connectors-report.json").read_text(encoding="utf-8"))
+          print("## Multi-provider market data (read-only)")
+          print(f"- Solana mints checked: {len(report.get('mints_requested', []))}")
+          for provider in report.get("provider_status", []):
+              print(f"- {provider['provider']}: **{provider['status']}**; records={len(provider.get('records', []))}; error={provider.get('error') or 'none'}")
+              if provider.get("note"):
+                  print(f"  - {provider['note']}")
+          print("- This report is research evidence only. No signal, strategy update, or live trade is authorized.")
+          PY
+
+      - name: Smoke-test whale-follow replay on repository data (PR only, research only)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          print("## Whale-follow replay smoke test (offline, research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Usable paths / train / holdout: {report.get('usable_paths', 0)} / {report.get('train_paths', 0)} / {report.get('holdout_paths', 0)}")
+          print(f"- Wallet swaps / matched path mints: {report.get('wallet_swap_events', 0)} / {report.get('paths_sharing_mints_with_wallet_swaps', 0)}")
+          print(f"- Eligible training candidates: {report.get('eligible_training_candidates', 0)}")
+          print("- Live trading is disabled; this step reads stored snapshots only.")
+          PY
+
       - name: Validate paper-trade target integrity
         run: |
           python - <<'PY'
@@ -287,6 +360,7 @@ jobs:
           python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-whale-backtest-report.json
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
           python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
+          python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -296,6 +370,33 @@ jobs:
           paper_whale_strategy = json.loads(Path("/tmp/paper-whale-backtest-report.json").read_text(encoding="utf-8"))
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
+          paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          market_data_path = Path("/tmp/market-data-connectors-report.json")
+          market_data_sources = (
+              json.loads(market_data_path.read_text(encoding="utf-8"))
+              if market_data_path.exists()
+              else {
+                  "status": "not_run_or_disabled",
+                  "research_only": True,
+                  "live_trading_authorized": False,
+                  "provider_status": [],
+                  "records": [],
+              }
+          )
+          behavior_path = Path("/tmp/whale-behavior-report.json")
+          paper_whale_behavior = (
+              json.loads(behavior_path.read_text(encoding="utf-8"))
+              if behavior_path.exists()
+              else {
+                  "status": "not_run_or_disabled",
+                  "research_only": True,
+                  "live_trading_authorized": False,
+                  "copy_policy_changed": False,
+                  "statistics": {},
+                  "wallet_profiles": [],
+                  "token_flows": [],
+              }
+          )
           report = {
               "strategy": strategy,
               "shadow": shadow,
@@ -303,6 +404,9 @@ jobs:
               "paper_whale_strategy": paper_whale_strategy,
               "paper_shadow": paper_shadow,
               "paper_simulator": paper_simulator,
+              "paper_whale_behavior": paper_whale_behavior,
+              "market_data_sources": market_data_sources,
+              "paper_whale_follow_backtest": paper_whale_follow_backtest,
           }
           Path("dashboard/backtest-data.js").write_text(
               "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
@@ -315,6 +419,36 @@ jobs:
               f"paper whale experiment={paper_whale_strategy.get('rows', 0)} rows, "
               f"paper shadow={paper_shadow.get('rows', 0)} rows."
           )
+          PY
+
+      - name: Summarize whale-follow walk-forward results (research only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          print("## Delayed whale-follow walk-forward backtest (research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Usable quote paths / training / holdout: {report.get('usable_paths', 0)} / {report.get('train_paths', 0)} / {report.get('holdout_paths', 0)}")
+          print(f"- Recorded wallet swaps / unique wallet-token sets: {report.get('wallet_swap_events', 0)} / {report.get('unique_wallet_tokens_with_swaps', 0)}")
+          print(f"- Quote paths matching tracked-wallet token mints: {report.get('paths_sharing_mints_with_wallet_swaps', 0)}")
+          print(f"- Eligible training rules: {report.get('eligible_training_candidates', 0)}")
+          for candidate in report.get("candidates", []):
+              training = candidate.get("training", {})
+              holdout = candidate.get("holdout", {})
+              print(
+                  f"- {candidate.get('signal_mode')} delay={candidate.get('delay_seconds')}s: "
+                  f"train n={training.get('n', 0)}, mean={training.get('mean_pnl_pct', 0):+.2f}%, PF={training.get('profit_factor', 0):.2f}; "
+                  f"holdout n={holdout.get('n', 0)}, mean={holdout.get('mean_pnl_pct', 0):+.2f}%, "
+                  f"return={candidate.get('holdout_portfolio', {}).get('return_pct', 0):+.2f}%, "
+                  f"validated={candidate.get('validated', False)}"
+              )
+          if report.get("status") != "validated_profitable_out_of_sample":
+              print("- **NOT VALIDATED:** no delayed whale-follow rule has passed all net-profit training and untouched holdout gates.")
+          print("- Only recorded DEX quotes are used. Wallet qualification uses realized swap history before each signal. This step cannot authorize live trading.")
           PY
 
       - name: Backtest sampled shadow exit paths (research only)

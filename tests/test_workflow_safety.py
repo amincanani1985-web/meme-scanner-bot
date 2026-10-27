@@ -130,6 +130,71 @@ class WorkflowSafetyTests(unittest.TestCase):
             refresh.index('Path("dashboard/backtest-data.js").write_text'),
         )
 
+    def test_whale_follow_backtest_is_walk_forward_read_only_and_published(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_follow_backtest.py"', workflow)
+        self.assertIn("whale_follow_backtest.py tests/test_whale_follow_backtest.py", workflow)
+        self.assertIn(
+            "python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl "
+            "paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json "
+            "--output /tmp/whale-follow-backtest-report.json",
+            workflow,
+        )
+        refresh = workflow.split(
+            "- name: Refresh learning reports after the latest outcomes", 1
+        )[1].split("- name: Summarize whale-follow walk-forward results", 1)[0]
+        self.assertIn('"paper_whale_follow_backtest": paper_whale_follow_backtest', refresh)
+        self.assertIn('paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json")', refresh)
+        self.assertLess(
+            refresh.index("python whale_follow_backtest.py"),
+            refresh.index('Path("dashboard/backtest-data.js").write_text'),
+        )
+        source = (ROOT / "whale_follow_backtest.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn("_wallet_metrics_as_of(", source)
+        self.assertIn("prepare_entry_path(", source)
+        self.assertNotIn("sendTransaction", source)
+        smoke = workflow.split(
+            "- name: Smoke-test whale-follow replay on repository data", 1
+        )[1].split("- name: Validate paper-trade target integrity", 1)[0]
+        self.assertIn("if: github.event_name == 'pull_request'", smoke)
+        self.assertIn("python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json", smoke)
+
+    def test_whale_shadow_capture_uses_observed_quotes_inside_monitor_cycles(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_shadow_capture.py"', workflow)
+        self.assertIn("whale_shadow_capture.py tests/test_whale_shadow_capture.py", workflow)
+        self.assertIn("paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl", workflow)
+        monitor = (ROOT / "paper_position_monitor.py").read_text(encoding="utf-8")
+        self.assertIn("whale_shadow_capture.monitored_mints(root", monitor)
+        self.assertIn("whale_shadow_capture.sample(", monitor)
+        self.assertIn("scanner.fetch_dex_pairs(monitored_mints)", monitor)
+        capture = (ROOT / "whale_shadow_capture.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', capture)
+        self.assertIn('"price_usd": price', capture)
+        self.assertIn("CAPTURE_HORIZON_SECONDS = 900.0", capture)
+        self.assertNotIn("sendTransaction", capture)
+        self.assertNotIn("signTransaction", capture)
+
+    def test_whale_behavior_lab_is_read_only_and_is_published_after_wallet_updates(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_behavior_lab.py"', workflow)
+        self.assertIn("whale_behavior_lab.py tests/test_whale_behavior_lab.py", workflow)
+        self.assertIn("python whale_behavior_lab.py --swaps whale_copy_state.json --balances whale_watch_state.json", workflow)
+        behavior_step = workflow.split(
+            "- name: Analyze observed whale behaviour and token consensus", 1
+        )[1].split("- name: Collect multi-provider market evidence", 1)[0]
+        self.assertNotIn("if: github.event_name != 'pull_request'", behavior_step)
+        self.assertIn('"paper_whale_behavior": paper_whale_behavior', workflow)
+        analysis = workflow.index("- name: Analyze observed whale behaviour and token consensus")
+        copy_research = workflow.index("- name: Run transaction-level whale-copy paper research")
+        refresh = workflow.index("- name: Refresh learning reports after the latest outcomes")
+        self.assertLess(copy_research, analysis)
+        self.assertLess(analysis, refresh)
+        source = (ROOT / "whale_behavior_lab.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn('"copy_policy_changed": False', source)
+
     def test_pull_request_runs_cannot_block_the_main_paper_cycle(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn(
