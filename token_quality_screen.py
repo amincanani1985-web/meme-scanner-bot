@@ -146,26 +146,67 @@ def screen_report(provider_report):
     records = provider_report.get("records", [])
     if not isinstance(records, list):
         records = []
+    public_sources = {"dexscreener", "geckoterminal"}
     pairs = [screen_pair(row) for row in records
-             if isinstance(row, dict) and str(row.get("source", "")).lower() == "dexscreener"]
-    # Deduplicate overlapping requests without merging separate pools for the same token.
-    deduped = []
-    seen = set()
+             if isinstance(row, dict) and str(row.get("source", "")).lower() in public_sources]
+    # Keep the deepest observed pool per token and source. This avoids allowing
+    # dozens of tiny illiquid pools to dominate the summary and preserves cross-source comparison.
+    best_by_source_mint = {}
     for row in pairs:
-        identity = row.get("pair_address") or (row.get("mint"), row.get("observed_at"))
-        if identity in seen:
-            continue
-        seen.add(identity)
-        deduped.append(row)
+        identity = (row.get("source"), row.get("mint") or row.get("pair_address"))
+        current = best_by_source_mint.get(identity)
+        liquidity = _number(row.get("liquidity_usd")) or 0.0
+        current_liquidity = _number(current.get("liquidity_usd")) if current else None
+        if current is None or liquidity > (current_liquidity or 0.0):
+            best_by_source_mint[identity] = row
+    deduped = list(best_by_source_mint.values())
     deduped.sort(key=lambda row: (-row["risk_score"], row.get("liquidity_usd") or -1, row.get("token_symbol") or ""))
+    by_mint = {}
+    for row in deduped:
+        if row.get("mint") and row.get("price_usd") is not None:
+            by_mint.setdefault(row["mint"], {})[row.get("source")] = row
+    comparisons = []
+    for mint, providers in by_mint.items():
+        dex = providers.get("dexscreener")
+        gecko = providers.get("geckoterminal")
+        if not dex or not gecko:
+            continue
+        dex_price, gecko_price = _number(dex.get("price_usd")), _number(gecko.get("price_usd"))
+        if dex_price is None or gecko_price is None or dex_price <= 0 or gecko_price <= 0:
+            continue
+        price_divergence = (gecko_price / dex_price - 1.0) * 100.0
+        dex_liquidity = _number(dex.get("liquidity_usd"))
+        gecko_liquidity = _number(gecko.get("liquidity_usd"))
+        liquidity_divergence = None
+        if dex_liquidity and gecko_liquidity is not None and dex_liquidity > 0:
+            liquidity_divergence = (gecko_liquidity / dex_liquidity - 1.0) * 100.0
+        flags = []
+        if abs(price_divergence) >= 8:
+            flags.append("price_divergence_over_8pct")
+        if liquidity_divergence is not None and abs(liquidity_divergence) >= 50:
+            flags.append("liquidity_divergence_over_50pct")
+        comparisons.append({
+            "mint": mint,
+            "token_symbol": dex.get("token_symbol") or gecko.get("token_symbol"),
+            "dexscreener_price_usd": dex_price,
+            "geckoterminal_price_usd": gecko_price,
+            "price_divergence_pct_gecko_vs_dex": round(price_divergence, 3),
+            "dexscreener_liquidity_usd": dex_liquidity,
+            "geckoterminal_liquidity_usd": gecko_liquidity,
+            "liquidity_divergence_pct_gecko_vs_dex": round(liquidity_divergence, 3) if liquidity_divergence is not None else None,
+            "flags": flags,
+            "interpretation": "Cross-source disagreement is a caution flag, not a trading signal; pool composition and observation timing can differ.",
+        })
+    comparisons.sort(key=lambda row: -abs(row["price_divergence_pct_gecko_vs_dex"]))
     levels = {level: sum(row["risk_level"] == level for row in deduped)
               for level in ("very_high", "high", "elevated", "lower_observed_risk", "insufficient_data")}
     return {
         "generated_at": provider_report.get("generated_at"),
-        "status": "screened" if deduped else "no_dexscreener_records",
+        "status": "screened" if deduped else "no_public_pool_records",
         "source_provider_status": provider_report.get("provider_status", []),
         "pairs_screened": len(deduped),
         "risk_level_counts": levels,
+        "provider_comparisons": comparisons,
         "pairs": deduped,
         "research_only": True,
         "trade_signal": False,
