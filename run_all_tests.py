@@ -24,6 +24,7 @@ def main():
              "scanner_simulator.py", "tests/test_scanner_simulator.py",
              "whale_behavior_lab.py", "tests/test_whale_behavior_lab.py",
              "market_data_connectors.py", "tests/test_market_data_connectors.py",
+             "token_quality_screen.py", "tests/test_token_quality_screen.py",
              "whale_follow_backtest.py", "tests/test_whale_follow_backtest.py",
              "whale_shadow_capture.py", "tests/test_whale_shadow_capture.py",
              "whale_event_study.py", "tests/test_whale_event_study.py",
