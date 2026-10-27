@@ -130,6 +130,21 @@ class WorkflowSafetyTests(unittest.TestCase):
             refresh.index('Path("dashboard/backtest-data.js").write_text'),
         )
 
+    def test_whale_behavior_lab_is_read_only_and_is_published_after_wallet_updates(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_behavior_lab.py"', workflow)
+        self.assertIn("whale_behavior_lab.py tests/test_whale_behavior_lab.py", workflow)
+        self.assertIn("python whale_behavior_lab.py --swaps whale_copy_state.json --balances whale_watch_state.json", workflow)
+        self.assertIn('"paper_whale_behavior": paper_whale_behavior', workflow)
+        analysis = workflow.index("- name: Analyze observed whale behaviour and token consensus")
+        copy_research = workflow.index("- name: Run transaction-level whale-copy paper research")
+        refresh = workflow.index("- name: Refresh learning reports after the latest outcomes")
+        self.assertLess(copy_research, analysis)
+        self.assertLess(analysis, refresh)
+        source = (ROOT / "whale_behavior_lab.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn('"copy_policy_changed": False', source)
+
     def test_pull_request_runs_cannot_block_the_main_paper_cycle(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn(
