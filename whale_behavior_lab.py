@@ -70,12 +70,13 @@ def _normalize_swaps(swap_state):
                     or not mint or quote not in VALID_QUOTES or not wallet):
                 rejected += 1
                 continue
-            # Solana signatures uniquely identify transactions. A duplicated record
-            # must not artificially amplify apparent consensus or wallet activity.
-            if signature and signature in seen_signatures:
+            # The same signature may contain multiple tracked wallet-side swaps.
+            # Deduplicate repeated records per wallet, not globally by transaction.
+            signature_key = (signature, wallet)
+            if signature and signature_key in seen_signatures:
                 continue
             if signature:
-                seen_signatures.add(signature)
+                seen_signatures.add(signature_key)
             events.append({
                 "wallet": wallet,
                 "mint": mint,
