@@ -6,9 +6,14 @@ import market_data_connectors as connectors
 
 class MarketDataConnectorTests(unittest.TestCase):
     def test_missing_credentials_are_reported_not_silently_as_zero_activity(self):
+        session = Mock()
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"pairs": []}
+        session.request.return_value = response
         report = connectors.collect(
             mints=["So11111111111111111111111111111111111111112"],
-            session=Mock(),
+            session=session,
             environ={},
         )
         statuses = {item["provider"]: item["status"] for item in report["provider_status"]}
