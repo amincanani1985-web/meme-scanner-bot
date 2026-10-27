@@ -258,7 +258,7 @@ jobs:
           PY
 
       - name: Collect multi-provider market evidence (read-only)
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && vars.MARKET_DATA_CONNECTORS_ENABLED == 'true'
         shell: bash
         run: |
           set -euo pipefail
