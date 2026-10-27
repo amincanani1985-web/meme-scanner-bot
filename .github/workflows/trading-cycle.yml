@@ -374,7 +374,7 @@ jobs:
               json.loads(market_data_path.read_text(encoding="utf-8"))
               if market_data_path.exists()
               else {
-                  "status": "not_run_in_pull_request",
+                  "status": "not_run_or_disabled",
                   "research_only": True,
                   "live_trading_authorized": False,
                   "provider_status": [],
@@ -386,7 +386,7 @@ jobs:
               json.loads(behavior_path.read_text(encoding="utf-8"))
               if behavior_path.exists()
               else {
-                  "status": "not_run_in_pull_request",
+                  "status": "not_run_or_disabled",
                   "research_only": True,
                   "live_trading_authorized": False,
                   "copy_policy_changed": False,
