@@ -21,7 +21,7 @@ def main():
         run([py, "-m", "py_compile", "memeswap_research.py",
              "tests/test_memeswap_research.py", "meme_scanner_cycle.py",
              "learn_agent.py", "strategy_backtest.py", "shadow_path_backtest.py",
-             "scanner_simulator.py", "tests/test_scanner_simulator.py",
+             "scanner_simulator.py", "tests/test_scanner_simulator.py",\n             "whale_behavior_lab.py", "tests/test_whale_behavior_lab.py",
              "tests/test_scanner_logic.py", "tests/test_adaptive.py",
              "tests/test_v17_improvements.py", "tests/test_shadow_path_backtest.py"],
             "Python syntax"),
