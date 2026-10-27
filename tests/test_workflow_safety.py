@@ -242,6 +242,10 @@ class WorkflowSafetyTests(unittest.TestCase):
         screen_step = workflow.split("- name: Screen observed DEX pools for research risk flags", 1)[1].split("- name: Smoke-test whale-follow replay", 1)[0]
         self.assertIn("python token_quality_screen.py", screen_step)
         self.assertIn("token_quality_screen", workflow)
+        dashboard = (ROOT / "dashboard/index.html").read_text(encoding="utf-8")
+        self.assertIn('id="tokenRiskPanel"', dashboard)
+        self.assertIn('id="tokenRiskCompareRows"', dashboard)
+        self.assertIn("const quality=report.token_quality_screen||{}", dashboard)
         source = (ROOT / "token_quality_screen.py").read_text(encoding="utf-8")
         self.assertIn("eligible_for_entry", source)
         self.assertNotIn("sendTransaction", source)
