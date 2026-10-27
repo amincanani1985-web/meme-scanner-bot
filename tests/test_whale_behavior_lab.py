@@ -147,6 +147,26 @@ class WhaleBehaviorLabTests(unittest.TestCase):
         token = next(row for row in report["token_flows"] if row["mint"] == "mint-a")
         self.assertEqual(token["latest_window_unique_buyers"], 2)
 
+    def test_balance_drops_are_reported_separately_from_swap_sells(self):
+        swaps = {"wallets": {"wallet-a": {"normalized_swaps": [
+            swap("wallet-a", "mint-a", 100, "buy")]}}}
+        balances = {"wallets": {"wallet-a": {
+            "observed_balance_drops": 4,
+            "confirmed_sell_pressure_events": 3,
+            "observed_balance_increases": 2,
+            "confirmed_buy_pressure_events": 1,
+            "tokens_seen": ["mint-a", "mint-b"],
+        }}}
+
+        profile = lab.analyze_behavior(swaps, balances, now=110)["wallet_profiles"][0]
+
+        self.assertEqual(profile["sell_count"], 0)
+        self.assertEqual(profile["holder_balance_signals"]["confirmed_sell_pressure_events"], 3)
+        self.assertEqual(
+            profile["holder_balance_signals"]["evidence_type"],
+            "balance_change_plus_market_context_not_verified_swap",
+        )
+
     def test_quote_notional_is_kept_separate_by_currency_and_bad_events_are_ignored(self):
         state = {"wallets": {"wallet-a": {"history_complete": True, "normalized_swaps": [
             swap("wallet-a", "mint-a", 100, "buy", 2.0, "SOL"),
