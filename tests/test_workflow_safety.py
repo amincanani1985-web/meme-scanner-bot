@@ -135,6 +135,10 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn('"whale_behavior_lab.py"', workflow)
         self.assertIn("whale_behavior_lab.py tests/test_whale_behavior_lab.py", workflow)
         self.assertIn("python whale_behavior_lab.py --swaps whale_copy_state.json --balances whale_watch_state.json", workflow)
+        behavior_step = workflow.split(
+            "- name: Analyze observed whale behaviour and token consensus", 1
+        )[1].split("- name: Validate paper-trade target integrity", 1)[0]
+        self.assertNotIn("if: github.event_name != 'pull_request'", behavior_step)
         self.assertIn('"paper_whale_behavior": paper_whale_behavior', workflow)
         analysis = workflow.index("- name: Analyze observed whale behaviour and token consensus")
         copy_research = workflow.index("- name: Run transaction-level whale-copy paper research")
