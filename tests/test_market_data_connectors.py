@@ -99,6 +99,24 @@ class MarketDataConnectorTests(unittest.TestCase):
         self.assertEqual(statuses["dexscreener"], "not_run_by_policy")
         self.assertEqual(statuses["birdeye"], "ok")
 
+    def test_geckoterminal_normalizes_public_pool_metrics_and_skips_mint_as_quote(self):
+        session = Mock()
+        response = Mock()
+        response.raise_for_status.return_value = None
+        mint = "M" * 44
+        response.json.return_value = {"data": [
+            {"attributes": {"address": "pool-a", "name": "M / SOL", "base_token_price_usd": "0.01", "reserve_in_usd": "50000", "fdv_usd": "1000000", "volume_usd": {"h1": "2500", "h6": "10000", "h24": "40000"}, "price_change_percentage": {"m5": "1", "h1": "2", "h6": "3", "h24": "4"}, "transactions": {"m5": {"buys": 10, "sells": 4}, "h1": {"buys": 80, "sells": 30}, "h6": {"buys": 300, "sells": 200}, "h24": {"buys": 800, "sells": 600}}}, "relationships": {"base_token": {"data": {"id": "solana_" + mint}}, "quote_token": {"data": {"id": "solana_SOL"}}}},
+            {"attributes": {"address": "pool-b", "name": "SOL / M", "base_token_price_usd": "99", "reserve_in_usd": "90000", "volume_usd": {}, "price_change_percentage": {}, "transactions": {}}, "relationships": {"base_token": {"data": {"id": "solana_SOL"}}, "quote_token": {"data": {"id": "solana_" + mint}}}}
+        ]}
+        session.request.return_value = response
+        records = connectors.fetch_geckoterminal(session, mint)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["pair_address"], "pool-a")
+        self.assertEqual(records[0]["price_usd"], "0.01")
+        self.assertEqual(records[0]["liquidity_usd"], "50000")
+        self.assertEqual(records[0]["volume_h24_usd"], "40000")
+        self.assertEqual(records[0]["source"], "geckoterminal")
+
     def test_provider_error_does_not_hide_other_provider_results(self):
         def bad():
             raise TimeoutError("provider timed out")
