@@ -15,6 +15,7 @@ on:
       - "scanner_simulator.py"
       - "whale_research.py"
       - "whale_behavior_lab.py"
+      - "market_data_connectors.py"
       - "whale_follow_backtest.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -33,6 +34,7 @@ on:
       - "scanner_simulator.py"
       - "whale_research.py"
       - "whale_behavior_lab.py"
+      - "market_data_connectors.py"
       - "whale_follow_backtest.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
@@ -367,6 +369,18 @@ jobs:
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
           paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          market_data_path = Path("/tmp/market-data-connectors-report.json")
+          market_data_sources = (
+              json.loads(market_data_path.read_text(encoding="utf-8"))
+              if market_data_path.exists()
+              else {
+                  "status": "not_run_in_pull_request",
+                  "research_only": True,
+                  "live_trading_authorized": False,
+                  "provider_status": [],
+                  "records": [],
+              }
+          )
           behavior_path = Path("/tmp/whale-behavior-report.json")
           paper_whale_behavior = (
               json.loads(behavior_path.read_text(encoding="utf-8"))
@@ -389,6 +403,7 @@ jobs:
               "paper_shadow": paper_shadow,
               "paper_simulator": paper_simulator,
               "paper_whale_behavior": paper_whale_behavior,
+              "market_data_sources": market_data_sources,
               "paper_whale_follow_backtest": paper_whale_follow_backtest,
           }
           Path("dashboard/backtest-data.js").write_text(
