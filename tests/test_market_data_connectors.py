@@ -65,6 +65,21 @@ class MarketDataConnectorTests(unittest.TestCase):
             found = connectors._extract_mints(str(swaps), str(balances), limit=2)
         self.assertEqual(found, ["A" * 32, "B" * 32])
 
+    def test_mint_discovery_reads_wallet_swap_mints_not_wallet_addresses(self):
+        import json
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as temp:
+            swaps = Path(temp) / "swaps.json"
+            swaps.write_text(json.dumps({"wallets": {
+                "W" * 44: {"normalized_swaps": [
+                    {"mint": "M" * 44, "side": "buy"},
+                    {"mint": "N" * 44, "side": "sell"},
+                ]}
+            }}))
+            found = connectors._extract_mints(str(swaps), limit=5)
+        self.assertEqual(found, ["M" * 44, "N" * 44])
+
     def test_dune_saved_query_executes_and_fetches_results(self):
         session = Mock()
         def response(payload):
