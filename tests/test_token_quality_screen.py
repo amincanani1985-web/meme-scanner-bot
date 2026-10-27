@@ -35,6 +35,7 @@ class TokenQualityScreenTests(unittest.TestCase):
     def test_sell_dominant_window_is_flagged_when_sample_is_large_enough(self):
         result = screen.screen_pair(pair(txns_h6={"buys": 3_260, "sells": 33_097}))
         self.assertIn("sell_pressure_h6", {flag["code"] for flag in result["flags"]})
+        self.assertGreaterEqual(result["risk_score"], 20)
 
     def test_extreme_turnover_and_short_term_spike_are_flagged(self):
         result = screen.screen_pair(pair(
@@ -44,6 +45,8 @@ class TokenQualityScreenTests(unittest.TestCase):
         flags = {flag["code"] for flag in result["flags"]}
         self.assertIn("extreme_24h_turnover", flags)
         self.assertIn("extreme_short_term_momentum", flags)
+        h6 = screen.screen_pair(pair(price_change_m5_pct=0, price_change_h1_pct=0, price_change_h6_pct=75))
+        self.assertIn("extreme_short_term_momentum", {flag["code"] for flag in h6["flags"]})
 
     def test_non_finite_values_are_not_used_as_market_evidence(self):
         result = screen.screen_pair(pair(liquidity_usd=float("nan"), price_usd="inf", price_change_h24_pct="NaN"))
