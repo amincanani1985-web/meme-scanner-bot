@@ -97,6 +97,42 @@ class WhaleBehaviorLabTests(unittest.TestCase):
         self.assertFalse(profile["copy_paper_qualified"])
         self.assertFalse(report["live_trading_authorized"])
 
+    def test_repeated_same_token_timing_overlap_is_not_called_coordination(self):
+        state = {"wallets": {
+            "wallet-a": {"history_complete": True, "normalized_swaps": [
+                swap("wallet-a", "mint-a", 100, "buy"),
+                swap("wallet-a", "mint-b", 1000, "buy")]},
+            "wallet-b": {"history_complete": True, "normalized_swaps": [
+                swap("wallet-b", "mint-a", 140, "buy"),
+                swap("wallet-b", "mint-b", 1040, "buy")]},
+        }}
+
+        report = lab.analyze_behavior(state, now=1100)
+        edge = next(row for row in report["wallet_relationships"]
+                    if row["earlier_observed_wallet"] == "wallet-a"
+                    and row["later_observed_wallet"] == "wallet-b")
+
+        self.assertEqual(edge["shared_token_count"], 2)
+        self.assertEqual(edge["relationship_label"], "repeated_timing_overlap")
+        self.assertFalse(edge["coordination_proven"])
+        self.assertEqual(report["statistics"]["repeated_timing_overlap_pairs"], 1)
+
+    def test_short_holding_pattern_is_descriptive_not_a_copy_instruction(self):
+        state = {"wallets": {"wallet-fast": {"history_complete": True, "normalized_swaps": [
+            swap("wallet-fast", "mint-a", 100, "buy"),
+            swap("wallet-fast", "mint-a", 115, "sell"),
+            swap("wallet-fast", "mint-b", 200, "buy"),
+            swap("wallet-fast", "mint-b", 225, "sell"),
+            swap("wallet-fast", "mint-c", 300, "buy"),
+            swap("wallet-fast", "mint-c", 320, "sell"),
+        ]}}}
+
+        profile = lab.analyze_behavior(state, now=330)["wallet_profiles"][0]
+
+        self.assertEqual(profile["median_observed_hold_seconds"], 20.0)
+        self.assertIn("short_horizon_trade_pattern", profile["behavior_tags"])
+        self.assertFalse(profile["copy_paper_qualified"])
+
     def test_quote_notional_is_kept_separate_by_currency_and_bad_events_are_ignored(self):
         state = {"wallets": {"wallet-a": {"history_complete": True, "normalized_swaps": [
             swap("wallet-a", "mint-a", 100, "buy", 2.0, "SOL"),
