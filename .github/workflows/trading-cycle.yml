@@ -59,6 +59,10 @@ env:
   NOTIFY_ISSUE: "1"
   HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
   HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+  BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+  DUNE_API_KEY: ${{ secrets.DUNE_API_KEY }}
+  DUNE_SOLANA_TRADES_QUERY_ID: ${{ secrets.DUNE_SOLANA_TRADES_QUERY_ID }}
+  NANSEN_API_KEY: ${{ secrets.NANSEN_API_KEY }}
   SHADOW_PRICE_PATH_LOG: "${{ github.workspace }}/paper_account/shadow_price_paths.jsonl"
   # Optional read-only token risk profiles; no swap/transaction endpoint is used.
   MEMESWAP_RESEARCH_ENABLED: "1"
@@ -83,7 +87,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py whale_follow_backtest.py tests/test_whale_follow_backtest.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -249,6 +253,25 @@ jobs:
           for token in report.get("token_flows", [])[:10]:
               print(f"- Token {token['mint'][:8]}…: flow={token['flow_label']}, recent unique buyers/sellers={token['latest_window_unique_buyers']}/{token['latest_window_unique_sellers']}, crowding-risk={token['crowding_risk']}")
           print("- Observed leadership is relative to monitored histories; these labels never authorize trades or change strategy thresholds.")
+          PY
+
+      - name: Collect multi-provider market evidence (read-only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python market_data_connectors.py --swaps whale_copy_state.json --balances whale_watch_state.json --output /tmp/market-data-connectors-report.json | tee /tmp/market-data-connectors-summary.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/market-data-connectors-report.json").read_text(encoding="utf-8"))
+          print("## Multi-provider market data (read-only)")
+          print(f"- Solana mints checked: {len(report.get('mints_requested', []))}")
+          for provider in report.get("provider_status", []):
+              print(f"- {provider['provider']}: **{provider['status']}**; records={len(provider.get('records', []))}; error={provider.get('error') or 'none'}")
+              if provider.get("note"):
+                  print(f"  - {provider['note']}")
+          print("- This report is research evidence only. No signal, strategy update, or live trade is authorized.")
           PY
 
       - name: Validate paper-trade target integrity
