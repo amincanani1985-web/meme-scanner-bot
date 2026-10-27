@@ -109,7 +109,7 @@ class WhaleBehaviorLabTests(unittest.TestCase):
         report = lab.analyze_behavior(state, now=140)
         profile = report["wallet_profiles"][0]
 
-        self.assertEqual(report["swap_events_used"], 2)
+        self.assertEqual(report["statistics"]["swap_events_used"], 2)
         self.assertEqual(profile["buy_notional_by_quote"], {"SOL": 2.0})
         self.assertEqual(profile["sell_notional_by_quote"], {"USDC": 50.0})
 
