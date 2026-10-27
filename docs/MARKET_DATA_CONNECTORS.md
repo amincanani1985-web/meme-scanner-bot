@@ -12,7 +12,7 @@ The connector job is read-only. It never creates trade signals, changes strategy
 
 ## Configure GitHub Actions
 
-In the repository, open **Settings → Secrets and variables → Actions** and add the required secrets there. Do not paste API keys into chat, commit them, or put them in source files.
+In the repository, open **Settings → Secrets and variables → Actions** and add the required secrets there. Also create an Actions **repository variable** named `MARKET_DATA_CONNECTORS_ENABLED` with value `true` to opt into provider API calls. The variable is intentionally required because this workflow runs every five minutes and paid APIs may charge per request. Leave it unset or false until credentials and usage limits are ready. Do not paste API keys into chat, commit them, or put them in source files.
 
 Required for existing Helius ingestion:
 - `HELIUS_API_KEY` or `HELIUS_RPC_URL`
@@ -27,7 +27,7 @@ If optional credentials are absent, the report marks that provider as `not_confi
 
 ## Report
 
-The scheduled trading-cycle workflow writes `/tmp/market-data-connectors-report.json`, adds a concise provider-status section to the Actions summary, and includes the provider report in the generated dashboard research data. The raw temporary file is not committed as a persistent historical dataset.
+When `MARKET_DATA_CONNECTORS_ENABLED=true`, the scheduled trading-cycle workflow writes `/tmp/market-data-connectors-report.json`, adds a concise provider-status section to the Actions summary, and includes the provider report in the generated dashboard research data. The workflow is scheduled every five minutes, so this opt-in may invoke the configured providers each cycle. The raw temporary file is not committed as a persistent historical dataset.
 
 The first version is deliberately bounded to five mints, twenty recent Birdeye trades per mint, and five Nansen wallet histories for the latest seven days. It is a collection layer, not yet a complete multi-provider historical warehouse. Before any strategy consumes these records, add provider-specific schema validation, deduplication by chain + signature + event index, timestamp normalization, and explicit coverage/retention metadata.
 
