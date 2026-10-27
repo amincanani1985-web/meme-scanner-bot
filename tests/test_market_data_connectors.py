@@ -74,9 +74,10 @@ class MarketDataConnectorTests(unittest.TestCase):
             mints=["M" * 44], session=session, environ=env,
             include_public=True, include_optional=False,
         )
-        self.assertEqual(session.request.call_count, 1)
+        self.assertEqual(session.request.call_count, 2)
         statuses = {item["provider"]: item["status"] for item in report["provider_status"]}
         self.assertEqual(statuses["dexscreener"], "ok")
+        self.assertEqual(statuses["geckoterminal"], "ok")
         self.assertEqual(statuses["birdeye"], "disabled_by_policy")
         self.assertEqual(statuses["dune"], "disabled_by_policy")
         self.assertEqual(statuses["nansen"], "disabled_by_policy")
