@@ -133,6 +133,20 @@ class WhaleBehaviorLabTests(unittest.TestCase):
         self.assertIn("short_horizon_trade_pattern", profile["behavior_tags"])
         self.assertFalse(profile["copy_paper_qualified"])
 
+    def test_duplicate_signature_does_not_hide_a_different_wallet_side_of_a_swap(self):
+        state = {"wallets": {
+            "wallet-a": {"history_complete": True, "normalized_swaps": [
+                swap("wallet-a", "mint-a", 100, "buy", signature="shared-signature")]},
+            "wallet-b": {"history_complete": True, "normalized_swaps": [
+                swap("wallet-b", "mint-a", 100, "buy", signature="shared-signature")]},
+        }}
+
+        report = lab.analyze_behavior(state, now=110)
+
+        self.assertEqual(report["statistics"]["swap_events_used"], 2)
+        token = next(row for row in report["token_flows"] if row["mint"] == "mint-a")
+        self.assertEqual(token["latest_window_unique_buyers"], 2)
+
     def test_quote_notional_is_kept_separate_by_currency_and_bad_events_are_ignored(self):
         state = {"wallets": {"wallet-a": {"history_complete": True, "normalized_swaps": [
             swap("wallet-a", "mint-a", 100, "buy", 2.0, "SOL"),
