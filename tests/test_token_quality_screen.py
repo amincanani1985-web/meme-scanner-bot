@@ -57,17 +57,23 @@ class TokenQualityScreenTests(unittest.TestCase):
     def test_report_deduplicates_pairs_and_never_outputs_trade_signal(self):
         report = screen.screen_report({
             "generated_at": "2026-10-27T10:00:00Z",
-            "provider_status": [{"provider": "dexscreener", "status": "ok"}],
-            "records": [pair(), pair(), {**pair(pair_address="pair-b"), "liquidity_usd": 2_000}],
+            "provider_status": [{"provider": "dexscreener", "status": "ok"}, {"provider": "geckoterminal", "status": "ok"}],
+            "records": [
+                pair(), pair(),
+                {**pair(source="geckoterminal", pair_address="pool-gecko", price_usd=0.0011, liquidity_usd=60_000)},
+                {**pair(pair_address="pair-b"), "liquidity_usd": 2_000},
+            ],
         })
         self.assertEqual(report["pairs_screened"], 2)
+        self.assertEqual(len(report["provider_comparisons"]), 1)
+        self.assertIn("price_divergence_over_8pct", report["provider_comparisons"][0]["flags"])
         self.assertFalse(report["trade_signal"])
         self.assertFalse(report["live_trading_authorized"])
         self.assertTrue(all(item["eligible_for_entry"] is False for item in report["pairs"]))
 
     def test_unconfigured_or_empty_source_is_not_reported_as_safe(self):
         report = screen.screen_report({"records": [], "provider_status": [{"provider": "dexscreener", "status": "error"}]})
-        self.assertEqual(report["status"], "no_dexscreener_records")
+        self.assertEqual(report["status"], "no_public_pool_records")
         self.assertEqual(report["pairs_screened"], 0)
         self.assertEqual(report["risk_level_counts"]["insufficient_data"], 0)
 
