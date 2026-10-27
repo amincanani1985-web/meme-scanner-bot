@@ -46,40 +46,6 @@ def load_json(path):
         return {}
 
 
-def load_paths(filenames):
-    """Load one quality-valid real quote path per mint, prioritizing file order."""
-    paths, rejected, seen = [], 0, set()
-    for filename in filenames:
-        try:
-            lines = Path(filename).read_text(encoding="utf-8").splitlines()
-        except OSError:
-            continue
-        for line in lines:
-            if not line.strip():
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                rejected += 1
-                continue
-            paths.append(row)
-    report = analyze_event_response(paths, {"wallets": {}})
-    # Keep CLI loading concerns separate from analysis so path deduplication and
-    # quality filters have exactly the same behavior for API and file inputs.
-    validated, invalid, seen = [], rejected, set()
-    for row in paths:
-        path, error = _quality_path(row)
-        if error:
-            invalid += 1
-            continue
-        if path["mint"] in seen:
-            continue
-        seen.add(path["mint"])
-        validated.append(path)
-    validated.sort(key=lambda row: (row["entry_timestamp"], row["mint"]))
-    return validated, invalid
-
-
 def _quality_path(row):
     path, error = _normalized_path(row)
     if error:
