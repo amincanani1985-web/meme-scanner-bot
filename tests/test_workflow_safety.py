@@ -153,6 +153,11 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("_wallet_metrics_as_of(", source)
         self.assertIn("prepare_entry_path(", source)
         self.assertNotIn("sendTransaction", source)
+        smoke = workflow.split(
+            "- name: Smoke-test whale-follow replay on repository data", 1
+        )[1].split("- name: Validate paper-trade target integrity", 1)[0]
+        self.assertIn("if: github.event_name == 'pull_request'", smoke)
+        self.assertIn("python whale_follow_backtest.py --paths paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json", smoke)
 
     def test_whale_behavior_lab_is_read_only_and_is_published_after_wallet_updates(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
