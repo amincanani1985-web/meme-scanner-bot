@@ -532,7 +532,7 @@ def analyze_follow(paths, swap_state, initial_equity=1000.0, allocation_pct=10.0
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--paths", nargs="+", default=["paper_account/shadow_price_paths.jsonl"])
+    parser.add_argument("--paths", nargs="+", default=["paper_account/whale_quote_paths.jsonl", "paper_account/shadow_price_paths.jsonl"])
     parser.add_argument("--swaps", default="whale_copy_state.json")
     parser.add_argument("--output")
     parser.add_argument("--initial-equity", type=float, default=1000.0)
