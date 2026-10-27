@@ -15,6 +15,7 @@ on:
       - "scanner_simulator.py"
       - "whale_research.py"
       - "whale_behavior_lab.py"
+      - "whale_follow_backtest.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   push:
@@ -32,6 +33,7 @@ on:
       - "scanner_simulator.py"
       - "whale_research.py"
       - "whale_behavior_lab.py"
+      - "whale_follow_backtest.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   # Keep periodic paper scans; push-triggered runs also kick off an immediate cycle.
@@ -81,7 +83,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py whale_follow_backtest.py tests/test_whale_follow_backtest.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -313,6 +315,7 @@ jobs:
           python strategy_backtest.py --observations paper_account/whale_strategy_observations.csv > /tmp/paper-whale-backtest-report.json
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
           python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
+          python whale_follow_backtest.py --paths paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -322,6 +325,7 @@ jobs:
           paper_whale_strategy = json.loads(Path("/tmp/paper-whale-backtest-report.json").read_text(encoding="utf-8"))
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
+          paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
           behavior_path = Path("/tmp/whale-behavior-report.json")
           paper_whale_behavior = (
               json.loads(behavior_path.read_text(encoding="utf-8"))
@@ -344,6 +348,7 @@ jobs:
               "paper_shadow": paper_shadow,
               "paper_simulator": paper_simulator,
               "paper_whale_behavior": paper_whale_behavior,
+              "paper_whale_follow_backtest": paper_whale_follow_backtest,
           }
           Path("dashboard/backtest-data.js").write_text(
               "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
@@ -356,6 +361,36 @@ jobs:
               f"paper whale experiment={paper_whale_strategy.get('rows', 0)} rows, "
               f"paper shadow={paper_shadow.get('rows', 0)} rows."
           )
+          PY
+
+      - name: Summarize whale-follow walk-forward results (research only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          print("## Delayed whale-follow walk-forward backtest (research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Usable quote paths / training / holdout: {report.get('usable_paths', 0)} / {report.get('train_paths', 0)} / {report.get('holdout_paths', 0)}")
+          print(f"- Recorded wallet swaps / unique wallet-token sets: {report.get('wallet_swap_events', 0)} / {report.get('unique_wallet_tokens_with_swaps', 0)}")
+          print(f"- Quote paths matching tracked-wallet token mints: {report.get('paths_sharing_mints_with_wallet_swaps', 0)}")
+          print(f"- Eligible training rules: {report.get('eligible_training_candidates', 0)}")
+          for candidate in report.get("candidates", []):
+              training = candidate.get("training", {})
+              holdout = candidate.get("holdout", {})
+              print(
+                  f"- {candidate.get('signal_mode')} delay={candidate.get('delay_seconds')}s: "
+                  f"train n={training.get('n', 0)}, mean={training.get('mean_pnl_pct', 0):+.2f}%, PF={training.get('profit_factor', 0):.2f}; "
+                  f"holdout n={holdout.get('n', 0)}, mean={holdout.get('mean_pnl_pct', 0):+.2f}%, "
+                  f"return={candidate.get('holdout_portfolio', {}).get('return_pct', 0):+.2f}%, "
+                  f"validated={candidate.get('validated', False)}"
+              )
+          if report.get("status") != "validated_profitable_out_of_sample":
+              print("- **NOT VALIDATED:** no delayed whale-follow rule has passed all net-profit training and untouched holdout gates.")
+          print("- Only recorded DEX quotes are used. Wallet qualification uses realized swap history before each signal. This step cannot authorize live trading.")
           PY
 
       - name: Backtest sampled shadow exit paths (research only)
