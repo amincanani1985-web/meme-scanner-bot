@@ -14,6 +14,7 @@ on:
       - "shadow_path_backtest.py"
       - "scanner_simulator.py"
       - "whale_research.py"
+      - "whale_behavior_lab.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   push:
@@ -30,6 +31,7 @@ on:
       - "shadow_path_backtest.py"
       - "scanner_simulator.py"
       - "whale_research.py"
+      - "whale_behavior_lab.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   # Keep periodic paper scans; push-triggered runs also kick off an immediate cycle.
@@ -79,7 +81,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -223,6 +225,31 @@ jobs:
               print(f"- Wallet {wallet['owner']}: closed={wallet['closed_trades']}, win rate={wallet['win_rate']:.1%}, PF={wallet['profit_factor']:.2f}, mean net={wallet['mean_net_pnl_pct']:+.2f}%, qualified={wallet['qualified']}")
           PY
 
+      - name: Analyze observed whale behaviour and token consensus (research only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python whale_behavior_lab.py --swaps whale_copy_state.json --balances whale_watch_state.json --output /tmp/whale-behavior-report.json | tee /tmp/whale-behavior-report.stdout.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-behavior-report.json").read_text(encoding="utf-8"))
+          stats = report.get("statistics", {})
+          print("## Tracked whale behaviour patterns (research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Valid swaps / observed wallets / tokens: {stats.get('swap_events_used', 0)} / {stats.get('wallets_with_valid_swaps', 0)} / {stats.get('tokens_with_observed_swaps', 0)}")
+          print(f"- Complete wallet histories: {stats.get('wallets_with_complete_history', 0)}")
+          print(f"- Wallets with realised outcomes / passing paper-copy gates: {stats.get('wallets_with_realized_outcomes', 0)} / {stats.get('wallets_meeting_copy_paper_gates', 0)}")
+          print(f"- Multi-wallet buy consensus / distribution tokens: {stats.get('multi_wallet_buy_consensus_tokens', 0)} / {stats.get('multi_wallet_distribution_tokens', 0)}")
+          print(f"- Malformed or unsupported events ignored: {stats.get('rejected_malformed_or_unsupported_events', 0)}")
+          for wallet in report.get("wallet_profiles", [])[:10]:
+              print(f"- Wallet {wallet['wallet'][:8]}…: style={wallet['observed_style']}, confidence={wallet['confidence']}, swaps={wallet['swap_count']}, leader/follower={wallet['observed_leader_count']}/{wallet['observed_follower_count']}, copy-paper-qualified={wallet['copy_paper_qualified']}")
+          for token in report.get("token_flows", [])[:10]:
+              print(f"- Token {token['mint'][:8]}…: flow={token['flow_label']}, recent unique buyers/sellers={token['latest_window_unique_buyers']}/{token['latest_window_unique_sellers']}, crowding-risk={token['crowding_risk']}")
+          print("- Observed leadership is relative to monitored histories; these labels never authorize trades or change strategy thresholds.")
+          PY
+
       - name: Validate paper-trade target integrity
         run: |
           python - <<'PY'
@@ -296,6 +323,20 @@ jobs:
           paper_whale_strategy = json.loads(Path("/tmp/paper-whale-backtest-report.json").read_text(encoding="utf-8"))
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
+          behavior_path = Path("/tmp/whale-behavior-report.json")
+          paper_whale_behavior = (
+              json.loads(behavior_path.read_text(encoding="utf-8"))
+              if behavior_path.exists()
+              else {
+                  "status": "not_run_in_pull_request",
+                  "research_only": True,
+                  "live_trading_authorized": False,
+                  "copy_policy_changed": False,
+                  "statistics": {},
+                  "wallet_profiles": [],
+                  "token_flows": [],
+              }
+          )
           report = {
               "strategy": strategy,
               "shadow": shadow,
@@ -303,6 +344,7 @@ jobs:
               "paper_whale_strategy": paper_whale_strategy,
               "paper_shadow": paper_shadow,
               "paper_simulator": paper_simulator,
+              "paper_whale_behavior": paper_whale_behavior,
           }
           Path("dashboard/backtest-data.js").write_text(
               "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
