@@ -274,6 +274,24 @@ jobs:
           print("- This report is research evidence only. No signal, strategy update, or live trade is authorized.")
           PY
 
+      - name: Smoke-test whale-follow replay on repository data (PR only, research only)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python whale_follow_backtest.py --paths paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          print("## Whale-follow replay smoke test (offline, research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Usable paths / train / holdout: {report.get('usable_paths', 0)} / {report.get('train_paths', 0)} / {report.get('holdout_paths', 0)}")
+          print(f"- Wallet swaps / matched path mints: {report.get('wallet_swap_events', 0)} / {report.get('paths_sharing_mints_with_wallet_swaps', 0)}")
+          print(f"- Eligible training candidates: {report.get('eligible_training_candidates', 0)}")
+          print("- Live trading is disabled; this step reads stored snapshots only.")
+          PY
+
       - name: Validate paper-trade target integrity
         run: |
           python - <<'PY'
