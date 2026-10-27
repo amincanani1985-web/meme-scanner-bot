@@ -11,29 +11,29 @@
   },
   "positions": {},
   "shadow_positions": {
-    "8THZ69JP2ErZuHVj4G5rcwkFfsQafp5mQsaoQReApump": {
-      "symbol": "NETWORK",
-      "entry_price": 0.000110635,
-      "entry_time": 1793078917.1739764,
-      "entry_liquidity": 26720.9,
-      "peak_price": 0.000110635,
-      "signal_score": 71.2,
+    "49Z7uMK8U6F67t7RtU2feeWYTRrUYnnjxKBuR2Mx4JB2": {
+      "symbol": "SI",
+      "entry_price": 1.8219249999999997e-05,
+      "entry_time": 1793083589.4280539,
+      "entry_liquidity": 11484.27,
+      "peak_price": 1.8219249999999997e-05,
+      "signal_score": 17.873506493506497,
       "trailing_armed": false,
       "components": {
-        "momentum": 9.200000000000001,
-        "hourly_bonus": 0.044000000000000004,
-        "short_term_bonus": 9.156,
-        "buy_pressure": 12.0,
-        "momentum_m5_pct": 0.63,
-        "momentum_h1_pct": 0.11,
-        "buy_sell_ratio": 5.0,
-        "liquidity_usd": 26720.9,
-        "volume_h1_usd": 3990.85,
-        "market_cap_usd": 103641.0,
-        "liquidity_to_mcap_ratio": 0.25782171148483707,
+        "momentum": -34.62,
+        "hourly_bonus": -20.0,
+        "short_term_bonus": -14.619999999999997,
+        "buy_pressure": 2.493506493506493,
+        "momentum_m5_pct": -17.08,
+        "momentum_h1_pct": -57.48,
+        "buy_sell_ratio": 1.4155844155844155,
+        "liquidity_usd": 11484.27,
+        "volume_h1_usd": 67392.65,
+        "market_cap_usd": 17958.0,
+        "liquidity_to_mcap_ratio": 0.6395071834279987,
         "memeswap_available": 1.0,
         "memeswap_price_age_seconds": null,
-        "memeswap_profile_age_seconds": 0.048131465911865234,
+        "memeswap_profile_age_seconds": 0.05131101608276367,
         "memeswap_top1_pct": null,
         "memeswap_top5_pct": null,
         "memeswap_top10_pct": null,
@@ -49,82 +49,84 @@
         "memeswap_risk_data_available": 0.0,
         "memeswap_full_risk_screen_available": 0.0
       },
-      "prospective_entry_filters": [
-        "score_band_70_80_v1",
-        "broad_pullback_v1"
-      ],
+      "prospective_entry_filters": [],
       "price_history": [
         {
-          "timestamp": 1793078917.1739764,
-          "price_usd": 0.000109,
-          "liquidity_usd": 26720.9
+          "timestamp": 1793083589.4280539,
+          "price_usd": 1.795e-05,
+          "liquidity_usd": 11484.27
         },
         {
-          "timestamp": 1793078948.346487,
-          "price_usd": 0.0001076,
-          "liquidity_usd": 26534.19
+          "timestamp": 1793083620.7757874,
+          "price_usd": 1.652e-05,
+          "liquidity_usd": 11021.64
         },
         {
-          "timestamp": 1793078978.6162841,
-          "price_usd": 0.0001076,
-          "liquidity_usd": 26534.53
+          "timestamp": 1793083651.059789,
+          "price_usd": 1.652e-05,
+          "liquidity_usd": 11022.42
         },
         {
-          "timestamp": 1793079008.9914203,
-          "price_usd": 0.0001089,
-          "liquidity_usd": 26702.46
+          "timestamp": 1793083681.3398142,
+          "price_usd": 1.119e-05,
+          "liquidity_usd": 9053.28
         },
         {
-          "timestamp": 1793079039.2709615,
-          "price_usd": 0.000108,
-          "liquidity_usd": 26579.56
+          "timestamp": 1793083711.6422074,
+          "price_usd": 1.112e-05,
+          "liquidity_usd": 9033.9
         },
         {
-          "timestamp": 1793079069.5635734,
-          "price_usd": 0.0001064,
-          "liquidity_usd": 26371.87
+          "timestamp": 1793083741.9155486,
+          "price_usd": 1.467e-05,
+          "liquidity_usd": 10382.4
         },
         {
-          "timestamp": 1793079099.8685467,
-          "price_usd": 0.0001064,
-          "liquidity_usd": 26371.87
+          "timestamp": 1793083772.1969159,
+          "price_usd": 1.407e-05,
+          "liquidity_usd": 10168.58
         },
         {
-          "timestamp": 1793079130.1629524,
-          "price_usd": 0.0001079,
-          "liquidity_usd": 26565.84
+          "timestamp": 1793083802.5743358,
+          "price_usd": 1.399e-05,
+          "liquidity_usd": 10144.05
         },
         {
-          "timestamp": 1793079160.4648829,
-          "price_usd": 0.0001093,
-          "liquidity_usd": 26753.95
+          "timestamp": 1793083832.9506793,
+          "price_usd": 1.216e-05,
+          "liquidity_usd": 9467.28
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1793083681.3398142,
+      "benchmark_exit_price_usd": 1.119e-05,
+      "benchmark_exit_liquidity_usd": 9053.28,
+      "benchmark_exit_after_slippage_pnl_pct": -39.80981654019786
     },
     "27Qg7EcnGfmbthfQeQXTs4qjfnvU6gXf8W1ahJiJpump": {
       "symbol": "ELON2028",
-      "entry_price": 0.001188565,
-      "entry_time": 1793078917.4297643,
-      "entry_liquidity": 96573.93,
-      "peak_price": 0.001205,
-      "signal_score": 73.60447058823529,
+      "entry_price": 0.001221045,
+      "entry_time": 1793083589.7196443,
+      "entry_liquidity": 98345.39,
+      "peak_price": 0.001266,
+      "signal_score": 73.5028625592417,
       "trailing_armed": false,
       "components": {
-        "momentum": 14.927999999999999,
-        "hourly_bonus": 3.132,
-        "short_term_bonus": 11.796,
-        "buy_pressure": 8.676470588235295,
-        "momentum_m5_pct": 3.17,
-        "momentum_h1_pct": 7.83,
-        "buy_sell_ratio": 2.446078431372549,
-        "liquidity_usd": 96573.93,
-        "volume_h1_usd": 185963.51,
-        "market_cap_usd": 1164283.0,
-        "liquidity_to_mcap_ratio": 0.08294712711600186,
+        "momentum": 13.664000000000001,
+        "hourly_bonus": 5.984000000000001,
+        "short_term_bonus": 7.68,
+        "buy_pressure": 9.838862559241704,
+        "momentum_m5_pct": -0.6,
+        "momentum_h1_pct": 14.96,
+        "buy_sell_ratio": 2.639810426540284,
+        "liquidity_usd": 98345.39,
+        "volume_h1_usd": 181136.9,
+        "market_cap_usd": 1196641.0,
+        "liquidity_to_mcap_ratio": 0.08218453989124558,
         "memeswap_available": 1.0,
         "memeswap_price_age_seconds": null,
-        "memeswap_profile_age_seconds": 0.04991483688354492,
+        "memeswap_profile_age_seconds": 0.05896162986755371,
         "memeswap_top1_pct": null,
         "memeswap_top5_pct": null,
         "memeswap_top10_pct": null,
@@ -142,103 +144,11 @@
       },
       "prospective_entry_filters": [
         "score_band_70_80_v1",
-        "broad_pullback_v1",
-        "broad_moderate_momentum_v2",
-        "volume_confirmed_pullback_v1",
-        "steady_pressure_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078917.4297643,
-          "price_usd": 0.001171,
-          "liquidity_usd": 96573.93
-        },
-        {
-          "timestamp": 1793078948.3465004,
-          "price_usd": 0.001195,
-          "liquidity_usd": 97583.18
-        },
-        {
-          "timestamp": 1793078978.6162975,
-          "price_usd": 0.001153,
-          "liquidity_usd": 95861.16
-        },
-        {
-          "timestamp": 1793079008.9914346,
-          "price_usd": 0.001205,
-          "liquidity_usd": 98002.76
-        },
-        {
-          "timestamp": 1793079039.2709756,
-          "price_usd": 0.001197,
-          "liquidity_usd": 97683.96
-        },
-        {
-          "timestamp": 1793079069.5635872,
-          "price_usd": 0.001166,
-          "liquidity_usd": 96382.24
-        },
-        {
-          "timestamp": 1793079099.8685613,
-          "price_usd": 0.001142,
-          "liquidity_usd": 95339.07
-        },
-        {
-          "timestamp": 1793079130.1629665,
-          "price_usd": 0.001183,
-          "liquidity_usd": 97089.31
-        },
-        {
-          "timestamp": 1793079160.464897,
-          "price_usd": 0.001175,
-          "liquidity_usd": 96751.43
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "DtBatQsrazRRVp37UTMQH7TnXL1mT2qrJTj7PB9Rpump": {
-      "symbol": "Wifoween",
-      "entry_price": 0.00011083799999999998,
-      "entry_time": 1793078917.831742,
-      "entry_liquidity": 27785.82,
-      "peak_price": 0.00011083799999999998,
-      "signal_score": 64.93,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 11.18,
-        "hourly_bonus": 3.98,
-        "short_term_bonus": 7.2,
-        "buy_pressure": 3.75,
-        "momentum_m5_pct": -1.0,
-        "momentum_h1_pct": 9.95,
-        "buy_sell_ratio": 1.625,
-        "liquidity_usd": 27785.82,
-        "volume_h1_usd": 19861.55,
-        "market_cap_usd": 106488.0,
-        "liquidity_to_mcap_ratio": 0.26092911877394637,
-        "memeswap_available": 1.0,
-        "memeswap_price_age_seconds": null,
-        "memeswap_profile_age_seconds": 0.053017616271972656,
-        "memeswap_top1_pct": null,
-        "memeswap_top5_pct": null,
-        "memeswap_top10_pct": null,
-        "memeswap_top20_pct": null,
-        "memeswap_lp_locked_pct": null,
-        "memeswap_lp_locked": null,
-        "memeswap_fake_score": null,
-        "memeswap_honeypot": null,
-        "memeswap_mintable": null,
-        "memeswap_buy_tax_value": null,
-        "memeswap_sell_tax_value": null,
-        "memeswap_gate_pass": 0.0,
-        "memeswap_risk_data_available": 0.0,
-        "memeswap_full_risk_screen_available": 0.0
-      },
-      "prospective_entry_filters": [
-        "score_band_60_70_v1",
         "moderate_pullback_v1",
         "broad_pullback_v1",
         "liquid_pullback_v1",
+        "tight_pullback_v1",
+        "recovery_pullback_v1",
         "broad_moderate_momentum_v2",
         "volume_confirmed_pullback_v1",
         "steady_pressure_v1",
@@ -247,76 +157,171 @@
       ],
       "price_history": [
         {
-          "timestamp": 1793078917.831742,
-          "price_usd": 0.0001092,
-          "liquidity_usd": 27785.82
+          "timestamp": 1793083589.7196443,
+          "price_usd": 0.001203,
+          "liquidity_usd": 98345.39
         },
         {
-          "timestamp": 1793078948.3465068,
-          "price_usd": 0.0001044,
-          "liquidity_usd": 27131.78
+          "timestamp": 1793083620.7758033,
+          "price_usd": 0.001197,
+          "liquidity_usd": 98104.63
         },
         {
-          "timestamp": 1793078978.6163034,
-          "price_usd": 0.000107,
-          "liquidity_usd": 27490.88
+          "timestamp": 1793083651.0598054,
+          "price_usd": 0.00125,
+          "liquidity_usd": 100284.68
         },
         {
-          "timestamp": 1793079008.991441,
-          "price_usd": 0.0001077,
-          "liquidity_usd": 27578.08
+          "timestamp": 1793083681.3443072,
+          "price_usd": 0.001215,
+          "liquidity_usd": 98852.92
         },
         {
-          "timestamp": 1793079039.2709818,
-          "price_usd": 0.0001052,
-          "liquidity_usd": 27230.13
+          "timestamp": 1793083711.6422226,
+          "price_usd": 0.001266,
+          "liquidity_usd": 100955.35
         },
         {
-          "timestamp": 1793079069.5635934,
-          "price_usd": 0.0001083,
-          "liquidity_usd": 27653.63
+          "timestamp": 1793083741.9155617,
+          "price_usd": 0.001222,
+          "liquidity_usd": 99153.98
         },
         {
-          "timestamp": 1793079099.8685675,
-          "price_usd": 0.0001097,
-          "liquidity_usd": 27844.76
+          "timestamp": 1793083772.196929,
+          "price_usd": 0.001239,
+          "liquidity_usd": 99928.86
         },
         {
-          "timestamp": 1793079130.1629734,
-          "price_usd": 0.0001098,
-          "liquidity_usd": 27865.86
+          "timestamp": 1793083802.5743499,
+          "price_usd": 0.001195,
+          "liquidity_usd": 97986.08
         },
         {
-          "timestamp": 1793079160.4649038,
-          "price_usd": 0.0001102,
-          "liquidity_usd": 27911.08
+          "timestamp": 1793083832.9506922,
+          "price_usd": 0.001207,
+          "liquidity_usd": 98495.63
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "FeiVAVWku2dVE7DzsqEo3stV694YQMJeqqtbaQTDpump": {
-      "symbol": "Musk2028",
-      "entry_price": 1.0647349999999999e-05,
-      "entry_time": 1793078918.0605433,
-      "entry_liquidity": 6867.76,
-      "peak_price": 1.124e-05,
-      "signal_score": 44.5,
-      "trailing_armed": false,
+    "9vphGHJXi6LSwRYGxvLSaenLK4J3DYjpGrmpqRLkpump": {
+      "symbol": "LUMINA",
+      "entry_price": 0.0001440285,
+      "entry_time": 1793083590.0580328,
+      "entry_liquidity": 32520.07,
+      "peak_price": 0.0001587,
+      "signal_score": 50.5695067264574,
+      "trailing_armed": true,
       "components": {
         "momentum": -5.0,
         "hourly_bonus": 20.0,
         "short_term_bonus": -25.0,
-        "buy_pressure": -0.5000000000000002,
-        "momentum_m5_pct": -25.82,
-        "momentum_h1_pct": 61.43,
-        "buy_sell_ratio": 0.9166666666666666,
-        "liquidity_usd": 6867.76,
-        "volume_h1_usd": 6429.5,
-        "market_cap_usd": 10051.0,
-        "liquidity_to_mcap_ratio": 0.6832912148044971,
+        "buy_pressure": 5.5695067264574,
+        "momentum_m5_pct": -38.24,
+        "momentum_h1_pct": 237.0,
+        "buy_sell_ratio": 1.9282511210762332,
+        "liquidity_usd": 32520.07,
+        "volume_h1_usd": 547309.7,
+        "market_cap_usd": 138653.0,
+        "liquidity_to_mcap_ratio": 0.23454285157912197,
         "memeswap_available": 1.0,
         "memeswap_price_age_seconds": null,
-        "memeswap_profile_age_seconds": 0.04093790054321289,
+        "memeswap_profile_age_seconds": 0.06627869606018066,
+        "memeswap_top1_pct": null,
+        "memeswap_top5_pct": null,
+        "memeswap_top10_pct": null,
+        "memeswap_top20_pct": null,
+        "memeswap_lp_locked_pct": null,
+        "memeswap_lp_locked": null,
+        "memeswap_fake_score": null,
+        "memeswap_honeypot": null,
+        "memeswap_mintable": null,
+        "memeswap_buy_tax_value": null,
+        "memeswap_sell_tax_value": null,
+        "memeswap_gate_pass": 0.0,
+        "memeswap_risk_data_available": 0.0,
+        "memeswap_full_risk_screen_available": 0.0
+      },
+      "prospective_entry_filters": [
+        "score_band_50_60_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.0580328,
+          "price_usd": 0.0001419,
+          "liquidity_usd": 32520.07
+        },
+        {
+          "timestamp": 1793083620.775811,
+          "price_usd": 0.0001359,
+          "liquidity_usd": 31836.91
+        },
+        {
+          "timestamp": 1793083651.059812,
+          "price_usd": 0.0001343,
+          "liquidity_usd": 31661.25
+        },
+        {
+          "timestamp": 1793083681.3443182,
+          "price_usd": 0.0001421,
+          "liquidity_usd": 32604.72
+        },
+        {
+          "timestamp": 1793083711.6422305,
+          "price_usd": 0.0001456,
+          "liquidity_usd": 33045.34
+        },
+        {
+          "timestamp": 1793083741.9155707,
+          "price_usd": 0.0001475,
+          "liquidity_usd": 33275.62
+        },
+        {
+          "timestamp": 1793083772.1969385,
+          "price_usd": 0.0001587,
+          "liquidity_usd": 34553.7
+        },
+        {
+          "timestamp": 1793083802.5743606,
+          "price_usd": 0.0001316,
+          "liquidity_usd": 31471.69
+        },
+        {
+          "timestamp": 1793083832.950701,
+          "price_usd": 0.0001224,
+          "liquidity_usd": 30404.93
+        }
+      ],
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "trailing_stop",
+      "benchmark_exit_timestamp": 1793083802.5743606,
+      "benchmark_exit_price_usd": 0.0001316,
+      "benchmark_exit_liquidity_usd": 31471.69,
+      "benchmark_exit_after_slippage_pnl_pct": -10.456611017958245
+    },
+    "BDsdyZ5wSksj7X7jFDJrR1inmFgWpdrrDLr7oycpPjaf": {
+      "symbol": "OI",
+      "entry_price": 1.8259849999999998e-05,
+      "entry_time": 1793083590.490465,
+      "entry_liquidity": 11622.03,
+      "peak_price": 2.405e-05,
+      "signal_score": 36.71,
+      "trailing_armed": true,
+      "components": {
+        "momentum": -15.540000000000001,
+        "hourly_bonus": -20.0,
+        "short_term_bonus": 4.459999999999999,
+        "buy_pressure": 2.25,
+        "momentum_m5_pct": -4.36,
+        "momentum_h1_pct": -57.13,
+        "buy_sell_ratio": 1.375,
+        "liquidity_usd": 11622.03,
+        "volume_h1_usd": 113490.32,
+        "market_cap_usd": 17995.0,
+        "liquidity_to_mcap_ratio": 0.6458477354820784,
+        "memeswap_available": 1.0,
+        "memeswap_price_age_seconds": null,
+        "memeswap_profile_age_seconds": 0.04473471641540527,
         "memeswap_top1_pct": null,
         "memeswap_top5_pct": null,
         "memeswap_top10_pct": null,
@@ -337,819 +342,973 @@
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0605433,
-          "price_usd": 1.049e-05,
-          "liquidity_usd": 6867.76
+          "timestamp": 1793083590.490465,
+          "price_usd": 1.799e-05,
+          "liquidity_usd": 11622.03
         },
         {
-          "timestamp": 1793078948.3465116,
-          "price_usd": 1.049e-05,
-          "liquidity_usd": 6867.76
+          "timestamp": 1793083620.775817,
+          "price_usd": 1.889e-05,
+          "liquidity_usd": 11924.17
         },
         {
-          "timestamp": 1793078978.6163077,
-          "price_usd": 1.07e-05,
-          "liquidity_usd": 6954.36
+          "timestamp": 1793083651.059817,
+          "price_usd": 1.878e-05,
+          "liquidity_usd": 11888.64
         },
         {
-          "timestamp": 1793079008.9914465,
-          "price_usd": 1.078e-05,
-          "liquidity_usd": 6986.06
+          "timestamp": 1793083681.3443234,
+          "price_usd": 1.937e-05,
+          "liquidity_usd": 12007.4
         },
         {
-          "timestamp": 1793079039.2709866,
-          "price_usd": 1.085e-05,
-          "liquidity_usd": 7011.56
+          "timestamp": 1793083711.642236,
+          "price_usd": 2.119e-05,
+          "liquidity_usd": 12571.24
         },
         {
-          "timestamp": 1793079069.5635984,
-          "price_usd": 1.085e-05,
-          "liquidity_usd": 7011.56
+          "timestamp": 1793083741.9155762,
+          "price_usd": 2.031e-05,
+          "liquidity_usd": 12309.59
         },
         {
-          "timestamp": 1793079099.8685722,
-          "price_usd": 1.058e-05,
-          "liquidity_usd": 6905.52
+          "timestamp": 1793083772.1969447,
+          "price_usd": 2.031e-05,
+          "liquidity_usd": 12311.1
         },
         {
-          "timestamp": 1793079130.1629784,
-          "price_usd": 1.058e-05,
-          "liquidity_usd": 6905.52
+          "timestamp": 1793083802.5787244,
+          "price_usd": 2.067e-05,
+          "liquidity_usd": 12420.3
         },
         {
-          "timestamp": 1793079160.4649086,
-          "price_usd": 1.124e-05,
-          "liquidity_usd": 7168.65
+          "timestamp": 1793083832.9507062,
+          "price_usd": 2.405e-05,
+          "liquidity_usd": 13403.48
+        }
+      ],
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "trailing_stop",
+      "benchmark_exit_timestamp": 1793083741.9155762,
+      "benchmark_exit_price_usd": 2.031e-05,
+      "benchmark_exit_liquidity_usd": 12309.59,
+      "benchmark_exit_after_slippage_pnl_pct": 9.003086005635334
+    },
+    "8THZ69JP2ErZuHVj4G5rcwkFfsQafp5mQsaoQReApump": {
+      "symbol": "NETWORK",
+      "entry_price": 0.00011550699999999999,
+      "entry_time": 1793083590.4907675,
+      "entry_liquidity": 27342.26,
+      "peak_price": 0.0001208,
+      "signal_score": 59.26,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 9.26,
+        "hourly_bonus": 2.924,
+        "short_term_bonus": 6.336,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": -1.72,
+        "momentum_h1_pct": 7.31,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 27342.26,
+        "volume_h1_usd": 4449.49,
+        "market_cap_usd": 108168.0,
+        "liquidity_to_mcap_ratio": 0.25277586716958805
+      },
+      "prospective_entry_filters": [
+        "score_band_50_60_v1",
+        "moderate_pullback_v1",
+        "broad_pullback_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.4907675,
+          "price_usd": 0.0001138,
+          "liquidity_usd": 27342.26
+        },
+        {
+          "timestamp": 1793083620.7758226,
+          "price_usd": 0.0001195,
+          "liquidity_usd": 28073.26
+        },
+        {
+          "timestamp": 1793083651.0598218,
+          "price_usd": 0.0001208,
+          "liquidity_usd": 28234.45
+        },
+        {
+          "timestamp": 1793083681.3443277,
+          "price_usd": 0.0001199,
+          "liquidity_usd": 28121.24
+        },
+        {
+          "timestamp": 1793083711.6422408,
+          "price_usd": 0.0001182,
+          "liquidity_usd": 27910.23
+        },
+        {
+          "timestamp": 1793083741.9201415,
+          "price_usd": 0.0001179,
+          "liquidity_usd": 27868.41
+        },
+        {
+          "timestamp": 1793083772.196949,
+          "price_usd": 0.0001177,
+          "liquidity_usd": 27844.85
+        },
+        {
+          "timestamp": 1793083802.5787323,
+          "price_usd": 0.0001194,
+          "liquidity_usd": 28050.25
+        },
+        {
+          "timestamp": 1793083832.950711,
+          "price_usd": 0.0001194,
+          "liquidity_usd": 28038.56
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "GVKcQQurZKZxV2pQG5MvkCnuMxgqTiup3d1azCiCpump": {
-      "symbol": "ELUN",
-      "entry_price": 5.920494999999999e-06,
-      "entry_time": 1793078918.060843,
-      "entry_liquidity": 4682.11,
-      "peak_price": 5.920494999999999e-06,
-      "signal_score": 40.234153846153845,
+    "8LQ5DQUrKqvmithWcNkKj41HYu1wsUVR3ZvUikhvpump": {
+      "symbol": "s8n",
+      "entry_price": 3.054135e-05,
+      "entry_time": 1793083590.4908874,
+      "entry_liquidity": 12847.52,
+      "peak_price": 3.054135e-05,
+      "signal_score": 17.563578947368423,
       "trailing_armed": false,
       "components": {
-        "momentum": -10.112,
+        "momentum": -36.068,
+        "hourly_bonus": -11.068000000000001,
+        "short_term_bonus": -25.0,
+        "buy_pressure": 3.6315789473684217,
+        "momentum_m5_pct": 177.0,
+        "momentum_h1_pct": -27.67,
+        "buy_sell_ratio": 1.605263157894737,
+        "liquidity_usd": 12847.52,
+        "volume_h1_usd": 88295.37,
+        "market_cap_usd": 28470.0,
+        "liquidity_to_mcap_ratio": 0.451265191429575
+      },
+      "prospective_entry_filters": [],
+      "price_history": [
+        {
+          "timestamp": 1793083590.4908874,
+          "price_usd": 3.009e-05,
+          "liquidity_usd": 12847.52
+        },
+        {
+          "timestamp": 1793083620.7758503,
+          "price_usd": 1.874e-05,
+          "liquidity_usd": 9968.54
+        },
+        {
+          "timestamp": 1793083651.0598505,
+          "price_usd": 1.794e-05,
+          "liquidity_usd": 9562.86
+        },
+        {
+          "timestamp": 1793083681.3443317,
+          "price_usd": 1.759e-05,
+          "liquidity_usd": 9445.94
+        },
+        {
+          "timestamp": 1793083711.6422446,
+          "price_usd": 2.058e-05,
+          "liquidity_usd": 10362.93
+        },
+        {
+          "timestamp": 1793083741.920152,
+          "price_usd": 2.214e-05,
+          "liquidity_usd": 10909.99
+        },
+        {
+          "timestamp": 1793083772.1969535,
+          "price_usd": 1.78e-05,
+          "liquidity_usd": 9524.91
+        },
+        {
+          "timestamp": 1793083802.578739,
+          "price_usd": 1.613e-05,
+          "liquidity_usd": 8990.42
+        },
+        {
+          "timestamp": 1793083832.950716,
+          "price_usd": 1.663e-05,
+          "liquidity_usd": 9174.58
+        }
+      ],
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1793083620.7758503,
+      "benchmark_exit_price_usd": 1.874e-05,
+      "benchmark_exit_liquidity_usd": 9968.54,
+      "benchmark_exit_after_slippage_pnl_pct": -39.86775306265113
+    },
+    "DtBatQsrazRRVp37UTMQH7TnXL1mT2qrJTj7PB9Rpump": {
+      "symbol": "Wifoween",
+      "entry_price": 0.000127078,
+      "entry_time": 1793083590.4909387,
+      "entry_liquidity": 29876.85,
+      "peak_price": 0.000127078,
+      "signal_score": 70.504,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 14.504,
+        "hourly_bonus": 4.34,
+        "short_term_bonus": 10.164,
+        "buy_pressure": 6.0,
+        "momentum_m5_pct": 1.47,
+        "momentum_h1_pct": 10.85,
+        "buy_sell_ratio": 2.0,
+        "liquidity_usd": 29876.85,
+        "volume_h1_usd": 8551.86,
+        "market_cap_usd": 122085.0,
+        "liquidity_to_mcap_ratio": 0.24472171028381864
+      },
+      "prospective_entry_filters": [
+        "score_band_70_80_v1",
+        "moderate_pullback_v1",
+        "broad_pullback_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.4909387,
+          "price_usd": 0.0001252,
+          "liquidity_usd": 29876.85
+        },
+        {
+          "timestamp": 1793083620.7804224,
+          "price_usd": 0.0001235,
+          "liquidity_usd": 29663.05
+        },
+        {
+          "timestamp": 1793083651.0598555,
+          "price_usd": 0.0001236,
+          "liquidity_usd": 29664.19
+        },
+        {
+          "timestamp": 1793083681.3443353,
+          "price_usd": 0.0001236,
+          "liquidity_usd": 29664.14
+        },
+        {
+          "timestamp": 1793083711.642248,
+          "price_usd": 0.0001235,
+          "liquidity_usd": 29654.52
+        },
+        {
+          "timestamp": 1793083741.9201565,
+          "price_usd": 0.0001231,
+          "liquidity_usd": 29603.01
+        },
+        {
+          "timestamp": 1793083772.196958,
+          "price_usd": 0.0001227,
+          "liquidity_usd": 29554.1
+        },
+        {
+          "timestamp": 1793083802.5787425,
+          "price_usd": 0.0001224,
+          "liquidity_usd": 29508.65
+        },
+        {
+          "timestamp": 1793083832.9507205,
+          "price_usd": 0.0001225,
+          "liquidity_usd": 29519.65
+        }
+      ],
+      "liquidity_drain_hits": 0
+    },
+    "5bSE9bfaZWLnHVeMKsmvbWMvC7WpmFhh4j5nVSmmX8k8": {
+      "symbol": "DEEPEND",
+      "entry_price": 1.97113e-06,
+      "entry_time": 1793083590.4909832,
+      "entry_liquidity": 3713.14,
+      "peak_price": 1.97113e-06,
+      "signal_score": 38.4,
+      "trailing_armed": false,
+      "components": {
+        "momentum": -11.6,
         "hourly_bonus": -20.0,
-        "short_term_bonus": 9.888,
-        "buy_pressure": 0.34615384615384626,
-        "momentum_m5_pct": 4.76,
-        "momentum_h1_pct": -85.56,
-        "buy_sell_ratio": 1.0576923076923077,
-        "liquidity_usd": 4682.11,
-        "volume_h1_usd": 150169.49,
-        "market_cap_usd": 5834.0,
-        "liquidity_to_mcap_ratio": 0.8025557079190949
+        "short_term_bonus": 8.4,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": 0.0,
+        "momentum_h1_pct": -95.27,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 3713.14,
+        "volume_h1_usd": 14180.38,
+        "market_cap_usd": 1943.0,
+        "liquidity_to_mcap_ratio": 1.9110344827586205
       },
       "prospective_entry_filters": [
         "score_band_35_50_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.060843,
-          "price_usd": 5.833e-06,
-          "liquidity_usd": 4682.11
+          "timestamp": 1793083590.4909832,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793078948.346516,
-          "price_usd": 5.554e-06,
-          "liquidity_usd": 4526.87
+          "timestamp": 1793083620.7804406,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793078978.6163116,
-          "price_usd": 5.699e-06,
-          "liquidity_usd": 4608.24
+          "timestamp": 1793083651.0598683,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079008.9914515,
-          "price_usd": 4.33e-06,
-          "liquidity_usd": 3795.71
+          "timestamp": 1793083681.3443465,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079039.2709908,
-          "price_usd": 3.715e-06,
-          "liquidity_usd": 3389.47
+          "timestamp": 1793083711.6422586,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079069.563603,
-          "price_usd": 3.693e-06,
-          "liquidity_usd": 3374.36
+          "timestamp": 1793083741.9201682,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079099.8685765,
-          "price_usd": 3.679e-06,
-          "liquidity_usd": 3364.97
+          "timestamp": 1793083772.1969712,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079130.1629841,
-          "price_usd": 3.76e-06,
-          "liquidity_usd": 3420.83
+          "timestamp": 1793083802.5787542,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         },
         {
-          "timestamp": 1793079160.464913,
-          "price_usd": 3.688e-06,
-          "liquidity_usd": 3371.25
-        }
-      ],
-      "liquidity_drain_hits": 0,
-      "benchmark_exit_reason": "hard_stop_loss",
-      "benchmark_exit_timestamp": 1793079008.9914515,
-      "benchmark_exit_price_usd": 4.33e-06,
-      "benchmark_exit_liquidity_usd": 3795.71,
-      "benchmark_exit_after_slippage_pnl_pct": -28.326938879266
-    },
-    "ASCcuz8Dy5edyvjZMcpyJEkfx87fgjw1pBVoLbj4pump": {
-      "symbol": "TGC",
-      "entry_price": 0.00013529949999999997,
-      "entry_time": 1793078918.0609248,
-      "entry_liquidity": 29280.8,
-      "peak_price": 0.0001403,
-      "signal_score": 88.114,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 31.364,
-        "hourly_bonus": 20.0,
-        "short_term_bonus": 11.364,
-        "buy_pressure": 6.75,
-        "momentum_m5_pct": 3.53,
-        "momentum_h1_pct": 69.91,
-        "buy_sell_ratio": 2.125,
-        "liquidity_usd": 29280.8,
-        "volume_h1_usd": 161737.86,
-        "market_cap_usd": 128474.0,
-        "liquidity_to_mcap_ratio": 0.22791226240328782
-      },
-      "prospective_entry_filters": [
-        "score_band_80_100_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0609248,
-          "price_usd": 0.0001333,
-          "liquidity_usd": 29280.8
-        },
-        {
-          "timestamp": 1793078948.3465195,
-          "price_usd": 0.0001365,
-          "liquidity_usd": 29652.69
-        },
-        {
-          "timestamp": 1793078978.6163156,
-          "price_usd": 0.0001375,
-          "liquidity_usd": 29762.66
-        },
-        {
-          "timestamp": 1793079008.9961069,
-          "price_usd": 0.0001403,
-          "liquidity_usd": 30074.08
-        },
-        {
-          "timestamp": 1793079039.2709944,
-          "price_usd": 0.0001364,
-          "liquidity_usd": 29647.87
-        },
-        {
-          "timestamp": 1793079069.5636065,
-          "price_usd": 0.0001315,
-          "liquidity_usd": 29062.96
-        },
-        {
-          "timestamp": 1793079099.8685806,
-          "price_usd": 0.0001315,
-          "liquidity_usd": 29062.96
-        },
-        {
-          "timestamp": 1793079130.16299,
-          "price_usd": 0.0001267,
-          "liquidity_usd": 28492.72
-        },
-        {
-          "timestamp": 1793079160.4649174,
-          "price_usd": 0.0001267,
-          "liquidity_usd": 28492.72
+          "timestamp": 1793083832.950734,
+          "price_usd": 1.942e-06,
+          "liquidity_usd": 3713.14
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "CzLSujWBLFsSjncfkh59rUFqvafWcY5tzedWJSuypump": {
-      "symbol": "GOAT",
-      "entry_price": 0.013935949999999997,
-      "entry_time": 1793078918.0609655,
-      "entry_liquidity": 1403935.51,
-      "peak_price": 0.013935949999999997,
-      "signal_score": 58.12,
+    "6GaNPFwUv3P7K8nzFRXLba4hnabdmrjiKofmr5Qkpump": {
+      "symbol": "GTAELON",
+      "entry_price": 0.00047786199999999996,
+      "entry_time": 1793083590.491055,
+      "entry_liquidity": 58242.57,
+      "peak_price": 0.000496,
+      "signal_score": 78.20309677419355,
       "trailing_armed": false,
       "components": {
-        "momentum": 8.12,
+        "momentum": 31.616,
+        "hourly_bonus": 20.0,
+        "short_term_bonus": 11.616,
+        "buy_pressure": -3.412903225806452,
+        "momentum_m5_pct": 3.32,
+        "momentum_h1_pct": 77.09,
+        "buy_sell_ratio": 0.4311827956989247,
+        "liquidity_usd": 58242.57,
+        "volume_h1_usd": 588724.42,
+        "market_cap_usd": 465583.0,
+        "liquidity_to_mcap_ratio": 0.1250959979208863
+      },
+      "prospective_entry_filters": [
+        "score_band_70_80_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.491055,
+          "price_usd": 0.0004708,
+          "liquidity_usd": 58242.57
+        },
+        {
+          "timestamp": 1793083620.7804496,
+          "price_usd": 0.0004726,
+          "liquidity_usd": 58359.71
+        },
+        {
+          "timestamp": 1793083651.059879,
+          "price_usd": 0.0004652,
+          "liquidity_usd": 57893.37
+        },
+        {
+          "timestamp": 1793083681.3443556,
+          "price_usd": 0.000494,
+          "liquidity_usd": 59714.8
+        },
+        {
+          "timestamp": 1793083711.6422675,
+          "price_usd": 0.0004932,
+          "liquidity_usd": 59672.43
+        },
+        {
+          "timestamp": 1793083741.920177,
+          "price_usd": 0.0004958,
+          "liquidity_usd": 59836.84
+        },
+        {
+          "timestamp": 1793083772.1969817,
+          "price_usd": 0.000496,
+          "liquidity_usd": 59857.18
+        },
+        {
+          "timestamp": 1793083802.5787628,
+          "price_usd": 0.0004908,
+          "liquidity_usd": 59506.77
+        },
+        {
+          "timestamp": 1793083832.9507446,
+          "price_usd": 0.0004906,
+          "liquidity_usd": 59503.65
+        }
+      ],
+      "liquidity_drain_hits": 0
+    },
+    "2WvvNt9P7RYJzSPE7q2mV1ySrm97ddbf5YjfkAX5pump": {
+      "symbol": "MINU",
+      "entry_price": 1.0200749999999999e-05,
+      "entry_time": 1793083590.491096,
+      "entry_liquidity": 8228.3,
+      "peak_price": 1.0200749999999999e-05,
+      "signal_score": 58.012,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 8.012,
         "hourly_bonus": -0.07600000000000001,
-        "short_term_bonus": 8.196,
+        "short_term_bonus": 8.088000000000001,
         "buy_pressure": 0.0,
-        "momentum_m5_pct": -0.17,
+        "momentum_m5_pct": -0.26,
         "momentum_h1_pct": -0.19,
         "buy_sell_ratio": 1.0,
-        "liquidity_usd": 1403935.51,
-        "volume_h1_usd": 153.08,
-        "market_cap_usd": 13733488.0,
-        "liquidity_to_mcap_ratio": 0.102227162538752
+        "liquidity_usd": 8228.3,
+        "volume_h1_usd": 127.92,
+        "market_cap_usd": 9740.0,
+        "liquidity_to_mcap_ratio": 0.844794661190965
       },
       "prospective_entry_filters": [
         "score_band_50_60_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0609655,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083590.491096,
+          "price_usd": 1.005e-05,
+          "liquidity_usd": 8228.3
         },
         {
-          "timestamp": 1793078948.346523,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083620.7804554,
+          "price_usd": 9.888e-06,
+          "liquidity_usd": 8142.51
         },
         {
-          "timestamp": 1793078978.616319,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083651.0598857,
+          "price_usd": 1.006e-05,
+          "liquidity_usd": 8231.74
         },
         {
-          "timestamp": 1793079008.9961169,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083681.34436,
+          "price_usd": 1.006e-05,
+          "liquidity_usd": 8231.74
         },
         {
-          "timestamp": 1793079039.270999,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083711.6422718,
+          "price_usd": 1.006e-05,
+          "liquidity_usd": 8231.74
         },
         {
-          "timestamp": 1793079069.5636106,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083741.9201813,
+          "price_usd": 1.006e-05,
+          "liquidity_usd": 8231.74
         },
         {
-          "timestamp": 1793079099.8685849,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083772.1969872,
+          "price_usd": 1.006e-05,
+          "liquidity_usd": 8231.75
         },
         {
-          "timestamp": 1793079130.162998,
-          "price_usd": 0.01373,
-          "liquidity_usd": 1403935.51
+          "timestamp": 1793083802.578767,
+          "price_usd": 1.008e-05,
+          "liquidity_usd": 8241.67
         },
         {
-          "timestamp": 1793079160.464922,
-          "price_usd": 0.01372,
-          "liquidity_usd": 1403092.54
+          "timestamp": 1793083832.9507499,
+          "price_usd": 9.901e-06,
+          "liquidity_usd": 8149.85
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "2G6QUmbQFoRZGiojghzez6rLH7EmDXawyGYQopcXpump": {
-      "symbol": "GTA",
-      "entry_price": 3.0744349999999996e-06,
-      "entry_time": 1793078918.0610018,
-      "entry_liquidity": 2862.08,
-      "peak_price": 3.0744349999999996e-06,
-      "signal_score": 22.07,
+    "2qQVrHpQaWzGf8iGYbpVUjYELYN2Q911XQWxFbsGpump": {
+      "symbol": "UNITE",
+      "entry_price": 8.950269999999999e-05,
+      "entry_time": 1793083590.49113,
+      "entry_liquidity": 25459.24,
+      "peak_price": 8.965e-05,
+      "signal_score": 61.437,
       "trailing_armed": false,
       "components": {
-        "momentum": -21.93,
-        "hourly_bonus": -20.0,
-        "short_term_bonus": -1.9299999999999997,
-        "buy_pressure": -6.0,
-        "momentum_m5_pct": -8.62,
-        "momentum_h1_pct": -92.52,
-        "buy_sell_ratio": 0.0,
-        "liquidity_usd": 2862.08,
-        "volume_h1_usd": 51600.39,
-        "market_cap_usd": 3029.0,
-        "liquidity_to_mcap_ratio": 0.9448927038626609
-      },
-      "prospective_entry_filters": [],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0610018,
-          "price_usd": 3.029e-06,
-          "liquidity_usd": 2862.08
-        },
-        {
-          "timestamp": 1793078948.3465335,
-          "price_usd": 3.02e-06,
-          "liquidity_usd": 2855.54
-        },
-        {
-          "timestamp": 1793078978.6163292,
-          "price_usd": 3.02e-06,
-          "liquidity_usd": 2855.54
-        },
-        {
-          "timestamp": 1793079008.996129,
-          "price_usd": 3.02e-06,
-          "liquidity_usd": 2855.54
-        },
-        {
-          "timestamp": 1793079039.2710183,
-          "price_usd": 3.015e-06,
-          "liquidity_usd": 2851.4
-        },
-        {
-          "timestamp": 1793079069.5636215,
-          "price_usd": 3.014e-06,
-          "liquidity_usd": 2850.79
-        },
-        {
-          "timestamp": 1793079099.8685963,
-          "price_usd": 3.013e-06,
-          "liquidity_usd": 2849.86
-        },
-        {
-          "timestamp": 1793079130.163009,
-          "price_usd": 3.009e-06,
-          "liquidity_usd": 2846.56
-        },
-        {
-          "timestamp": 1793079160.4649372,
-          "price_usd": 3.009e-06,
-          "liquidity_usd": 2846.56
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "5wyVHQcToNiSZsDVzDViZWQ8gRQng6TGTJ2U3NKSpump": {
-      "symbol": "Conway-Sol",
-      "entry_price": 3.8691799999999994e-05,
-      "entry_time": 1793078918.0610507,
-      "entry_liquidity": 14808.17,
-      "peak_price": 3.8691799999999994e-05,
-      "signal_score": 44.838,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 0.8380000000000001,
-        "hourly_bonus": -6.772,
-        "short_term_bonus": 7.61,
-        "buy_pressure": -6.0,
-        "momentum_m5_pct": -2.26,
-        "momentum_h1_pct": -16.93,
-        "buy_sell_ratio": 0.0,
-        "liquidity_usd": 14808.17,
-        "volume_h1_usd": 1837.3,
-        "market_cap_usd": 36813.0,
-        "liquidity_to_mcap_ratio": 0.4022538233776112
-      },
-      "prospective_entry_filters": [
-        "score_band_35_50_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0610507,
-          "price_usd": 3.812e-05,
-          "liquidity_usd": 14808.17
-        },
-        {
-          "timestamp": 1793078948.3465426,
-          "price_usd": 3.824e-05,
-          "liquidity_usd": 14833.23
-        },
-        {
-          "timestamp": 1793078978.6163385,
-          "price_usd": 3.824e-05,
-          "liquidity_usd": 14833.23
-        },
-        {
-          "timestamp": 1793079008.9961383,
-          "price_usd": 3.833e-05,
-          "liquidity_usd": 14852.88
-        },
-        {
-          "timestamp": 1793079039.2710316,
-          "price_usd": 3.844e-05,
-          "liquidity_usd": 14873.5
-        },
-        {
-          "timestamp": 1793079069.5636306,
-          "price_usd": 3.844e-05,
-          "liquidity_usd": 14873.5
-        },
-        {
-          "timestamp": 1793079099.8686056,
-          "price_usd": 3.844e-05,
-          "liquidity_usd": 14873.5
-        },
-        {
-          "timestamp": 1793079130.163018,
-          "price_usd": 3.844e-05,
-          "liquidity_usd": 14873.5
-        },
-        {
-          "timestamp": 1793079160.4649467,
-          "price_usd": 3.844e-05,
-          "liquidity_usd": 14873.5
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "Fp4JkqEcKYKBKhb9iMu9NSDeo71HWgq2q9QtXaaKpump": {
-      "symbol": "paws",
-      "entry_price": 5.338899999999999e-05,
-      "entry_time": 1793078918.0610826,
-      "entry_liquidity": 17560.23,
-      "peak_price": 5.338899999999999e-05,
-      "signal_score": 61.308,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 8.308,
-        "hourly_bonus": 2.068,
-        "short_term_bonus": 6.24,
-        "buy_pressure": 3.0,
-        "momentum_m5_pct": -1.8,
-        "momentum_h1_pct": 5.17,
-        "buy_sell_ratio": 1.5,
-        "liquidity_usd": 17560.23,
-        "volume_h1_usd": 31514.9,
-        "market_cap_usd": 50446.0,
-        "liquidity_to_mcap_ratio": 0.34809955199619397
+        "momentum": 10.077,
+        "hourly_bonus": 6.172000000000001,
+        "short_term_bonus": 3.9049999999999994,
+        "buy_pressure": 1.3599999999999994,
+        "momentum_m5_pct": -4.73,
+        "momentum_h1_pct": 15.43,
+        "buy_sell_ratio": 1.2266666666666666,
+        "liquidity_usd": 25459.24,
+        "volume_h1_usd": 473512.76,
+        "market_cap_usd": 85776.0,
+        "liquidity_to_mcap_ratio": 0.2968107629173662
       },
       "prospective_entry_filters": [
         "score_band_60_70_v1",
         "moderate_pullback_v1",
         "broad_pullback_v1",
+        "liquid_pullback_v1",
+        "recovery_pullback_v1",
         "broad_moderate_momentum_v2",
         "volume_confirmed_pullback_v1",
-        "steady_pressure_v1",
+        "continuation_cooldown_v1",
         "weak_trend_recovery_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0610826,
-          "price_usd": 5.26e-05,
-          "liquidity_usd": 17560.23
+          "timestamp": 1793083590.49113,
+          "price_usd": 8.818e-05,
+          "liquidity_usd": 25459.24
         },
         {
-          "timestamp": 1793078948.3465476,
-          "price_usd": 5.144e-05,
-          "liquidity_usd": 17345.36
+          "timestamp": 1793083620.7804594,
+          "price_usd": 8.849e-05,
+          "liquidity_usd": 25508.82
         },
         {
-          "timestamp": 1793078978.6163435,
-          "price_usd": 5.144e-05,
-          "liquidity_usd": 17345.36
+          "timestamp": 1793083651.0598905,
+          "price_usd": 8.892e-05,
+          "liquidity_usd": 25577.32
         },
         {
-          "timestamp": 1793079008.9961443,
-          "price_usd": 5.131e-05,
-          "liquidity_usd": 17318.13
+          "timestamp": 1793083681.344365,
+          "price_usd": 8.813e-05,
+          "liquidity_usd": 25454.41
         },
         {
-          "timestamp": 1793079039.2710407,
-          "price_usd": 4.958e-05,
-          "liquidity_usd": 16998.13
+          "timestamp": 1793083711.642276,
+          "price_usd": 8.965e-05,
+          "liquidity_usd": 25692.93
         },
         {
-          "timestamp": 1793079069.563637,
-          "price_usd": 4.759e-05,
-          "liquidity_usd": 16617.49
+          "timestamp": 1793083741.9201849,
+          "price_usd": 8.791e-05,
+          "liquidity_usd": 25427.56
         },
         {
-          "timestamp": 1793079099.8686118,
-          "price_usd": 4.722e-05,
-          "liquidity_usd": 16545.85
+          "timestamp": 1793083772.1969917,
+          "price_usd": 8.681e-05,
+          "liquidity_usd": 25259.47
         },
         {
-          "timestamp": 1793079130.1630244,
-          "price_usd": 4.718e-05,
-          "liquidity_usd": 16539.0
+          "timestamp": 1793083802.5787704,
+          "price_usd": 7.143e-05,
+          "liquidity_usd": 22784.37
         },
         {
-          "timestamp": 1793079160.464953,
-          "price_usd": 4.834e-05,
-          "liquidity_usd": 16762.89
+          "timestamp": 1793083832.9507542,
+          "price_usd": 7.346e-05,
+          "liquidity_usd": 23138.41
         }
       ],
       "liquidity_drain_hits": 0,
       "benchmark_exit_reason": "hard_stop_loss",
-      "benchmark_exit_timestamp": 1793079069.563637,
-      "benchmark_exit_price_usd": 4.759e-05,
-      "benchmark_exit_liquidity_usd": 16617.49,
-      "benchmark_exit_after_slippage_pnl_pct": -12.644552248590529
+      "benchmark_exit_timestamp": 1793083802.5787704,
+      "benchmark_exit_price_usd": 7.143e-05,
+      "benchmark_exit_liquidity_usd": 22784.37,
+      "benchmark_exit_after_slippage_pnl_pct": -21.78850470432735
     },
-    "H74CYmXgMkYHYuSRsZt6RJb4NYp2u72Vw8BS5huApump": {
-      "symbol": "LMAO!",
-      "entry_price": 0.002684675,
-      "entry_time": 1793078918.0611079,
-      "entry_liquidity": 303055.46,
-      "peak_price": 0.002684675,
-      "signal_score": 52.032,
+    "63LfDmNb3MQ8mw9MtZ2To9bEA2M71kZUUGq5tiJxcqj9": {
+      "symbol": "GIGA",
+      "entry_price": 0.0018899299999999997,
+      "entry_time": 1793083590.491166,
+      "entry_liquidity": 1496991.44,
+      "peak_price": 0.0018899299999999997,
+      "signal_score": 53.02,
       "trailing_armed": false,
       "components": {
-        "momentum": 6.532,
-        "hourly_bonus": -1.04,
-        "short_term_bonus": 7.572,
-        "buy_pressure": -4.5,
-        "momentum_m5_pct": -0.69,
-        "momentum_h1_pct": -2.6,
-        "buy_sell_ratio": 0.25,
-        "liquidity_usd": 303055.46,
-        "volume_h1_usd": 7202.73,
-        "market_cap_usd": 2642907.0,
-        "liquidity_to_mcap_ratio": 0.1146674703271814
+        "momentum": 8.020000000000001,
+        "hourly_bonus": -0.2,
+        "short_term_bonus": 8.22,
+        "buy_pressure": -5.0,
+        "momentum_m5_pct": -0.15,
+        "momentum_h1_pct": -0.5,
+        "buy_sell_ratio": 0.16666666666666666,
+        "liquidity_usd": 1496991.44,
+        "volume_h1_usd": 1931.26,
+        "market_cap_usd": 17886328.0,
+        "liquidity_to_mcap_ratio": 0.08369473264719286
       },
       "prospective_entry_filters": [
         "score_band_50_60_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0611079,
-          "price_usd": 0.002645,
-          "liquidity_usd": 303055.46
+          "timestamp": 1793083590.491166,
+          "price_usd": 0.001862,
+          "liquidity_usd": 1496991.44
         },
         {
-          "timestamp": 1793078948.346552,
-          "price_usd": 0.002641,
-          "liquidity_usd": 302849.21
+          "timestamp": 1793083620.7804627,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496681.77
         },
         {
-          "timestamp": 1793078978.6163473,
-          "price_usd": 0.002632,
-          "liquidity_usd": 302326.56
+          "timestamp": 1793083651.0598946,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496681.77
         },
         {
-          "timestamp": 1793079008.9961495,
-          "price_usd": 0.002632,
-          "liquidity_usd": 302326.56
+          "timestamp": 1793083681.344368,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496681.77
         },
         {
-          "timestamp": 1793079039.2710488,
-          "price_usd": 0.002632,
-          "liquidity_usd": 302326.56
+          "timestamp": 1793083711.6422796,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496681.77
         },
         {
-          "timestamp": 1793079069.5684476,
-          "price_usd": 0.002632,
-          "liquidity_usd": 302326.56
+          "timestamp": 1793083741.9201896,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496521.75
         },
         {
-          "timestamp": 1793079099.8686156,
-          "price_usd": 0.00263,
-          "liquidity_usd": 302083.78
+          "timestamp": 1793083772.1969972,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496494.62
         },
         {
-          "timestamp": 1793079130.1630285,
-          "price_usd": 0.00263,
-          "liquidity_usd": 302076.69
+          "timestamp": 1793083802.5822546,
+          "price_usd": 0.001861,
+          "liquidity_usd": 1496494.62
         },
         {
-          "timestamp": 1793079160.4649565,
-          "price_usd": 0.002633,
-          "liquidity_usd": 302263.95
+          "timestamp": 1793083832.950757,
+          "price_usd": 0.001859,
+          "liquidity_usd": 1495122.57
         }
       ],
       "liquidity_drain_hits": 0
     },
     "8U6Rw9WVtPb9ShnUo1HeSKBLrGxWLSczCd2RSdYFpump": {
       "symbol": "\u2588\u2588\u2588WIF",
-      "entry_price": 0.001702155,
-      "entry_time": 1793078918.0611436,
-      "entry_liquidity": 109785.53,
-      "peak_price": 0.001702155,
-      "signal_score": 80.916,
+      "entry_price": 0.0020614649999999997,
+      "entry_time": 1793083590.4912095,
+      "entry_liquidity": 120986.35,
+      "peak_price": 0.0020614649999999997,
+      "signal_score": 68.11200000000001,
       "trailing_armed": false,
       "components": {
-        "momentum": 18.916,
-        "hourly_bonus": 10.18,
-        "short_term_bonus": 8.736,
-        "buy_pressure": 12.0,
-        "momentum_m5_pct": 0.28,
-        "momentum_h1_pct": 25.45,
-        "buy_sell_ratio": 4.193548387096774,
-        "liquidity_usd": 109785.53,
-        "volume_h1_usd": 30241.01,
-        "market_cap_usd": 1657619.0,
-        "liquidity_to_mcap_ratio": 0.06623085884030046
+        "momentum": 18.412000000000003,
+        "hourly_bonus": 10.612000000000002,
+        "short_term_bonus": 7.8,
+        "buy_pressure": -0.30000000000000027,
+        "momentum_m5_pct": -0.5,
+        "momentum_h1_pct": 26.53,
+        "buy_sell_ratio": 0.95,
+        "liquidity_usd": 120986.35,
+        "volume_h1_usd": 25236.53,
+        "market_cap_usd": 2008067.0,
+        "liquidity_to_mcap_ratio": 0.06025015599579098
       },
       "prospective_entry_filters": [
-        "score_band_80_100_v1",
-        "broad_pullback_v1"
+        "score_band_60_70_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0611436,
-          "price_usd": 0.001677,
-          "liquidity_usd": 109785.53
+          "timestamp": 1793083590.4912095,
+          "price_usd": 0.002031,
+          "liquidity_usd": 120986.35
         },
         {
-          "timestamp": 1793078948.3465552,
-          "price_usd": 0.001693,
-          "liquidity_usd": 110332.15
+          "timestamp": 1793083620.7804656,
+          "price_usd": 0.002028,
+          "liquidity_usd": 120884.32
         },
         {
-          "timestamp": 1793078978.6163504,
-          "price_usd": 0.001692,
-          "liquidity_usd": 110310.02
+          "timestamp": 1793083651.0598981,
+          "price_usd": 0.002032,
+          "liquidity_usd": 120997.41
         },
         {
-          "timestamp": 1793079008.9961536,
-          "price_usd": 0.001684,
-          "liquidity_usd": 110004.91
+          "timestamp": 1793083681.3443716,
+          "price_usd": 0.002032,
+          "liquidity_usd": 121020.36
         },
         {
-          "timestamp": 1793079039.2710543,
-          "price_usd": 0.001672,
-          "liquidity_usd": 109609.26
+          "timestamp": 1793083711.6422832,
+          "price_usd": 0.002029,
+          "liquidity_usd": 120909.95
         },
         {
-          "timestamp": 1793079069.5684564,
-          "price_usd": 0.001659,
-          "liquidity_usd": 109176.36
+          "timestamp": 1793083741.9201932,
+          "price_usd": 0.002001,
+          "liquidity_usd": 120056.58
         },
         {
-          "timestamp": 1793079099.86862,
-          "price_usd": 0.001664,
-          "liquidity_usd": 109341.99
+          "timestamp": 1793083772.197001,
+          "price_usd": 0.002013,
+          "liquidity_usd": 120424.92
         },
         {
-          "timestamp": 1793079130.1630325,
-          "price_usd": 0.001657,
-          "liquidity_usd": 109088.54
+          "timestamp": 1793083802.5822632,
+          "price_usd": 0.002001,
+          "liquidity_usd": 120016.58
         },
         {
-          "timestamp": 1793079160.4649608,
-          "price_usd": 0.001658,
-          "liquidity_usd": 109124.51
+          "timestamp": 1793083832.9507604,
+          "price_usd": 0.00202,
+          "liquidity_usd": 120599.98
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "9v4airX4Vt45ADFg3QQG9pXX68LkX9Big4GiYEuJpump": {
-      "symbol": "CHICO",
-      "entry_price": 0.005128794999999999,
-      "entry_time": 1793078918.0611835,
-      "entry_liquidity": 193794.83,
-      "peak_price": 0.005128794999999999,
-      "signal_score": 58.62615384615385,
+    "5wyVHQcToNiSZsDVzDViZWQ8gRQng6TGTJ2U3NKSpump": {
+      "symbol": "Conway-Sol",
+      "entry_price": 4.322884999999999e-05,
+      "entry_time": 1793083590.4912512,
+      "entry_liquidity": 15741.83,
+      "peak_price": 4.322884999999999e-05,
+      "signal_score": 73.864,
       "trailing_armed": false,
       "components": {
-        "momentum": 9.18,
-        "hourly_bonus": 1.6800000000000002,
-        "short_term_bonus": 7.5,
-        "buy_pressure": -0.5538461538461539,
-        "momentum_m5_pct": -0.75,
-        "momentum_h1_pct": 4.2,
-        "buy_sell_ratio": 0.9076923076923077,
-        "liquidity_usd": 193794.83,
-        "volume_h1_usd": 161288.17,
-        "market_cap_usd": 4988445.0,
-        "liquidity_to_mcap_ratio": 0.038848745450736646
+        "momentum": 11.864,
+        "hourly_bonus": 4.208,
+        "short_term_bonus": 7.656,
+        "buy_pressure": 12.0,
+        "momentum_m5_pct": 6.62,
+        "momentum_h1_pct": 10.52,
+        "buy_sell_ratio": 3.0,
+        "liquidity_usd": 15741.83,
+        "volume_h1_usd": 1144.98,
+        "market_cap_usd": 41127.0,
+        "liquidity_to_mcap_ratio": 0.382761446251854
+      },
+      "prospective_entry_filters": [
+        "score_band_70_80_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.4912512,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083620.7804685,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083651.0599012,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083681.344374,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083711.6422863,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083741.9201965,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083772.1970046,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083802.5822685,
+          "price_usd": 4.259e-05,
+          "liquidity_usd": 15741.83
+        },
+        {
+          "timestamp": 1793083832.9507654,
+          "price_usd": 4.201e-05,
+          "liquidity_usd": 15616.94
+        }
+      ],
+      "liquidity_drain_hits": 0
+    },
+    "H74CYmXgMkYHYuSRsZt6RJb4NYp2u72Vw8BS5huApump": {
+      "symbol": "LMAO!",
+      "entry_price": 0.0028318499999999995,
+      "entry_time": 1793083590.491282,
+      "entry_liquidity": 311031.39,
+      "peak_price": 0.002832,
+      "signal_score": 57.41431578947368,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 10.888,
+        "hourly_bonus": 2.3800000000000003,
+        "short_term_bonus": 8.508,
+        "buy_pressure": -3.473684210526316,
+        "momentum_m5_pct": 0.09,
+        "momentum_h1_pct": 5.95,
+        "buy_sell_ratio": 0.42105263157894735,
+        "liquidity_usd": 311031.39,
+        "volume_h1_usd": 10130.33,
+        "market_cap_usd": 2787786.0,
+        "liquidity_to_mcap_ratio": 0.1115693206006487
       },
       "prospective_entry_filters": [
         "score_band_50_60_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0611835,
-          "price_usd": 0.005053,
-          "liquidity_usd": 193794.83
+          "timestamp": 1793083590.491282,
+          "price_usd": 0.00279,
+          "liquidity_usd": 311031.39
         },
         {
-          "timestamp": 1793078948.346558,
-          "price_usd": 0.005032,
-          "liquidity_usd": 193393.46
+          "timestamp": 1793083620.780471,
+          "price_usd": 0.002798,
+          "liquidity_usd": 311461.97
         },
         {
-          "timestamp": 1793078978.616354,
-          "price_usd": 0.005018,
-          "liquidity_usd": 193119.76
+          "timestamp": 1793083651.059904,
+          "price_usd": 0.002802,
+          "liquidity_usd": 311674.95
         },
         {
-          "timestamp": 1793079008.9961572,
-          "price_usd": 0.004993,
-          "liquidity_usd": 192575.08
+          "timestamp": 1793083681.3443768,
+          "price_usd": 0.002831,
+          "liquidity_usd": 313289.44
         },
         {
-          "timestamp": 1793079039.2710602,
-          "price_usd": 0.004977,
-          "liquidity_usd": 192257.62
+          "timestamp": 1793083711.642289,
+          "price_usd": 0.002805,
+          "liquidity_usd": 311865.67
         },
         {
-          "timestamp": 1793079069.568462,
-          "price_usd": 0.004894,
-          "liquidity_usd": 190644.0
+          "timestamp": 1793083741.9201992,
+          "price_usd": 0.002805,
+          "liquidity_usd": 311837.67
         },
         {
-          "timestamp": 1793079099.868624,
-          "price_usd": 0.004816,
-          "liquidity_usd": 189096.01
+          "timestamp": 1793083772.1970077,
+          "price_usd": 0.002802,
+          "liquidity_usd": 311672.24
         },
         {
-          "timestamp": 1793079130.1630363,
-          "price_usd": 0.004851,
-          "liquidity_usd": 189791.11
+          "timestamp": 1793083802.5822718,
+          "price_usd": 0.002799,
+          "liquidity_usd": 311391.74
         },
         {
-          "timestamp": 1793079160.4649649,
-          "price_usd": 0.004942,
-          "liquidity_usd": 191597.12
+          "timestamp": 1793083832.9507692,
+          "price_usd": 0.002832,
+          "liquidity_usd": 313227.48
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "C5xph2yL6gMdxmuLGxJBkGpmuDFfyi5fqkBNhvL6pump": {
-      "symbol": "BTC",
-      "entry_price": 0.006450325,
-      "entry_time": 1793078918.0612109,
-      "entry_liquidity": 295976.81,
-      "peak_price": 0.006450325,
-      "signal_score": 67.092,
+    "Fp4JkqEcKYKBKhb9iMu9NSDeo71HWgq2q9QtXaaKpump": {
+      "symbol": "paws",
+      "entry_price": 3.86106e-05,
+      "entry_time": 1793083590.491325,
+      "entry_liquidity": 14664.84,
+      "peak_price": 3.884e-05,
+      "signal_score": 43.028,
       "trailing_armed": false,
       "components": {
-        "momentum": 17.092,
-        "hourly_bonus": 6.316,
-        "short_term_bonus": 10.776,
-        "buy_pressure": 0.0,
-        "momentum_m5_pct": 4.02,
-        "momentum_h1_pct": 15.79,
-        "buy_sell_ratio": 1.0,
-        "liquidity_usd": 295976.81,
-        "volume_h1_usd": 4354.89,
-        "market_cap_usd": 6299048.0,
-        "liquidity_to_mcap_ratio": 0.0469875463720867
+        "momentum": -2.9720000000000004,
+        "hourly_bonus": -9.884,
+        "short_term_bonus": 6.912,
+        "buy_pressure": -4.0,
+        "momentum_m5_pct": -1.24,
+        "momentum_h1_pct": -24.71,
+        "buy_sell_ratio": 0.3333333333333333,
+        "liquidity_usd": 14664.84,
+        "volume_h1_usd": 4141.83,
+        "market_cap_usd": 36483.0,
+        "liquidity_to_mcap_ratio": 0.4019636543047447
       },
       "prospective_entry_filters": [
-        "score_band_60_70_v1",
-        "broad_pullback_v1"
+        "score_band_35_50_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0612109,
-          "price_usd": 0.006355,
-          "liquidity_usd": 295976.81
+          "timestamp": 1793083590.491325,
+          "price_usd": 3.804e-05,
+          "liquidity_usd": 14664.84
         },
         {
-          "timestamp": 1793078948.3465655,
-          "price_usd": 0.006356,
-          "liquidity_usd": 296009.37
+          "timestamp": 1793083620.7804737,
+          "price_usd": 3.804e-05,
+          "liquidity_usd": 14664.84
         },
         {
-          "timestamp": 1793078978.616357,
-          "price_usd": 0.006356,
-          "liquidity_usd": 296009.37
+          "timestamp": 1793083651.0599077,
+          "price_usd": 3.804e-05,
+          "liquidity_usd": 14664.84
         },
         {
-          "timestamp": 1793079008.9961607,
-          "price_usd": 0.005964,
-          "liquidity_usd": 286693.14
+          "timestamp": 1793083681.3443797,
+          "price_usd": 3.884e-05,
+          "liquidity_usd": 14836.99
         },
         {
-          "timestamp": 1793079039.2710652,
-          "price_usd": 0.006378,
-          "liquidity_usd": 296555.87
+          "timestamp": 1793083711.6422915,
+          "price_usd": 3.884e-05,
+          "liquidity_usd": 14847.79
         },
         {
-          "timestamp": 1793079069.5684664,
-          "price_usd": 0.005962,
-          "liquidity_usd": 286624.29
+          "timestamp": 1793083741.920202,
+          "price_usd": 3.629e-05,
+          "liquidity_usd": 14283.49
         },
         {
-          "timestamp": 1793079099.8686278,
-          "price_usd": 0.005962,
-          "liquidity_usd": 286624.29
+          "timestamp": 1793083772.1970115,
+          "price_usd": 3.629e-05,
+          "liquidity_usd": 14283.49
         },
         {
-          "timestamp": 1793079130.16304,
-          "price_usd": 0.006384,
-          "liquidity_usd": 296687.54
+          "timestamp": 1793083802.5822752,
+          "price_usd": 3.635e-05,
+          "liquidity_usd": 14297.28
         },
         {
-          "timestamp": 1793079160.4649684,
-          "price_usd": 0.006375,
-          "liquidity_usd": 296469.52
+          "timestamp": 1793083832.9507732,
+          "price_usd": 3.635e-05,
+          "liquidity_usd": 14297.28
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "E6exteuDy1u6u3FfQV7SvPyU4XPdcBGi4cBnqrusocat": {
-      "symbol": "CAT",
-      "entry_price": 5.6860299999999995e-05,
-      "entry_time": 1793078918.0612338,
-      "entry_liquidity": 18859.79,
-      "peak_price": 7.351e-05,
-      "signal_score": 58.64,
-      "trailing_armed": true,
+    "9v4airX4Vt45ADFg3QQG9pXX68LkX9Big4GiYEuJpump": {
+      "symbol": "CHICO",
+      "entry_price": 0.00508109,
+      "entry_time": 1793083590.4913538,
+      "entry_liquidity": 193024.72,
+      "peak_price": 0.005263,
+      "signal_score": 56.20765217391305,
+      "trailing_armed": false,
       "components": {
-        "momentum": 6.640000000000001,
-        "hourly_bonus": -2.384,
-        "short_term_bonus": 9.024000000000001,
-        "buy_pressure": 1.9999999999999996,
-        "momentum_m5_pct": 0.52,
-        "momentum_h1_pct": -5.96,
-        "buy_sell_ratio": 1.3333333333333333,
-        "liquidity_usd": 18859.79,
-        "volume_h1_usd": 411871.48,
-        "market_cap_usd": 54148.0,
-        "liquidity_to_mcap_ratio": 0.34830076826475587
+        "momentum": 5.5120000000000005,
+        "hourly_bonus": -1.688,
+        "short_term_bonus": 7.2,
+        "buy_pressure": 0.6956521739130439,
+        "momentum_m5_pct": -1.0,
+        "momentum_h1_pct": -4.22,
+        "buy_sell_ratio": 1.1159420289855073,
+        "liquidity_usd": 193024.72,
+        "volume_h1_usd": 111816.57,
+        "market_cap_usd": 4942045.0,
+        "liquidity_to_mcap_ratio": 0.0390576613527396
       },
       "prospective_entry_filters": [
         "score_band_50_60_v1",
@@ -1157,73 +1316,220 @@
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0612338,
-          "price_usd": 5.602e-05,
-          "liquidity_usd": 18859.79
+          "timestamp": 1793083590.4913538,
+          "price_usd": 0.005006,
+          "liquidity_usd": 193024.72
         },
         {
-          "timestamp": 1793078948.3465683,
-          "price_usd": 5.499e-05,
-          "liquidity_usd": 18674.25
+          "timestamp": 1793083620.7804759,
+          "price_usd": 0.005091,
+          "liquidity_usd": 194673.99
         },
         {
-          "timestamp": 1793078978.6163602,
-          "price_usd": 5.483e-05,
-          "liquidity_usd": 18645.51
+          "timestamp": 1793083651.0599113,
+          "price_usd": 0.00509,
+          "liquidity_usd": 194640.34
         },
         {
-          "timestamp": 1793079008.9961646,
-          "price_usd": 6.77e-05,
-          "liquidity_usd": 20923.03
+          "timestamp": 1793083681.3443823,
+          "price_usd": 0.005088,
+          "liquidity_usd": 194604.94
         },
         {
-          "timestamp": 1793079039.2710702,
-          "price_usd": 6.508e-05,
-          "liquidity_usd": 20483.69
+          "timestamp": 1793083711.6422942,
+          "price_usd": 0.005057,
+          "liquidity_usd": 194008.09
         },
         {
-          "timestamp": 1793079069.5684705,
-          "price_usd": 6.725e-05,
-          "liquidity_usd": 20868.66
+          "timestamp": 1793083741.9202049,
+          "price_usd": 0.005074,
+          "liquidity_usd": 194351.77
         },
         {
-          "timestamp": 1793079099.8686314,
-          "price_usd": 6.545e-05,
-          "liquidity_usd": 20563.01
+          "timestamp": 1793083772.197015,
+          "price_usd": 0.00511,
+          "liquidity_usd": 195050.24
         },
         {
-          "timestamp": 1793079130.1630435,
-          "price_usd": 6.735e-05,
-          "liquidity_usd": 20885.62
+          "timestamp": 1793083802.5822778,
+          "price_usd": 0.005187,
+          "liquidity_usd": 196427.61
         },
         {
-          "timestamp": 1793079160.464972,
-          "price_usd": 7.351e-05,
-          "liquidity_usd": 21901.98
+          "timestamp": 1793083832.9507766,
+          "price_usd": 0.005263,
+          "liquidity_usd": 197886.49
+        }
+      ],
+      "liquidity_drain_hits": 0
+    },
+    "C5xph2yL6gMdxmuLGxJBkGpmuDFfyi5fqkBNhvL6pump": {
+      "symbol": "BTC",
+      "entry_price": 0.006246309999999999,
+      "entry_time": 1793083590.4913938,
+      "entry_liquidity": 291174.7,
+      "peak_price": 0.00665,
+      "signal_score": 67.48,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 12.98,
+        "hourly_bonus": 1.2080000000000002,
+        "short_term_bonus": 11.772,
+        "buy_pressure": 4.5,
+        "momentum_m5_pct": 3.19,
+        "momentum_h1_pct": 3.02,
+        "buy_sell_ratio": 1.75,
+        "liquidity_usd": 291174.7,
+        "volume_h1_usd": 4480.96,
+        "market_cap_usd": 6100535.0,
+        "liquidity_to_mcap_ratio": 0.047729371276453623
+      },
+      "prospective_entry_filters": [
+        "score_band_60_70_v1",
+        "broad_pullback_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.4913938,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083620.7804787,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083651.0599144,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083681.344385,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083711.6422973,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083741.9202073,
+          "price_usd": 0.006154,
+          "liquidity_usd": 291174.7
+        },
+        {
+          "timestamp": 1793083772.1970184,
+          "price_usd": 0.00665,
+          "liquidity_usd": 302820.61
+        },
+        {
+          "timestamp": 1793083802.5822806,
+          "price_usd": 0.00665,
+          "liquidity_usd": 302820.61
+        },
+        {
+          "timestamp": 1793083832.9507797,
+          "price_usd": 0.006546,
+          "liquidity_usd": 300201.58
+        }
+      ],
+      "liquidity_drain_hits": 0
+    },
+    "GVKcQQurZKZxV2pQG5MvkCnuMxgqTiup3d1azCiCpump": {
+      "symbol": "ELUN",
+      "entry_price": 3.3931449999999995e-06,
+      "entry_time": 1793083590.491423,
+      "entry_liquidity": 3104.41,
+      "peak_price": 3.3931449999999995e-06,
+      "signal_score": 51.135999999999996,
+      "trailing_armed": false,
+      "components": {
+        "momentum": 1.1359999999999992,
+        "hourly_bonus": -5.620000000000001,
+        "short_term_bonus": 6.756,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": -1.37,
+        "momentum_h1_pct": -14.05,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 3104.41,
+        "volume_h1_usd": 758.76,
+        "market_cap_usd": 3138.0,
+        "liquidity_to_mcap_ratio": 0.989295729764181
+      },
+      "prospective_entry_filters": [
+        "score_band_50_60_v1"
+      ],
+      "price_history": [
+        {
+          "timestamp": 1793083590.491423,
+          "price_usd": 3.343e-06,
+          "liquidity_usd": 3104.41
+        },
+        {
+          "timestamp": 1793083620.7804813,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083651.0599172,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083681.3443887,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083711.6422997,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083741.92021,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083772.197022,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083802.5822837,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
+        },
+        {
+          "timestamp": 1793083832.950783,
+          "price_usd": 3.335e-06,
+          "liquidity_usd": 3098.49
         }
       ],
       "liquidity_drain_hits": 0
     },
     "9uGqEsc5Sh9GBjvLr7jUf7PyY9tDZhiV7kCdyM7Wpump": {
       "symbol": "N64",
-      "entry_price": 7.282624999999999e-05,
-      "entry_time": 1793078918.0612586,
-      "entry_liquidity": 21158.3,
-      "peak_price": 7.412e-05,
-      "signal_score": 63.088,
+      "entry_price": 7.272474999999999e-05,
+      "entry_time": 1793083590.4914546,
+      "entry_liquidity": 21161.87,
+      "peak_price": 7.272474999999999e-05,
+      "signal_score": 65.268,
       "trailing_armed": false,
       "components": {
-        "momentum": 5.888,
-        "hourly_bonus": -1.228,
-        "short_term_bonus": 7.116,
-        "buy_pressure": 7.200000000000001,
-        "momentum_m5_pct": -1.07,
-        "momentum_h1_pct": -3.07,
-        "buy_sell_ratio": 2.2,
-        "liquidity_usd": 21158.3,
-        "volume_h1_usd": 16763.91,
-        "market_cap_usd": 69568.0,
-        "liquidity_to_mcap_ratio": 0.3041383969641214
+        "momentum": 6.868,
+        "hourly_bonus": -0.044000000000000004,
+        "short_term_bonus": 6.912,
+        "buy_pressure": 8.399999999999999,
+        "momentum_m5_pct": -1.24,
+        "momentum_h1_pct": -0.11,
+        "buy_sell_ratio": 2.4,
+        "liquidity_usd": 21161.87,
+        "volume_h1_usd": 14773.01,
+        "market_cap_usd": 69466.0,
+        "liquidity_to_mcap_ratio": 0.3046363688711024
       },
       "prospective_entry_filters": [
         "score_band_60_70_v1",
@@ -1231,49 +1537,49 @@
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0612586,
-          "price_usd": 7.175e-05,
-          "liquidity_usd": 21158.3
+          "timestamp": 1793083590.4914546,
+          "price_usd": 7.165e-05,
+          "liquidity_usd": 21161.87
         },
         {
-          "timestamp": 1793078948.3465712,
-          "price_usd": 7.175e-05,
-          "liquidity_usd": 21158.3
+          "timestamp": 1793083620.7804837,
+          "price_usd": 7.054e-05,
+          "liquidity_usd": 20984.9
         },
         {
-          "timestamp": 1793078978.6163635,
-          "price_usd": 7.366e-05,
-          "liquidity_usd": 21461.49
+          "timestamp": 1793083651.0599208,
+          "price_usd": 7.171e-05,
+          "liquidity_usd": 21172.7
         },
         {
-          "timestamp": 1793079008.9961686,
-          "price_usd": 7.23e-05,
-          "liquidity_usd": 21240.97
+          "timestamp": 1793083681.3443913,
+          "price_usd": 6.993e-05,
+          "liquidity_usd": 20886.41
         },
         {
-          "timestamp": 1793079039.2710764,
-          "price_usd": 7.23e-05,
-          "liquidity_usd": 21240.97
+          "timestamp": 1793083711.6423028,
+          "price_usd": 6.993e-05,
+          "liquidity_usd": 20887.01
         },
         {
-          "timestamp": 1793079069.5684745,
-          "price_usd": 7.159e-05,
-          "liquidity_usd": 21128.28
+          "timestamp": 1793083741.9202135,
+          "price_usd": 7.028e-05,
+          "liquidity_usd": 20944.15
         },
         {
-          "timestamp": 1793079099.8686352,
-          "price_usd": 7.221e-05,
-          "liquidity_usd": 21226.95
+          "timestamp": 1793083772.1970258,
+          "price_usd": 7.051e-05,
+          "liquidity_usd": 20981.19
         },
         {
-          "timestamp": 1793079130.1630473,
-          "price_usd": 7.204e-05,
-          "liquidity_usd": 21200.37
+          "timestamp": 1793083802.582287,
+          "price_usd": 6.906e-05,
+          "liquidity_usd": 20738.9
         },
         {
-          "timestamp": 1793079160.4649765,
-          "price_usd": 7.412e-05,
-          "liquidity_usd": 21529.48
+          "timestamp": 1793083832.9507864,
+          "price_usd": 6.89e-05,
+          "liquidity_usd": 20712.97
         }
       ],
       "liquidity_drain_hits": 0
@@ -1281,598 +1587,301 @@
     "Dfh5DzRgSvvCFDoYc2ciTkMrbDfRKybA4SoFbPmApump": {
       "symbol": "pippin",
       "entry_price": 0.015509199999999999,
-      "entry_time": 1793078918.061284,
-      "entry_liquidity": 3574671.32,
+      "entry_time": 1793083590.4914873,
+      "entry_liquidity": 3572453.47,
       "peak_price": 0.015509199999999999,
-      "signal_score": 52.196,
+      "signal_score": 51.672,
       "trailing_armed": false,
       "components": {
-        "momentum": 8.196000000000002,
-        "hourly_bonus": -0.024,
-        "short_term_bonus": 8.22,
+        "momentum": 7.672,
+        "hourly_bonus": 0.016,
+        "short_term_bonus": 7.656,
         "buy_pressure": -6.0,
-        "momentum_m5_pct": -0.15,
-        "momentum_h1_pct": -0.06,
+        "momentum_m5_pct": -0.62,
+        "momentum_h1_pct": 0.04,
         "buy_sell_ratio": 0.0,
-        "liquidity_usd": 3574671.32,
-        "volume_h1_usd": 5649.41,
-        "market_cap_usd": 15279954.0,
-        "liquidity_to_mcap_ratio": 0.233945162400358
+        "liquidity_usd": 3572453.47,
+        "volume_h1_usd": 1797.59,
+        "market_cap_usd": 15285440.0,
+        "liquidity_to_mcap_ratio": 0.23371610303661525
       },
       "prospective_entry_filters": [
         "score_band_50_60_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.061284,
+          "timestamp": 1793083590.4914873,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793078948.346574,
+          "timestamp": 1793083620.780486,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793078978.6163669,
+          "timestamp": 1793083651.059924,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079008.996172,
+          "timestamp": 1793083681.3443942,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079039.2710814,
+          "timestamp": 1793083711.6423056,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079069.568478,
+          "timestamp": 1793083741.9202158,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079099.8686385,
+          "timestamp": 1793083772.1970289,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079130.1630507,
+          "timestamp": 1793083802.58229,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         },
         {
-          "timestamp": 1793079160.4649808,
+          "timestamp": 1793083832.9507895,
           "price_usd": 0.01528,
-          "liquidity_usd": 3574671.32
+          "liquidity_usd": 3572453.47
         }
       ],
       "liquidity_drain_hits": 0
     },
-    "XtogpWjiAgvkemc5gr1auxkh77w3vKgSQN1nxJeJfHt": {
-      "symbol": "XTO",
-      "entry_price": 0.0130732,
-      "entry_time": 1793078918.0613065,
-      "entry_liquidity": 274447.67,
-      "peak_price": 0.0130732,
-      "signal_score": 71.752,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 9.751999999999999,
-        "hourly_bonus": 0.68,
-        "short_term_bonus": 9.072,
-        "buy_pressure": 12.0,
-        "momentum_m5_pct": 0.56,
-        "momentum_h1_pct": 1.7,
-        "buy_sell_ratio": 3.0,
-        "liquidity_usd": 274447.67,
-        "volume_h1_usd": 1302.26,
-        "market_cap_usd": 12883383.0,
-        "liquidity_to_mcap_ratio": 0.021302453711109882
-      },
-      "prospective_entry_filters": [
-        "score_band_70_80_v1",
-        "broad_pullback_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0613065,
-          "price_usd": 0.01288,
-          "liquidity_usd": 274447.67
-        },
-        {
-          "timestamp": 1793078948.346577,
-          "price_usd": 0.01288,
-          "liquidity_usd": 274447.67
-        },
-        {
-          "timestamp": 1793078978.6163704,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274770.07
-        },
-        {
-          "timestamp": 1793079008.9961755,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274770.07
-        },
-        {
-          "timestamp": 1793079039.2710865,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274770.07
-        },
-        {
-          "timestamp": 1793079069.5684817,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274770.07
-        },
-        {
-          "timestamp": 1793079099.868642,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274770.07
-        },
-        {
-          "timestamp": 1793079130.163054,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274834.55
-        },
-        {
-          "timestamp": 1793079160.4649844,
-          "price_usd": 0.01291,
-          "liquidity_usd": 274834.55
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "5zTLJ9JxQRDeTxfm8onF8Gbf7J9tfXFwRbubaLs3pump": {
-      "symbol": "Particle",
-      "entry_price": 7.248114999999998e-05,
-      "entry_time": 1793078918.0613313,
-      "entry_liquidity": 21421.15,
-      "peak_price": 8.234e-05,
-      "signal_score": 52.92,
+    "ASCcuz8Dy5edyvjZMcpyJEkfx87fgjw1pBVoLbj4pump": {
+      "symbol": "TGC",
+      "entry_price": 0.00022532999999999999,
+      "entry_time": 1793083590.4915192,
+      "entry_liquidity": 39278.1,
+      "peak_price": 0.0002894,
+      "signal_score": 41.952923076923085,
       "trailing_armed": true,
       "components": {
-        "momentum": 2.6799999999999993,
-        "hourly_bonus": -3.4280000000000004,
-        "short_term_bonus": 6.108,
-        "buy_pressure": 0.2400000000000002,
-        "momentum_m5_pct": 7.91,
-        "momentum_h1_pct": -8.57,
-        "buy_sell_ratio": 1.04,
-        "liquidity_usd": 21421.15,
-        "volume_h1_usd": 107612.84,
-        "market_cap_usd": 68781.0,
-        "liquidity_to_mcap_ratio": 0.31143993253950947
+        "momentum": -16.124,
+        "hourly_bonus": 8.876000000000001,
+        "short_term_bonus": -25.0,
+        "buy_pressure": 8.076923076923077,
+        "momentum_m5_pct": 39.32,
+        "momentum_h1_pct": 22.19,
+        "buy_sell_ratio": 2.3461538461538463,
+        "liquidity_usd": 39278.1,
+        "volume_h1_usd": 358464.81,
+        "market_cap_usd": 213824.0,
+        "liquidity_to_mcap_ratio": 0.1836935984735109
       },
       "prospective_entry_filters": [
-        "score_band_50_60_v1"
+        "score_band_35_50_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0613313,
-          "price_usd": 7.141e-05,
-          "liquidity_usd": 21421.15
+          "timestamp": 1793083590.4915192,
+          "price_usd": 0.000222,
+          "liquidity_usd": 39278.1
         },
         {
-          "timestamp": 1793078948.3465803,
-          "price_usd": 7.122e-05,
-          "liquidity_usd": 21382.96
+          "timestamp": 1793083620.7804885,
+          "price_usd": 0.0002361,
+          "liquidity_usd": 40568.86
         },
         {
-          "timestamp": 1793078978.6163733,
-          "price_usd": 7.425e-05,
-          "liquidity_usd": 21877.41
+          "timestamp": 1793083651.059927,
+          "price_usd": 0.0002634,
+          "liquidity_usd": 42987.32
         },
         {
-          "timestamp": 1793079008.9961793,
-          "price_usd": 7.709e-05,
-          "liquidity_usd": 22316.27
+          "timestamp": 1793083681.3443968,
+          "price_usd": 0.0002463,
+          "liquidity_usd": 41518.99
         },
         {
-          "timestamp": 1793079039.271091,
-          "price_usd": 8.234e-05,
-          "liquidity_usd": 23125.44
+          "timestamp": 1793083711.642308,
+          "price_usd": 0.000241,
+          "liquidity_usd": 41067.34
         },
         {
-          "timestamp": 1793079069.5684848,
-          "price_usd": 7.403e-05,
-          "liquidity_usd": 21839.96
+          "timestamp": 1793083741.9202185,
+          "price_usd": 0.0002738,
+          "liquidity_usd": 43870.8
         },
         {
-          "timestamp": 1793079099.868646,
-          "price_usd": 6.601e-05,
-          "liquidity_usd": 20526.65
+          "timestamp": 1793083772.1970325,
+          "price_usd": 0.0002755,
+          "liquidity_usd": 44053.41
         },
         {
-          "timestamp": 1793079130.1630573,
-          "price_usd": 6.838e-05,
-          "liquidity_usd": 20922.77
+          "timestamp": 1793083802.5822928,
+          "price_usd": 0.0002656,
+          "liquidity_usd": 43172.1
         },
         {
-          "timestamp": 1793079160.4649882,
-          "price_usd": 6.569e-05,
-          "liquidity_usd": 20475.0
+          "timestamp": 1793083832.9507926,
+          "price_usd": 0.0002894,
+          "liquidity_usd": 45138.84
         }
       ],
       "liquidity_drain_hits": 0,
       "benchmark_exit_reason": "trailing_stop",
-      "benchmark_exit_timestamp": 1793079069.5684848,
-      "benchmark_exit_price_usd": 7.403e-05,
-      "benchmark_exit_liquidity_usd": 21839.96,
-      "benchmark_exit_after_slippage_pnl_pct": 0.09416241326193635
+      "benchmark_exit_timestamp": 1793083681.3443968,
+      "benchmark_exit_price_usd": 0.0002463,
+      "benchmark_exit_liquidity_usd": 41518.99,
+      "benchmark_exit_after_slippage_pnl_pct": 7.120223671947821
     },
     "DSEUEGxgDizLLLrVXmCqyAwD9GScpBsoH7HLmMYqfomo": {
       "symbol": "FOMO",
-      "entry_price": 4.0874049999999995e-06,
-      "entry_time": 1793078918.0613546,
-      "entry_liquidity": 2334.25,
-      "peak_price": 4.0874049999999995e-06,
-      "signal_score": 51.046,
+      "entry_price": 4.416265e-06,
+      "entry_time": 1793083590.491571,
+      "entry_liquidity": 2424.24,
+      "peak_price": 4.416265e-06,
+      "signal_score": 60.9,
       "trailing_armed": false,
       "components": {
-        "momentum": 7.046000000000001,
-        "hourly_bonus": 2.076,
-        "short_term_bonus": 4.970000000000001,
-        "buy_pressure": -6.0,
-        "momentum_m5_pct": -4.02,
-        "momentum_h1_pct": 5.19,
-        "buy_sell_ratio": 0.0,
-        "liquidity_usd": 2334.25,
-        "volume_h1_usd": 348.19,
-        "market_cap_usd": 3903.0,
-        "liquidity_to_mcap_ratio": 0.5980655905713553
+        "momentum": 10.9,
+        "hourly_bonus": 3.2200000000000006,
+        "short_term_bonus": 7.68,
+        "buy_pressure": 0.0,
+        "momentum_m5_pct": -0.6,
+        "momentum_h1_pct": 8.05,
+        "buy_sell_ratio": 1.0,
+        "liquidity_usd": 2424.24,
+        "volume_h1_usd": 104.31,
+        "market_cap_usd": 4217.0,
+        "liquidity_to_mcap_ratio": 0.574873132558691
       },
       "prospective_entry_filters": [
-        "score_band_50_60_v1"
+        "score_band_60_70_v1",
+        "moderate_pullback_v1",
+        "broad_pullback_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0613546,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083590.491571,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793078948.3465834,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083620.780491,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793078978.6163769,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083651.0599308,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079008.9961832,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083681.3478997,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079039.2710965,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083711.6423101,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079069.572542,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083741.9202204,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079099.868649,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083772.197036,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079130.1630604,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083802.5822952,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         },
         {
-          "timestamp": 1793079160.4649916,
-          "price_usd": 4.027e-06,
-          "liquidity_usd": 2334.25
+          "timestamp": 1793083832.9507952,
+          "price_usd": 4.351e-06,
+          "liquidity_usd": 2424.24
         }
       ],
       "liquidity_drain_hits": 0
     },
     "5EW3LXh5NYXHmH8X7kAG8iRm9x7Wwz2s6TCHjyFMpump": {
       "symbol": "BILLBOARD",
-      "entry_price": 1.1905949999999999e-05,
-      "entry_time": 1793078918.0613935,
-      "entry_liquidity": 7929.25,
-      "peak_price": 1.252e-05,
-      "signal_score": 51.91,
+      "entry_price": 9.767344999999999e-06,
+      "entry_time": 1793083590.491614,
+      "entry_liquidity": 7001.75,
+      "peak_price": 1.023e-05,
+      "signal_score": 48.123999999999995,
       "trailing_armed": false,
       "components": {
-        "momentum": 1.9100000000000001,
-        "hourly_bonus": -0.42000000000000004,
-        "short_term_bonus": 2.33,
-        "buy_pressure": 0.0,
-        "momentum_m5_pct": -5.78,
-        "momentum_h1_pct": -1.05,
-        "buy_sell_ratio": 1.0,
-        "liquidity_usd": 7929.25,
-        "volume_h1_usd": 129.88,
-        "market_cap_usd": 11344.0,
-        "liquidity_to_mcap_ratio": 0.6989818406205924
+        "momentum": 1.1239999999999988,
+        "hourly_bonus": -6.604000000000001,
+        "short_term_bonus": 7.728,
+        "buy_pressure": -3.0,
+        "momentum_m5_pct": -0.56,
+        "momentum_h1_pct": -16.51,
+        "buy_sell_ratio": 0.5,
+        "liquidity_usd": 7001.75,
+        "volume_h1_usd": 448.92,
+        "market_cap_usd": 9299.0,
+        "liquidity_to_mcap_ratio": 0.7529573072373373
       },
       "prospective_entry_filters": [
-        "score_band_50_60_v1"
+        "score_band_35_50_v1"
       ],
       "price_history": [
         {
-          "timestamp": 1793078918.0613935,
-          "price_usd": 1.173e-05,
-          "liquidity_usd": 7929.25
+          "timestamp": 1793083590.491614,
+          "price_usd": 9.623e-06,
+          "liquidity_usd": 7001.75
         },
         {
-          "timestamp": 1793078948.3465862,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8252.95
+          "timestamp": 1793083620.7804937,
+          "price_usd": 9.667e-06,
+          "liquidity_usd": 7036.11
         },
         {
-          "timestamp": 1793078978.6163802,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8252.95
+          "timestamp": 1793083651.059934,
+          "price_usd": 9.601e-06,
+          "liquidity_usd": 6991.81
         },
         {
-          "timestamp": 1793079008.9961863,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083681.3479068,
+          "price_usd": 9.601e-06,
+          "liquidity_usd": 6991.81
         },
         {
-          "timestamp": 1793079039.2711017,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083711.6423128,
+          "price_usd": 9.601e-06,
+          "liquidity_usd": 6991.81
         },
         {
-          "timestamp": 1793079069.5725496,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083741.920223,
+          "price_usd": 9.57e-06,
+          "liquidity_usd": 6977.23
         },
         {
-          "timestamp": 1793079099.8686523,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083772.1970391,
+          "price_usd": 1.023e-05,
+          "liquidity_usd": 7280.65
         },
         {
-          "timestamp": 1793079130.1630638,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083802.582298,
+          "price_usd": 1.023e-05,
+          "liquidity_usd": 7280.65
         },
         {
-          "timestamp": 1793079160.4649951,
-          "price_usd": 1.252e-05,
-          "liquidity_usd": 8247.99
+          "timestamp": 1793083832.9507983,
+          "price_usd": 1.023e-05,
+          "liquidity_usd": 7280.65
         }
       ],
       "liquidity_drain_hits": 0
-    },
-    "Az5naRCqYLfMi9KT92QCzJwR74BR5X33nZtMkXyvpump": {
-      "symbol": "CRAZYROLL",
-      "entry_price": 0.0002063495,
-      "entry_time": 1793078918.0614188,
-      "entry_liquidity": 37474.17,
-      "peak_price": 0.0002095,
-      "signal_score": 63.09680327868852,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 12.604999999999999,
-        "hourly_bonus": 13.02,
-        "short_term_bonus": -0.4150000000000009,
-        "buy_pressure": 0.49180327868852514,
-        "momentum_m5_pct": -7.61,
-        "momentum_h1_pct": 32.55,
-        "buy_sell_ratio": 1.0819672131147542,
-        "liquidity_usd": 37474.17,
-        "volume_h1_usd": 180127.36,
-        "market_cap_usd": 195959.0,
-        "liquidity_to_mcap_ratio": 0.1912347480850586
-      },
-      "prospective_entry_filters": [
-        "score_band_60_70_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0614188,
-          "price_usd": 0.0002033,
-          "liquidity_usd": 37474.17
-        },
-        {
-          "timestamp": 1793078948.3465886,
-          "price_usd": 0.0002009,
-          "liquidity_usd": 37257.47
-        },
-        {
-          "timestamp": 1793078978.6163836,
-          "price_usd": 0.0002008,
-          "liquidity_usd": 37240.4
-        },
-        {
-          "timestamp": 1793079008.9961903,
-          "price_usd": 0.0002095,
-          "liquidity_usd": 38071.12
-        },
-        {
-          "timestamp": 1793079039.2711062,
-          "price_usd": 0.0001988,
-          "liquidity_usd": 37045.75
-        },
-        {
-          "timestamp": 1793079069.5725543,
-          "price_usd": 0.0002095,
-          "liquidity_usd": 38080.38
-        },
-        {
-          "timestamp": 1793079099.8686554,
-          "price_usd": 0.000205,
-          "liquidity_usd": 37648.57
-        },
-        {
-          "timestamp": 1793079130.1630676,
-          "price_usd": 0.0002064,
-          "liquidity_usd": 37786.14
-        },
-        {
-          "timestamp": 1793079160.464999,
-          "price_usd": 0.0001999,
-          "liquidity_usd": 37154.63
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "JBKpuU4zBuBgCUvWB1UuCZx3G4WYm5c1AHvcMNxLpump": {
-      "symbol": "PROMOTE",
-      "entry_price": 7.334389999999999e-06,
-      "entry_time": 1793078918.061444,
-      "entry_liquidity": 5778.69,
-      "peak_price": 7.334389999999999e-06,
-      "signal_score": 60.896,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 10.896,
-        "hourly_bonus": 0.8640000000000001,
-        "short_term_bonus": 10.032,
-        "buy_pressure": 0.0,
-        "momentum_m5_pct": 1.36,
-        "momentum_h1_pct": 2.16,
-        "buy_sell_ratio": 1.0,
-        "liquidity_usd": 5778.69,
-        "volume_h1_usd": 558.43,
-        "market_cap_usd": 6863.0,
-        "liquidity_to_mcap_ratio": 0.8420064111904414
-      },
-      "prospective_entry_filters": [
-        "score_band_60_70_v1",
-        "broad_pullback_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.061444,
-          "price_usd": 7.226e-06,
-          "liquidity_usd": 5778.69
-        },
-        {
-          "timestamp": 1793078948.3465936,
-          "price_usd": 7.226e-06,
-          "liquidity_usd": 5778.8
-        },
-        {
-          "timestamp": 1793078978.616386,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079008.9961932,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079039.271111,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079069.5725582,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079099.8686585,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079130.1630712,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        },
-        {
-          "timestamp": 1793079160.4650023,
-          "price_usd": 7.311e-06,
-          "liquidity_usd": 5823.77
-        }
-      ],
-      "liquidity_drain_hits": 0
-    },
-    "GZd9LCziRNVXQWfsQ5jakdGLnkVBK7jtX3PjQjors7kT": {
-      "symbol": "IF",
-      "entry_price": 1.742755e-05,
-      "entry_time": 1793078918.0614665,
-      "entry_liquidity": 11023.01,
-      "peak_price": 1.755e-05,
-      "signal_score": 64.0,
-      "trailing_armed": false,
-      "components": {
-        "momentum": 16.0,
-        "hourly_bonus": 7.78,
-        "short_term_bonus": 8.22,
-        "buy_pressure": -2.0,
-        "momentum_m5_pct": -0.15,
-        "momentum_h1_pct": 19.45,
-        "buy_sell_ratio": 0.6666666666666666,
-        "liquidity_usd": 11023.01,
-        "volume_h1_usd": 11236.81,
-        "market_cap_usd": 17178.0,
-        "liquidity_to_mcap_ratio": 0.641693445104203
-      },
-      "prospective_entry_filters": [
-        "score_band_60_70_v1"
-      ],
-      "price_history": [
-        {
-          "timestamp": 1793078918.0614665,
-          "price_usd": 1.717e-05,
-          "liquidity_usd": 11023.01
-        },
-        {
-          "timestamp": 1793078948.3465984,
-          "price_usd": 1.755e-05,
-          "liquidity_usd": 11143.74
-        },
-        {
-          "timestamp": 1793078978.6163886,
-          "price_usd": 1.748e-05,
-          "liquidity_usd": 11122.58
-        },
-        {
-          "timestamp": 1793079008.996196,
-          "price_usd": 1.743e-05,
-          "liquidity_usd": 11103.07
-        },
-        {
-          "timestamp": 1793079039.2711153,
-          "price_usd": 1.743e-05,
-          "liquidity_usd": 11103.07
-        },
-        {
-          "timestamp": 1793079069.5725615,
-          "price_usd": 1.743e-05,
-          "liquidity_usd": 11103.07
-        },
-        {
-          "timestamp": 1793079099.8686612,
-          "price_usd": 1.743e-05,
-          "liquidity_usd": 11103.07
-        },
-        {
-          "timestamp": 1793079130.1630745,
-          "price_usd": 1.738e-05,
-          "liquidity_usd": 11077.01
-        },
-        {
-          "timestamp": 1793079160.4650092,
-          "price_usd": 1.509e-05,
-          "liquidity_usd": 10324.68
-        }
-      ],
-      "liquidity_drain_hits": 0,
-      "benchmark_exit_reason": "hard_stop_loss",
-      "benchmark_exit_timestamp": 1793079160.4650092,
-      "benchmark_exit_price_usd": 1.509e-05,
-      "benchmark_exit_liquidity_usd": 10324.68,
-      "benchmark_exit_after_slippage_pnl_pct": -15.14469905408391
     }
   },
   "cooldowns": {
@@ -3899,23 +3908,22 @@
   },
   "blacklist": [],
   "trade_count": 71,
-  "scan_count": 218,
+  "scan_count": 220,
   "version": "v21-live-price",
   "peak_equity": 1000.0,
-  "last_run": "2026-10-27T05:28:38Z",
+  "last_run": "2026-10-27T06:46:30Z",
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-10-27T05:28:38Z",
-    "candidate_count": 101,
+    "timestamp": "2026-10-27T06:46:30Z",
+    "candidate_count": 97,
     "filter_passed": 24,
     "shadow_opened": 24,
     "rejections": {
       "shadow_liq_mcap_ratio:0.001": 1,
-      "pair_data_unavailable": 34,
-      "shadow_low_activity": 4,
-      "shadow_low_volume_h1:48": 1,
-      "shadow_low_volume_h1:25": 1,
-      "shadow_low_volume_h1:0": 2,
-      "shadow_liq_mcap_ratio:0.000": 1
+      "shadow_pair_too_new:191s": 1,
+      "pair_data_unavailable": 29,
+      "shadow_low_volume_h1:0": 3,
+      "shadow_low_activity": 6,
+      "shadow_low_volume_h1:39": 1
     }
   },
   "paper_scan_diagnostics": {
@@ -4031,7 +4039,7 @@
       "whale_weak_momentum_h1:-27.6%": 1
     }
   },
-  "last_position_monitor": "2026-10-27T05:32:40Z",
+  "last_position_monitor": "2026-10-27T06:50:32Z",
   "shadow_completed_mints": [
     "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
     "ABp2bT8ovFYYY8etNQmJauRDXgk3tYkt2jpmGqZSpump",
