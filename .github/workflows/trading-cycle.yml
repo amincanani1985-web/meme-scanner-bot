@@ -18,6 +18,7 @@ on:
       - "market_data_connectors.py"
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
+      - "whale_event_study.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   push:
@@ -38,6 +39,7 @@ on:
       - "market_data_connectors.py"
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
+      - "whale_event_study.py"
       - "dashboard/index.html"
       - ".github/workflows/trading-cycle.yml"
   # Keep periodic paper scans; push-triggered runs also kick off an immediate cycle.
@@ -91,7 +93,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py whale_event_study.py tests/test_whale_event_study.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -284,6 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
+          python whale_event_study.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-event-study-report.json
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
@@ -294,6 +297,8 @@ jobs:
           print(f"- Wallet swaps / matched path mints: {report.get('wallet_swap_events', 0)} / {report.get('paths_sharing_mints_with_wallet_swaps', 0)}")
           print(f"- Eligible training candidates: {report.get('eligible_training_candidates', 0)}")
           print("- Live trading is disabled; this step reads stored snapshots only.")
+          event = json.loads(Path("/tmp/whale-event-study-report.json").read_text(encoding="utf-8"))
+          print("- Whale event study: status={}, matched mints={}, event observations={}".format(event.get("status"), event.get("matched_mints", 0), event.get("event_observations", 0)))
           PY
 
       - name: Validate paper-trade target integrity
@@ -371,6 +376,7 @@ jobs:
           paper_shadow = json.loads(Path("/tmp/paper-shadow-learning-report.json").read_text(encoding="utf-8"))
           paper_simulator = json.loads(Path("/tmp/paper-simulator-report.json").read_text(encoding="utf-8"))
           paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json").read_text(encoding="utf-8"))
+          paper_whale_event_study = json.loads(Path("/tmp/whale-event-study-report.json").read_text(encoding="utf-8"))
           market_data_path = Path("/tmp/market-data-connectors-report.json")
           market_data_sources = (
               json.loads(market_data_path.read_text(encoding="utf-8"))
@@ -407,6 +413,7 @@ jobs:
               "paper_whale_behavior": paper_whale_behavior,
               "market_data_sources": market_data_sources,
               "paper_whale_follow_backtest": paper_whale_follow_backtest,
+              "paper_whale_event_study": paper_whale_event_study,
           }
           Path("dashboard/backtest-data.js").write_text(
               "window.BACKTEST_REPORT=" + json.dumps(report, separators=(",", ":")) + ";\n",
@@ -449,6 +456,30 @@ jobs:
           if report.get("status") != "validated_profitable_out_of_sample":
               print("- **NOT VALIDATED:** no delayed whale-follow rule has passed all net-profit training and untouched holdout gates.")
           print("- Only recorded DEX quotes are used. Wallet qualification uses realized swap history before each signal. This step cannot authorize live trading.")
+          PY
+
+      - name: Summarize whale event-response study (research only)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/whale-event-study-report.json").read_text(encoding="utf-8"))
+          print("## Directional response after observed whale swaps (research only)")
+          print(f"- Status: **{report.get('status', 'unknown')}**")
+          print(f"- Quote paths: {report.get('usable_paths', 0)} usable / {report.get('paths_received', 0)} received")
+          print(f"- Paths with buy / sell events: {report.get('paths_with_buy_events', 0)} / {report.get('paths_with_sell_events', 0)}")
+          print(f"- Matched mints / event observations: {report.get('matched_mints', 0)} / {report.get('event_observations', 0)}")
+          print(f"- Train / holdout paths: {report.get('train_matched_paths', 0)} / {report.get('holdout_matched_paths', 0)} matched")
+          for group in report.get("groups", []):
+              if group.get("delay_seconds") == 0 and group.get("horizon_seconds") in (60, 300, 600):
+                  print("- {} {} {} at {}s: n={}, directional mean={:+.2f}%, median={:+.2f}%, positive={:.1%}".format(
+                      group["partition"], group["side"], group["signal_class"], group["horizon_seconds"],
+                      group["n"], group["mean_directional_return_pct"], group["median_directional_return_pct"],
+                      group["directional_win_rate"]))
+          print("- Directional responses are price movement, not net executable PnL; no strategy is selected or approved.")
           PY
 
       - name: Backtest sampled shadow exit paths (research only)
