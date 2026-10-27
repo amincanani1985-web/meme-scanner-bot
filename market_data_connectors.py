@@ -137,6 +137,55 @@ def fetch_birdeye(session, mint, api_key):
     return output
 
 
+def _extract_wallet_addresses(path, limit=5):
+    if not path:
+        return []
+    try:
+        state = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return []
+    wallets = state.get("wallets") if isinstance(state, dict) else None
+    if not isinstance(wallets, dict):
+        return []
+    return [address for address in wallets.keys()
+            if isinstance(address, str) and 32 <= len(address) <= 64][:limit]
+
+
+def fetch_nansen_dex_trades(session, wallet, api_key, now=None):
+    end = now or datetime.now(timezone.utc)
+    start = end.timestamp() - 7 * 24 * 60 * 60
+    payload = _json_request(
+        session, "POST", "https://api.nansen.ai/api/v1/profiler/dex-trades",
+        headers={"apikey": api_key, "Content-Type": "application/json"},
+        json={
+            "address": wallet,
+            "chain": "solana",
+            "date": {
+                "from": datetime.fromtimestamp(start, timezone.utc).isoformat(),
+                "to": end.astimezone(timezone.utc).isoformat(),
+            },
+            "pagination": {"page": 1, "per_page": 100},
+        },
+    )
+    items = payload.get("data", []) if isinstance(payload, dict) else []
+    if not isinstance(items, list):
+        raise ValueError("Nansen response data was not a list")
+    output = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        output.append({
+            "wallet": wallet,
+            "signature": item.get("transaction_hash") or item.get("tx_hash"),
+            "timestamp": item.get("block_timestamp"),
+            "side": item.get("trade_type") or item.get("side"),
+            "mint": item.get("token_bought_address") or item.get("token_sold_address"),
+            "source_event": item,
+            "source": "nansen",
+        })
+    return output
+
+
 def fetch_dune_saved_query(session, api_key, query_id):
     started = _json_request(
         session, "POST", f"{DUNE_BASE}/query/{query_id}/execute",
@@ -196,14 +245,22 @@ def collect(mints=None, swaps_path="whale_copy_state.json", balances_path="whale
         "error": None,
         "note": "Wallet transaction parsing remains in whale_copy_paper.py; avoid double-counting its events.",
     })
-    nansen_configured = bool((env.get("NANSEN_API_KEY") or "").strip())
-    providers.append({
-        "provider": "nansen",
-        "status": "credential_present_adapter_pending" if nansen_configured else "not_configured",
-        "records": [],
-        "error": None,
-        "note": "No Nansen API calls are made until the exact subscribed endpoint and response contract are configured.",
-    })
+    nansen_key = (env.get("NANSEN_API_KEY") or "").strip()
+    tracked_wallets = _extract_wallet_addresses(swaps_path, limit=5)
+    if nansen_key and tracked_wallets:
+        providers.append(_provider_result(
+            "nansen", True,
+            lambda: [record for wallet in tracked_wallets
+                     for record in fetch_nansen_dex_trades(session, wallet, nansen_key)],
+        ))
+    else:
+        providers.append({
+            "provider": "nansen",
+            "status": "not_configured" if not nansen_key else "no_tracked_wallets",
+            "records": [],
+            "error": None,
+            "note": "Uses the official profiler DEX-trades endpoint for tracked Solana wallets over the latest seven days.",
+        })
 
     all_records = []
     for provider in providers:
@@ -224,7 +281,7 @@ def collect(mints=None, swaps_path="whale_copy_state.json", balances_path="whale
             "Birdeye and Dune require credentials; Dune additionally requires a saved query ID.",
             "DexScreener is public and can return no pair data for a mint.",
             "Helius is reported as configured here; transaction ingestion is owned by the existing pipeline.",
-            "Nansen remains explicitly uncalled until its exact API contract is configured.",
+            "Nansen is queried only for up to five tracked wallets and a seven-day window when its API key is configured.",
         ],
     }
 
