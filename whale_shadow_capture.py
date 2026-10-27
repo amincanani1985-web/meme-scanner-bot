@@ -90,12 +90,14 @@ def recent_buy_signals(swap_state, now=None, window_seconds=SIGNAL_WINDOW_SECOND
             quote_symbol = str(raw.get("quote_symbol") or "").upper()
             if (
                 not wallet or not mint or not signature or timestamp is None
-                or timestamp <= 0 or timestamp > now or timestamp < now - window_seconds
-                or token_amount is None or token_amount <= 0
+                or timestamp <= 0 or token_amount is None or token_amount <= 0
                 or quote_amount is None or quote_amount <= 0
                 or side != "buy" or quote_symbol not in VALID_QUOTES
             ):
                 rejected += 1
+                continue
+            # Valid old or future-dated rows are outside this capture window, not malformed.
+            if timestamp > now or timestamp < now - window_seconds:
                 continue
             key = (wallet, signature)
             if key in seen:
