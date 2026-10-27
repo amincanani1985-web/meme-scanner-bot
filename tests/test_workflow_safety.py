@@ -130,6 +130,30 @@ class WorkflowSafetyTests(unittest.TestCase):
             refresh.index('Path("dashboard/backtest-data.js").write_text'),
         )
 
+    def test_whale_follow_backtest_is_walk_forward_read_only_and_published(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_follow_backtest.py"', workflow)
+        self.assertIn("whale_follow_backtest.py tests/test_whale_follow_backtest.py", workflow)
+        self.assertIn(
+            "python whale_follow_backtest.py --paths paper_account/shadow_price_paths.jsonl "
+            "--swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json",
+            workflow,
+        )
+        refresh = workflow.split(
+            "- name: Refresh learning reports after the latest outcomes", 1
+        )[1].split("- name: Summarize whale-follow walk-forward results", 1)[0]
+        self.assertIn('"paper_whale_follow_backtest": paper_whale_follow_backtest', refresh)
+        self.assertIn('paper_whale_follow_backtest = json.loads(Path("/tmp/whale-follow-backtest-report.json")', refresh)
+        self.assertLess(
+            refresh.index("python whale_follow_backtest.py"),
+            refresh.index('Path("dashboard/backtest-data.js").write_text'),
+        )
+        source = (ROOT / "whale_follow_backtest.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn("_wallet_metrics_as_of(", source)
+        self.assertIn("prepare_entry_path(", source)
+        self.assertNotIn("sendTransaction", source)
+
     def test_whale_behavior_lab_is_read_only_and_is_published_after_wallet_updates(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn('"whale_behavior_lab.py"', workflow)
