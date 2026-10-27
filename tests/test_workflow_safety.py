@@ -160,6 +160,28 @@ class WorkflowSafetyTests(unittest.TestCase):
         self.assertIn("if: github.event_name == 'pull_request'", smoke)
         self.assertIn("python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json", smoke)
 
+    def test_whale_event_study_is_descriptive_and_published_with_quote_paths(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        self.assertIn('"whale_event_study.py"', workflow)
+        self.assertIn("whale_event_study.py tests/test_whale_event_study.py", workflow)
+        self.assertIn(
+            "python whale_event_study.py --paths paper_account/whale_quote_paths.jsonl "
+            "paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json "
+            "--output /tmp/whale-event-study-report.json",
+            workflow,
+        )
+        refresh = workflow.split(
+            "- name: Refresh learning reports after the latest outcomes", 1
+        )[1].split("- name: Summarize whale-follow walk-forward results", 1)[0]
+        self.assertIn('"paper_whale_event_study": paper_whale_event_study', refresh)
+        self.assertIn("python whale_event_study.py", refresh)
+        source = (ROOT / "whale_event_study.py").read_text(encoding="utf-8")
+        self.assertIn('"live_trading_authorized": False', source)
+        self.assertIn('"strategy_selected": False', source)
+        self.assertIn("censored_no_observed_quote", source)
+        self.assertNotIn("sendTransaction", source)
+        self.assertNotIn("signTransaction", source)
+
     def test_whale_shadow_capture_uses_observed_quotes_inside_monitor_cycles(self):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertIn('"whale_shadow_capture.py"', workflow)
