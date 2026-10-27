@@ -16,6 +16,7 @@ on:
       - "whale_research.py"
       - "whale_behavior_lab.py"
       - "market_data_connectors.py"
+      - "token_quality_screen.py"
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
       - "whale_event_study.py"
@@ -37,6 +38,7 @@ on:
       - "whale_research.py"
       - "whale_behavior_lab.py"
       - "market_data_connectors.py"
+      - "token_quality_screen.py"
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
       - "whale_event_study.py"
@@ -93,7 +95,7 @@ jobs:
         run: pip install requests
 
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py whale_event_study.py tests/test_whale_event_study.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py whale_copy_paper.py paper_scenario_lab.py paper_position_monitor.py whale_monitor.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_whale_monitor.py tests/test_paper_position_monitor.py tests/test_workflow_safety.py tests/test_whale_copy_paper.py tests/test_shadow_path_backtest.py shadow_learning.py tests/test_shadow_learning.py whale_research.py tests/test_whale_research.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py token_quality_screen.py tests/test_token_quality_screen.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py whale_event_study.py tests/test_whale_event_study.py
 
       - name: Monitor existing paper positions with 30-second gaps
         if: github.event_name != 'pull_request'
@@ -262,24 +264,64 @@ jobs:
           PY
 
       - name: Collect multi-provider market evidence (read-only)
-        if: github.event_name != 'pull_request' && vars.MARKET_DATA_CONNECTORS_ENABLED == 'true'
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          python market_data_connectors.py --swaps whale_copy_state.json --balances whale_watch_state.json --output /tmp/market-data-connectors-report.json | tee /tmp/market-data-connectors-summary.json
+          python market_data_connectors.py --swaps whale_copy_state.json --balances whale_watch_state.json --public-only --output /tmp/market-data-connectors-report.json | tee /tmp/market-data-connectors-summary.json
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
           report = json.loads(Path("/tmp/market-data-connectors-report.json").read_text(encoding="utf-8"))
-          print("## Multi-provider market data (read-only)")
+          print("## Public DEX market data (free, read-only)")
           print(f"- Solana mints checked: {len(report.get('mints_requested', []))}")
           for provider in report.get("provider_status", []):
               print(f"- {provider['provider']}: **{provider['status']}**; records={len(provider.get('records', []))}; error={provider.get('error') or 'none'}")
               if provider.get("note"):
                   print(f"  - {provider['note']}")
-          print("- This report is research evidence only. No signal, strategy update, or live trade is authorized.")
+          print("- Optional providers are disabled in this step. No signal, strategy update, or live trade is authorized.")
           PY
 
+      - name: Collect optional market-provider evidence (read-only)
+        if: github.event_name != 'pull_request' && vars.MARKET_DATA_CONNECTORS_ENABLED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python market_data_connectors.py --swaps whale_copy_state.json --balances whale_watch_state.json --optional-only --output /tmp/market-data-optional-connectors-report.json | tee /tmp/market-data-optional-connectors-summary.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/market-data-optional-connectors-report.json").read_text(encoding="utf-8"))
+          print("## Optional market providers (read-only)")
+          for provider in report.get("provider_status", []):
+              if provider.get("provider") != "dexscreener":
+                  print("- {}: **{}**; records={}; error={}".format(provider["provider"], provider["status"], len(provider.get("records", [])), provider.get("error") or "none"))
+          print("- This step runs only when MARKET_DATA_CONNECTORS_ENABLED=true; paid API usage can occur.")
+          PY
+
+      - name: Screen observed DEX pools for research risk flags
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python token_quality_screen.py --input /tmp/market-data-connectors-report.json --output /tmp/token-quality-screen-report.json | tee /tmp/token-quality-screen-summary.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/token-quality-screen-report.json").read_text(encoding="utf-8"))
+          print("## Token liquidity / volatility screen (research only)")
+          print("- Status: **{}**; pools screened={}".format(report.get("status", "unknown"), report.get("pairs_screened", 0)))
+          print("- Risk levels: {}".format(report.get("risk_level_counts", {})))
+          for pair in report.get("pairs", [])[:8]:
+              symbol = pair.get("token_symbol") or pair.get("token_name") or pair.get("mint") or "unknown"
+              liquidity = pair.get("liquidity_usd")
+              liquidity_text = "n/a" if liquidity is None else "${:,.0f}".format(liquidity)
+              change = pair.get("price_change_h24_pct")
+              change_text = "n/a" if change is None else "{:+.1f}%".format(change)
+              flags = ", ".join(flag.get("code", "") for flag in pair.get("flags", [])) or "no configured flags"
+              print("- {}: risk={} ({}/100), liquidity={}, 24h={}, flags={}".format(symbol, pair.get("risk_level"), pair.get("risk_score"), liquidity_text, change_text, flags))
+          print("- Boost counts never lower risk. This screen is not a rug detector or trading signal; entries remain disabled.")
+          PY
       - name: Smoke-test whale-follow replay on repository data (PR only, research only)
         if: github.event_name == 'pull_request'
         shell: bash
@@ -390,6 +432,22 @@ jobs:
                   "records": [],
               }
           )
+          optional_market_data_path = Path("/tmp/market-data-optional-connectors-report.json")
+          if optional_market_data_path.exists():
+              optional_market_data = json.loads(optional_market_data_path.read_text(encoding="utf-8"))
+              provider_map = {item.get("provider"): item for item in market_data_sources.get("provider_status", []) if item.get("provider") != "dexscreener"}
+              for item in optional_market_data.get("provider_status", []):
+                  if item.get("provider") != "dexscreener":
+                      provider_map[item.get("provider")] = item
+              dex_status = [item for item in market_data_sources.get("provider_status", []) if item.get("provider") == "dexscreener"]
+              market_data_sources["provider_status"] = dex_status + list(provider_map.values())
+              market_data_sources["records"] = market_data_sources.get("records", []) + optional_market_data.get("records", [])
+              market_data_sources["optional_provider_report_generated_at"] = optional_market_data.get("generated_at")
+          quality_path = Path("/tmp/token-quality-screen-report.json")
+          token_quality_screen = (
+              json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists()
+              else {"status": "not_run_or_disabled", "pairs_screened": 0, "pairs": [], "research_only": True, "trade_signal": False, "live_trading_authorized": False}
+          )
           behavior_path = Path("/tmp/whale-behavior-report.json")
           paper_whale_behavior = (
               json.loads(behavior_path.read_text(encoding="utf-8"))
@@ -413,6 +471,7 @@ jobs:
               "paper_simulator": paper_simulator,
               "paper_whale_behavior": paper_whale_behavior,
               "market_data_sources": market_data_sources,
+              "token_quality_screen": token_quality_screen,
               "paper_whale_follow_backtest": paper_whale_follow_backtest,
               "paper_whale_event_study": paper_whale_event_study,
           }
