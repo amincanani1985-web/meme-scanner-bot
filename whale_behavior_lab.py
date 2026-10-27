@@ -140,7 +140,7 @@ def _copy_paper_qualified(record, metrics):
     )
 
 
-def _wallet_profile(wallet, record, events, leadership):
+def _wallet_profile(wallet, record, events, leadership, balance_record=None):
     events = sorted(events, key=lambda event: (event["timestamp"], event["signature"]))
     buys = [event for event in events if event["side"] == "buy"]
     sells = [event for event in events if event["side"] == "sell"]
@@ -160,6 +160,7 @@ def _wallet_profile(wallet, record, events, leadership):
     ]
     durations, matched_units = _hold_durations(events)
     metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+    balance_record = balance_record if isinstance(balance_record, dict) else {}
     history_complete = bool(record.get("history_complete", False))
     history_truncated = bool(record.get("history_truncated", False))
 
@@ -226,6 +227,15 @@ def _wallet_profile(wallet, record, events, leadership):
         "matched_sell_inventory_units": round(matched_units, 8),
         "observed_leader_count": leadership.get("leaders", 0),
         "observed_follower_count": leadership.get("followers", 0),
+        "holder_balance_signals": {
+            "observed_balance_drops": int(_number(balance_record.get("observed_balance_drops")) or 0),
+            "confirmed_sell_pressure_events": int(_number(balance_record.get("confirmed_sell_pressure_events")) or 0),
+            "observed_balance_increases": int(_number(balance_record.get("observed_balance_increases")) or 0),
+            "confirmed_buy_pressure_events": int(_number(balance_record.get("confirmed_buy_pressure_events")) or 0),
+            "tokens_seen_in_balance_snapshots": len(balance_record.get("tokens_seen", []))
+                if isinstance(balance_record.get("tokens_seen", []), list) else 0,
+            "evidence_type": "balance_change_plus_market_context_not_verified_swap",
+        },
         "realized_performance": {
             "closed_trades": int(_number(metrics.get("closed_trades")) or 0),
             "win_rate": round(_number(metrics.get("win_rate")) or 0.0, 4),
@@ -349,6 +359,9 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
     by_wallet = defaultdict(list)
     by_mint = defaultdict(list)
     records = swap_state.get("wallets", {}) if isinstance(swap_state, dict) else {}
+    watch_wallets = watch_state.get("wallets", {}) if isinstance(watch_state, dict) else {}
+    if not isinstance(watch_wallets, dict):
+        watch_wallets = {}
     leadership = defaultdict(lambda: {"leaders": 0, "followers": 0})
 
     for event in events:
@@ -380,8 +393,11 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
     all_wallet_ids = set(str(wallet) for wallet in records.keys()) | set(by_wallet.keys())
     for wallet in all_wallet_ids:
         record = records.get(wallet, {})
-        profile = _wallet_profile(wallet, record if isinstance(record, dict) else {},
-                                  by_wallet.get(wallet, []), leadership[wallet])
+        profile = _wallet_profile(
+            wallet, record if isinstance(record, dict) else {},
+            by_wallet.get(wallet, []), leadership[wallet],
+            watch_wallets.get(wallet, {}),
+        )
         wallet_profiles.append(profile)
 
     wallet_profiles.sort(key=lambda item: (
@@ -412,7 +428,6 @@ def analyze_behavior(swap_state, watch_state=None, now=None):
 
     all_metrics = [item["realized_performance"] for item in wallet_profiles
                    if item["realized_performance"]["closed_trades"] > 0]
-    watch_wallets = watch_state.get("wallets", {}) if isinstance(watch_state, dict) else {}
     stats = {
         "tracked_wallet_records": len(all_wallet_ids),
         "wallets_with_valid_swaps": len(by_wallet),
