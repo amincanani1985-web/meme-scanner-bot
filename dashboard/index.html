@@ -454,6 +454,12 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
   $('pathBtStatus').textContent='گزارش در دسترس نیست';
   $('pathBtNote').textContent='هنوز گزارشی از بک‌تست مسیر قیمت در فایل داشبورد منتشر نشده است.';
  }
+
+})();
+</script>
+<script>
+(function(){
+ const report=window.BACKTEST_REPORT||{};
  const quality=report.token_quality_screen||{};
  const qStatus={screened:'غربال به‌روزرسانی شد',no_public_pool_records:'دادهٔ عمومی برای غربال موجود نیست',not_run_or_disabled:'هنوز اجرا نشده'}[quality.status]||quality.status||'گزارش در دسترس نیست';
  $('tokenRiskStatus').textContent=qStatus;
@@ -481,4 +487,5 @@ load();setInterval(load,60000);loadAgentOps();setInterval(loadAgentOps,30000);lo
  }).join('')||'<tr><td colspan="4" class="live-empty">برای یک mint، هنوز قیمت و نقدینگی قابل مقایسه از هر دو منبع موجود نیست.</td></tr>';
  $('tokenRiskNote').textContent='غربال توصیفی است، نه کشف قطعی کلاهبرداری یا سیگنال معامله. تعداد boost از امتیاز ریسک کم نمی‌کند. مقایسهٔ منابع ممکن است به‌دلیل تفاوت استخر و زمان مشاهده اختلاف داشته باشد. '+(quality.limitations||[]).length+' محدودیت در گزارش ثبت شده؛ هیچ معاملهٔ واقعی مجاز نیست.';
 })();
-</script><script src="./market-live.js"></script></body></html>
+</script>
+<script src="./market-live.js"></script></body></html>
