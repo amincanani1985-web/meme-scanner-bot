@@ -366,6 +366,7 @@ jobs:
           python shadow_learning.py --observations paper_account/shadow_observations.csv > /tmp/paper-shadow-learning-report.json
           python scanner_simulator.py --paths paper_account/shadow_price_paths.jsonl --output /tmp/paper-simulator-report.json
           python whale_follow_backtest.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-follow-backtest-report.json
+          python whale_event_study.py --paths paper_account/whale_quote_paths.jsonl paper_account/shadow_price_paths.jsonl --swaps whale_copy_state.json --output /tmp/whale-event-study-report.json
           python - <<'PY'
           import json
           from pathlib import Path
