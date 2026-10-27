@@ -13,6 +13,7 @@ MIN_LIQUIDITY_USD = 10_000.0
 SEVERE_DRAWDOWN_PCT = -50.0
 EXTREME_PUMP_PCT = 300.0
 EXTREME_MOMENTUM_H1_PCT = 50.0
+EXTREME_MOMENTUM_H6_PCT = 60.0
 EXTREME_MOMENTUM_M5_PCT = 20.0
 EXTREME_TURNOVER_RATIO = 20.0
 SELL_PRESSURE_MIN_TXNS_H6 = 200
@@ -78,12 +79,12 @@ def screen_pair(record):
 
     if (change_h1 is not None and change_h1 >= EXTREME_MOMENTUM_H1_PCT) or (
         change_m5 is not None and change_m5 >= EXTREME_MOMENTUM_M5_PCT
-    ):
+    ) or (change_h6 is not None and change_h6 >= EXTREME_MOMENTUM_H6_PCT):
         add("extreme_short_term_momentum", 10, "A rapid short-window price move increases slippage and reversal risk.")
 
     if buys_h6 is not None and sells_h6 is not None and buys_h6 + sells_h6 >= SELL_PRESSURE_MIN_TXNS_H6:
         if sells_h6 > 0 and buys_h6 / sells_h6 <= 1 / SELL_PRESSURE_RATIO:
-            add("sell_pressure_h6", 15, f"Six-hour sell count ({sells_h6:.0f}) is at least {SELL_PRESSURE_RATIO:.1f}x buy count ({buys_h6:.0f}).")
+            add("sell_pressure_h6", 25, f"Six-hour sell count ({sells_h6:.0f}) is at least {SELL_PRESSURE_RATIO:.1f}x buy count ({buys_h6:.0f}).")
 
     if liquidity is not None and liquidity > 0 and volume_h24 is not None and volume_h24 >= 0:
         turnover = volume_h24 / liquidity
