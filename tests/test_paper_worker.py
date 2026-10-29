@@ -48,6 +48,26 @@ class PaperWorkerScheduleTests(unittest.TestCase):
             [0, 10, 20, 30, 40, 50, 60],
         )
 
+    def test_scan_runs_only_the_isolated_paper_cycle_from_repo_root(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        import paper_worker
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "meme_scanner_cycle.py").write_text("# test entry point\\n", encoding="utf-8")
+
+            with patch.object(paper_worker.subprocess, "run") as subprocess_run:
+                paper_worker.scan_once(root)
+
+            args, kwargs = subprocess_run.call_args
+            command = args[0]
+            self.assertEqual(kwargs["cwd"], str(root))
+            self.assertIn("-c", command)
+            self.assertIn("run_isolated_paper_cycle", command[-1])
+            self.assertNotEqual(kwargs["cwd"], str(root / "paper_account"))
+
     def test_monitor_continues_after_a_scan_failure(self):
         clock = FakeClock()
         monitored = []
