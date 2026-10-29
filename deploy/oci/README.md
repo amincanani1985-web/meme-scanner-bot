@@ -14,26 +14,30 @@ Do not put paid resources on the account or upgrade the tenancy just to run this
 
 Create an Ubuntu ARM/Ampere A1 VM within the Always Free limits, assign a public IP, and permit SSH (port 22) only from your own IP. This worker does not need any inbound application port.
 
-After connecting to the VM over SSH, install the base packages and create a dedicated unprivileged account:
+After connecting to the VM over SSH, install the base packages and create a dedicated unprivileged account. Keep live state outside the code checkout so future code upgrades cannot overwrite it:
 
-```bash
+\`\`\`bash
 sudo apt-get update
 sudo apt-get install -y git python3 python3-venv
 sudo useradd --system --create-home --home-dir /var/lib/meme-bot --shell /usr/sbin/nologin meme-bot
-```
+sudo mkdir -p /opt/meme-scanner-bot/releases /var/lib/meme-bot/paper_account
+sudo chown -R meme-bot:meme-bot /opt/meme-scanner-bot /var/lib/meme-bot
+\`\`\`
 
-After this PR has been merged, clone the main branch. To test the PR before it is merged, replace `main` with `agent/railway-paper-worker`:
+After this PR has been merged, clone the main branch. To test the PR before it is merged, replace \`main\` with \`agent/railway-paper-worker\`:
 
-```bash
-sudo git clone --depth 1 --branch main https://github.com/amincanani1985-web/meme-scanner-bot.git /opt/meme-scanner-bot
-sudo chown -R meme-bot:meme-bot /opt/meme-scanner-bot
-sudo -u meme-bot python3 -m venv /opt/meme-scanner-bot/.venv
-sudo -u meme-bot /opt/meme-scanner-bot/.venv/bin/pip install -r /opt/meme-scanner-bot/requirements.txt
+\`\`\`bash
+sudo -u meme-bot git clone --depth 1 --branch main https://github.com/amincanani1985-web/meme-scanner-bot.git /opt/meme-scanner-bot/releases/initial
+sudo -u meme-bot rm -rf /opt/meme-scanner-bot/releases/initial/paper_account
+sudo -u meme-bot ln -s /var/lib/meme-bot/paper_account /opt/meme-scanner-bot/releases/initial/paper_account
+sudo -u meme-bot ln -sfn /opt/meme-scanner-bot/releases/initial /opt/meme-scanner-bot/current
+sudo -u meme-bot python3 -m venv /opt/meme-scanner-bot/venv
+sudo -u meme-bot /opt/meme-scanner-bot/venv/bin/pip install -r /opt/meme-scanner-bot/current/requirements.txt
 sudo install -o root -g root -m 600 /dev/null /etc/meme-scanner-bot.env
 sudoedit /etc/meme-scanner-bot.env
-```
+\`\`\`
 
-Add only the provider variables you actually have to `/etc/meme-scanner-bot.env`, such as `HELIUS_RPC_URL` and `HELIUS_API_KEY`. Do not put credentials or wallet private keys in this repository or in chat. With no Helius credentials, whale-confirmation entries fail closed; keep the worker in paper mode.
+Add only the provider variables you actually have to \`/etc/meme-scanner-bot.env\`, such as \`HELIUS_RPC_URL\` and \`HELIUS_API_KEY\`. Do not put credentials or wallet private keys in this repository or in chat. With no Helius credentials, whale-confirmation entries fail closed; keep the worker in paper mode.
 
 ## Install and verify the service
 
