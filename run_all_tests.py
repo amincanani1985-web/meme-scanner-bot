@@ -20,6 +20,7 @@ def main():
     checks = [
         run([py, "-m", "py_compile", "memeswap_research.py",
              "tests/test_memeswap_research.py", "meme_scanner_cycle.py",
+             "paper_worker.py", "tests/test_paper_worker.py",
              "learn_agent.py", "strategy_backtest.py", "shadow_path_backtest.py",
              "scanner_simulator.py", "tests/test_scanner_simulator.py",
              "whale_behavior_lab.py", "tests/test_whale_behavior_lab.py",

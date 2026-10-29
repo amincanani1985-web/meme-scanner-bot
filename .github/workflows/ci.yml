@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "meme_scanner_cycle.py"
+      - "paper_worker.py"
       - "memeswap_research.py"
       - "learn_agent.py"
       - "strategy_backtest.py"
@@ -14,6 +15,7 @@ on:
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
       - "tests/**"
+      - "deploy/**"
       - "run_all_tests.py"
       - "run_tests.py"
       - "requirements.txt"
@@ -24,6 +26,7 @@ on:
     branches-ignore: [main]
     paths:
       - "meme_scanner_cycle.py"
+      - "paper_worker.py"
       - "memeswap_research.py"
       - "learn_agent.py"
       - "strategy_backtest.py"
@@ -34,6 +37,7 @@ on:
       - "whale_follow_backtest.py"
       - "whale_shadow_capture.py"
       - "tests/**"
+      - "deploy/**"
       - "run_all_tests.py"
       - "run_tests.py"
       - "requirements.txt"
@@ -55,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Validate Python syntax
-        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_v17_improvements.py tests/test_shadow_path_backtest.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py
+        run: python -m py_compile memeswap_research.py tests/test_memeswap_research.py meme_scanner_cycle.py paper_worker.py tests/test_paper_worker.py learn_agent.py strategy_backtest.py shadow_path_backtest.py scanner_simulator.py tests/test_scanner_simulator.py tests/test_scanner_logic.py tests/test_adaptive.py tests/test_v17_improvements.py tests/test_shadow_path_backtest.py whale_behavior_lab.py tests/test_whale_behavior_lab.py market_data_connectors.py tests/test_market_data_connectors.py whale_follow_backtest.py tests/test_whale_follow_backtest.py whale_shadow_capture.py tests/test_whale_shadow_capture.py
       - name: Run canonical test suite 10 times
         shell: bash
         run: |
