@@ -28,12 +28,14 @@ After this PR has been merged, clone the main branch. To test the PR before it i
 
 \`\`\`bash
 sudo -u meme-bot git clone --depth 1 --branch main https://github.com/amincanani1985-web/meme-scanner-bot.git /opt/meme-scanner-bot/releases/initial
+# Seed the persistent directory from the repository without overwriting any existing persistent files.
+sudo -u meme-bot cp -an /opt/meme-scanner-bot/releases/initial/paper_account/. /var/lib/meme-bot/paper_account/
 sudo -u meme-bot rm -rf /opt/meme-scanner-bot/releases/initial/paper_account
 sudo -u meme-bot ln -s /var/lib/meme-bot/paper_account /opt/meme-scanner-bot/releases/initial/paper_account
 sudo -u meme-bot ln -sfn /opt/meme-scanner-bot/releases/initial /opt/meme-scanner-bot/current
 sudo -u meme-bot python3 -m venv /opt/meme-scanner-bot/venv
 sudo -u meme-bot /opt/meme-scanner-bot/venv/bin/pip install -r /opt/meme-scanner-bot/current/requirements.txt
-sudo install -o root -g root -m 600 /dev/null /etc/meme-scanner-bot.env
+sudo test -f /etc/meme-scanner-bot.env || sudo install -o root -g root -m 600 /dev/null /etc/meme-scanner-bot.env
 sudoedit /etc/meme-scanner-bot.env
 \`\`\`
 
