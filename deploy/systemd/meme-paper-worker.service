@@ -7,11 +7,11 @@ After=network-online.target
 Type=simple
 User=meme-bot
 Group=meme-bot
-WorkingDirectory=/opt/meme-scanner-bot
+WorkingDirectory=/opt/meme-scanner-bot/current
 EnvironmentFile=/etc/meme-scanner-bot.env
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/opt/meme-scanner-bot/.venv/bin/python -u /opt/meme-scanner-bot/paper_worker.py --poll-seconds 15 --scan-seconds 300 --backtest-seconds 900
+ExecStart=/opt/meme-scanner-bot/venv/bin/python -u /opt/meme-scanner-bot/current/paper_worker.py --poll-seconds 15 --scan-seconds 300 --backtest-seconds 900
 Restart=on-failure
 RestartSec=10
 TimeoutStopSec=30
@@ -21,7 +21,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/meme-scanner-bot/paper_account
+ReadWritePaths=/var/lib/meme-bot/paper_account
 
 [Install]
 WantedBy=multi-user.target
