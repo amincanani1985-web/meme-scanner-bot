@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persistent paper-only memecoin worker for Railway.
+"""Persistent paper-only memecoin worker for a long-running Linux host.
 
 Runs one scanner process at a time, polls exits frequently, and periodically
 runs offline walk-forward reports. It never signs or submits blockchain trades.
