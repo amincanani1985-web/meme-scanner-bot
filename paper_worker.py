@@ -60,9 +60,18 @@ def scan_once(root_dir: str | Path) -> None:
     env.setdefault("SHADOW_PRICE_PATH_LOG", str(paper_dir / "shadow_price_paths.jsonl"))
     env.setdefault("MEMESWAP_RESEARCH_ENABLED", "1")
     env.setdefault("PAPER_REQUIRE_WHALE_ACCUMULATION", "1")
+    # Do not launch meme_scanner_cycle.py as a script here. Its __main__
+    # intentionally runs both the legacy cycle and isolated paper cycle; when
+    # launched from paper_account that would process the same account twice.
+    # Invoke only the isolated-paper entry point, from the repository root.
+    isolated_cycle = (
+        "import json; import meme_scanner_cycle as scanner; "
+        "result = scanner.run_isolated_paper_cycle(); "
+        "print('[PAPER WORKER] result=' + json.dumps(result, sort_keys=True))"
+    )
     completed = subprocess.run(
-        [sys.executable, "-u", str(root / "meme_scanner_cycle.py")],
-        cwd=str(paper_dir),
+        [sys.executable, "-u", "-c", isolated_cycle],
+        cwd=str(root),
         env=env,
         check=True,
         timeout=240,
