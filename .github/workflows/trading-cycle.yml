@@ -335,8 +335,19 @@ jobs:
 
       - name: Run one discovery and entry cycle
         if: github.event_name != 'pull_request'
-        working-directory: paper_account
-        run: python ../meme_scanner_cycle.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The script entry point runs both the legacy cycle and isolated paper cycle.
+          # Invoke only the isolated paper account once, so it uses the configured whale-follow gate.
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import meme_scanner_cycle as scanner
+
+          result = scanner.run_isolated_paper_cycle(Path.cwd())
+          print("[PAPER ACCOUNT] " + json.dumps(result, sort_keys=True))
+          PY
 
       - name: Monitor newly opened paper positions immediately
         if: github.event_name != 'pull_request'
