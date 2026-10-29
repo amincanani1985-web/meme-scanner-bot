@@ -49,6 +49,6 @@ sudo systemctl status meme-paper-worker --no-pager
 sudo journalctl -u meme-paper-worker -f
 ```
 
-The worker monitors positions every 15 seconds, scans every 5 minutes, and refreshes walk-forward reports every 15 minutes. State and reports persist under `/opt/meme-scanner-bot/paper_account/` on the VM disk.
+The worker monitors positions every 15 seconds, scans every 5 minutes, and refreshes walk-forward reports every 15 minutes. The `current/paper_account` symlink points to `/var/lib/meme-bot/paper_account/`; that is the persistent state and report location on the VM disk.
 
 Back up `paper_account/` before changing code or restoring a VM. A code update should not overwrite the working paper state. Keep SSH restricted, do not expose ports for this worker, and do not add wallet-signing keys. This is a paper/research setup, not a validated profitable trading strategy.
