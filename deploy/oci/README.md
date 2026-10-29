@@ -42,7 +42,7 @@ Add only the provider variables you actually have to \`/etc/meme-scanner-bot.env
 ## Install and verify the service
 
 ```bash
-sudo cp /opt/meme-scanner-bot/deploy/systemd/meme-paper-worker.service /etc/systemd/system/
+sudo cp /opt/meme-scanner-bot/current/deploy/systemd/meme-paper-worker.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now meme-paper-worker
 sudo systemctl status meme-paper-worker --no-pager
