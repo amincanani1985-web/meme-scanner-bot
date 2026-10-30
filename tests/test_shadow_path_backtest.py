@@ -422,7 +422,7 @@ class ShadowPathBacktestTests(unittest.TestCase):
 
         training = backtest.calculate_metrics(
             [{"status": "closed", "net_pnl_pct": value}
-             for value in ([8.0] * 10 + [-5.0] * 10]
+             for value in ([8.0] * 10 + [-5.0] * 10)]
         )
         holdout = backtest.calculate_metrics(
             [{"status": "closed", "net_pnl_pct": value}
