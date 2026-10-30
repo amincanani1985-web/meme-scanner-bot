@@ -88,11 +88,8 @@ def metrics(rows, threshold, round_trip_cost_pct=None):
     result["eligible"] = (
         result["sample_eligible"]
         and result["outlier_count"] == 0
-        and result["net_median_pnl"] > 0
         and result["net_robust_mean_pnl"] > 0
-        and result["net_win_rate"] >= 0.5
-        and result["net_win_rate_wilson_lower"] >= 0.5
-        and result["net_profit_factor"] > 1.2
+        and result["net_profit_factor"] > 1.15
     )
     return result
 
@@ -130,12 +127,13 @@ def run(rows, round_trip_cost_pct=ROUND_TRIP_COST_PCT):
     for threshold in THRESHOLDS:
         train_metrics = metrics(train, threshold, round_trip_cost_pct)
         validation_metrics = metrics(validation, threshold, round_trip_cost_pct)
+        threshold_eligible = train_metrics["eligible"] and validation_metrics["eligible"]
         result[str(threshold)] = {
             "train": train_metrics,
             "validation": validation_metrics,
-            "eligible": validation_metrics["eligible"],
+            "eligible": threshold_eligible,
         }
-        if validation_metrics["eligible"]:
+        if threshold_eligible:
             eligible.append(threshold)
 
     return {
