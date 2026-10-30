@@ -1,4 +1,5 @@
 import time
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -173,6 +174,54 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "closed_trades": 10, "wins": 6, "win_rate": 0.6,
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
         }))
+
+
+    def _run_copy_paper_with_signals(self, folder, buy_signals, **options):
+        pair = {
+            "priceUsd": "1.0",
+            "liquidity": {"usd": 100000},
+            "baseToken": {"symbol": "TEST"},
+        }
+        with patch.object(follower, "_copy_entry_allowed", return_value=(True, "ok")), \
+             patch.object(follower.scanner, "fetch_dex_pair", return_value=pair):
+            return follower.run_copy_paper_account(
+                buy_signals,
+                [],
+                state_path=f"{folder}/state.json",
+                ledger_path=f"{folder}/trades.csv",
+                now=1030,
+                **options,
+            )
+
+    def test_default_copy_mode_still_requires_two_distinct_wallets(self):
+        signal = {
+            "wallet": "qualified-wallet",
+            "mint": MEME,
+            "timestamp": 1000,
+            "signature": "buy-one",
+            "quote_symbol": "USDC",
+            "leader_price_quote": 1.0,
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            report = self._run_copy_paper_with_signals(folder, [signal])
+        self.assertEqual(report["opened_this_cycle"], 0)
+        self.assertEqual(report["open_positions"], 0)
+
+    def test_single_qualified_wallet_experiment_can_copy_one_leader(self):
+        signal = {
+            "wallet": "qualified-wallet",
+            "mint": MEME,
+            "timestamp": 1000,
+            "signature": "buy-one",
+            "quote_symbol": "USDC",
+            "leader_price_quote": 1.0,
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            report = self._run_copy_paper_with_signals(
+                folder, [signal], min_signal_wallets=1
+            )
+        self.assertEqual(report["opened_this_cycle"], 1)
+        self.assertEqual(report["open_positions"], 1)
 
     def test_wallet_history_fetch_paginates_and_stops_on_short_page(self):
         first = Mock()
