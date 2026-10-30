@@ -220,6 +220,7 @@ jobs:
           from pathlib import Path
           report = json.loads(Path("/tmp/whale-copy-report.json").read_text(encoding="utf-8"))
           paper = report.get("paper_account", {})
+          single = report.get("single_wallet_paper_account", {})
           print("## Transaction-level whale-copy paper research")
           print(f"- Status: **{report.get('status', 'unknown')}**")
           print(f"- Wallets attempted / selected / tracked: {report.get('wallets_attempted', 0)} / {report.get('wallets_selected', 0)} / {report.get('wallets_tracked', 0)}")
@@ -234,7 +235,8 @@ jobs:
           print(f"- Copy-paper net PnL: ${paper.get('net_pnl_usd', 0):+.4f}")
           print(f"- Copy-paper open positions: {paper.get('open_positions', 0)}")
           print(f"- Entry rejections: {paper.get('entry_rejections', {})}")
-          print("- Realized wallet history is required; balance drops alone never qualify a wallet. The follower only trades in its own paper account.")
+          print("- Single-qualified-wallet experiment closed/open/net: {}/{}/ {:+.4f} USD".format(single.get("closed_trades", 0), single.get("open_positions", 0), single.get("net_pnl_usd", 0)))
+          print("- Both follower accounts are paper-only and isolated; only wallets passing realized-history gates can generate copy signals.")
           for wallet in report.get("leaderboard", []):
               print(f"- Wallet {wallet['owner']}: closed={wallet['closed_trades']}, win rate={wallet['win_rate']:.1%}, PF={wallet['profit_factor']:.2f}, mean net={wallet['mean_net_pnl_pct']:+.2f}%, qualified={wallet['qualified']}")
           PY

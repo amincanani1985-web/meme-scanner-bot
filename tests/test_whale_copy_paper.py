@@ -1,4 +1,5 @@
 import time
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -80,6 +81,38 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertEqual(record["metrics"]["closed_trades"], 1)
         self.assertEqual(record["metrics"]["wins"], 1)
 
+
+    def test_partial_sells_are_one_completed_round_trip_not_many_trades(self):
+        record = {"history_complete": True}
+        buy = follower.parse_swap_transaction(
+            swap("buy-partials", 100, "buy", 1000, 100), WALLET
+        )
+        follower.apply_wallet_trades(record, [buy], now=100)
+
+        # Eight partial sells are still one open position, not eight completed
+        # trades that can inflate a wallet's qualification sample.
+        for index in range(8):
+            partial = follower.parse_swap_transaction(
+                swap(f"partial-{index}", 200 + index, "sell", 100, 15), WALLET
+            )
+            follower.apply_wallet_trades(record, [partial], now=300 + index)
+            self.assertEqual(record["closed_trades"], [])
+            self.assertEqual(record["metrics"]["closed_trades"], 0)
+            self.assertAlmostEqual(
+                record["positions"][MEME]["token_amount"], 900 - index * 100
+            )
+
+        final_sell = follower.parse_swap_transaction(
+            swap("final-partial", 300, "sell", 200, 25), WALLET
+        )
+        result = follower.apply_wallet_trades(record, [final_sell], now=400)
+
+        self.assertEqual(result["new_closed_trades"], 1)
+        self.assertEqual(len(record["closed_trades"]), 1)
+        self.assertEqual(record["metrics"]["closed_trades"], 1)
+        self.assertAlmostEqual(record["closed_trades"][0]["net_pnl_pct"], 44.0)
+        self.assertEqual(record["positions"], {})
+
     def test_wallet_trade_processing_is_idempotent_by_signature(self):
         record = {"history_complete": True}
         buy = follower.parse_swap_transaction(swap("buy1", 100, "buy", 1000, 100), WALLET)
@@ -99,11 +132,14 @@ class WhaleCopyPaperTests(unittest.TestCase):
         sell = follower.parse_swap_transaction(
             swap("recent-sell", 300, "sell", 1000, 120), WALLET
         )
+        final_sell = follower.parse_swap_transaction(
+            swap("recent-sell-final", 301, "sell", 1000, 120), WALLET
+        )
 
         # Simulate the scanner fetching a fresh page first, then backfilling an
         # older page on the next cycle. Results must match a full chronological replay.
         incremental = {"history_complete": False}
-        follower.apply_wallet_trades(incremental, [recent_buy, sell], now=400)
+        follower.apply_wallet_trades(incremental, [recent_buy, sell, final_sell], now=400)
         self.assertEqual(incremental["closed_trades"], [])
         # The final short page establishes complete history; replay must now
         # include the delayed older buy in the cost basis of the later sale.
@@ -112,7 +148,7 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
         chronological = {"history_complete": True}
         follower.apply_wallet_trades(
-            chronological, [old_buy, recent_buy, sell], now=400
+            chronological, [old_buy, recent_buy, sell, final_sell], now=400
         )
 
         self.assertEqual(len(incremental["closed_trades"]), 1)
@@ -138,6 +174,54 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "closed_trades": 10, "wins": 6, "win_rate": 0.6,
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
         }))
+
+
+    def _run_copy_paper_with_signals(self, folder, buy_signals, **options):
+        pair = {
+            "priceUsd": "1.0",
+            "liquidity": {"usd": 100000},
+            "baseToken": {"symbol": "TEST"},
+        }
+        with patch.object(follower, "_copy_entry_allowed", return_value=(True, "ok")), \
+             patch.object(follower.scanner, "fetch_dex_pair", return_value=pair):
+            return follower.run_copy_paper_account(
+                buy_signals,
+                [],
+                state_path=f"{folder}/state.json",
+                ledger_path=f"{folder}/trades.csv",
+                now=1030,
+                **options,
+            )
+
+    def test_default_copy_mode_still_requires_two_distinct_wallets(self):
+        signal = {
+            "wallet": "qualified-wallet",
+            "mint": MEME,
+            "timestamp": 1000,
+            "signature": "buy-one",
+            "quote_symbol": "USDC",
+            "leader_price_quote": 1.0,
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            report = self._run_copy_paper_with_signals(folder, [signal])
+        self.assertEqual(report["opened_this_cycle"], 0)
+        self.assertEqual(report["open_positions"], 0)
+
+    def test_single_qualified_wallet_experiment_can_copy_one_leader(self):
+        signal = {
+            "wallet": "qualified-wallet",
+            "mint": MEME,
+            "timestamp": 1000,
+            "signature": "buy-one",
+            "quote_symbol": "USDC",
+            "leader_price_quote": 1.0,
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            report = self._run_copy_paper_with_signals(
+                folder, [signal], min_signal_wallets=1
+            )
+        self.assertEqual(report["opened_this_cycle"], 1)
+        self.assertEqual(report["open_positions"], 1)
 
     def test_wallet_history_fetch_paginates_and_stops_on_short_page(self):
         first = Mock()
