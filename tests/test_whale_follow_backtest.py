@@ -85,9 +85,9 @@ class WhaleFollowBacktestTests(unittest.TestCase):
 
     def test_past_realized_wallet_metrics_are_used_not_future_performance(self):
         swaps = []
-        for i in range(8):
+        for i in range(30):
             mint = f"closed-mint-{i}"
-            t = 100.0 + i * 100.0
+            t = 100.0 + i * 50.0
             swaps.append(swap("wallet-a", mint, t, "buy", 100.0, 10.0, "USDC", f"b-{i}"))
             swaps.append(swap("wallet-a", mint, t + 20.0, "sell", 100.0, 12.0, "USDC", f"s-{i}"))
         swaps.append(swap("wallet-a", "mint-a", 2000.0, "buy", signature="future-signal"))
@@ -103,7 +103,7 @@ class WhaleFollowBacktestTests(unittest.TestCase):
 
         self.assertIsNotNone(signal)
         self.assertEqual(signal["wallet"], "wallet-a")
-        self.assertGreaterEqual(signal["past_closed_trades"], 8)
+        self.assertGreaterEqual(signal["past_closed_trades"], 30)
         self.assertGreater(signal["past_mean_net_pnl_pct"], 0)
 
         # A future closed-trade summary cannot qualify a wallet with incomplete history.

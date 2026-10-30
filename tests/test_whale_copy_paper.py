@@ -171,8 +171,20 @@ class WhaleCopyPaperTests(unittest.TestCase):
             "profit_factor": 0.8, "mean_net_pnl_pct": 2.0,
         }))
         self.assertTrue(follower.wallet_qualifies({
-            "closed_trades": 10, "wins": 6, "win_rate": 0.6,
+            "closed_trades": 30, "wins": 18, "win_rate": 0.6,
             "profit_factor": 1.5, "mean_net_pnl_pct": 3.0,
+        }))
+
+    def test_wallet_qualification_accepts_strong_positive_expectancy_with_lower_win_rate(self):
+        self.assertTrue(follower.wallet_qualifies({
+            "closed_trades": 145, "wins": 62, "win_rate": 0.4276,
+            "profit_factor": 1.3428, "mean_net_pnl_pct": 6.3932,
+        }))
+
+    def test_wallet_qualification_rejects_low_sample_even_with_strong_metrics(self):
+        self.assertFalse(follower.wallet_qualifies({
+            "closed_trades": 29, "wins": 13, "win_rate": 0.4483,
+            "profit_factor": 1.8, "mean_net_pnl_pct": 4.0,
         }))
 
 
@@ -385,8 +397,8 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
     def test_only_previously_profitable_wallets_emit_fresh_buy_signals(self):
         now = time.time()
-        good_history = [{"net_pnl_pct": 10.0} for _ in range(6)] + [
-            {"net_pnl_pct": -2.0}, {"net_pnl_pct": -2.0}
+        good_history = [{"net_pnl_pct": 10.0} for _ in range(24)] + [
+            {"net_pnl_pct": -2.0} for _ in range(6)
         ]
         record = {
             "positions": {}, "seen_signatures": [], "closed_trades": good_history,

@@ -17,6 +17,21 @@ def swap(wallet, mint, timestamp, side, quote_amount=1.0, quote_symbol="SOL", si
 
 
 class WhaleBehaviorLabTests(unittest.TestCase):
+    def test_high_expectancy_wallet_is_consistently_qualified(self):
+        record = {"history_complete": True, "history_truncated": False}
+        metrics = {
+            "closed_trades": 145, "win_rate": 0.4276,
+            "profit_factor": 1.3428, "mean_net_pnl_pct": 6.3932,
+        }
+        self.assertTrue(lab._copy_paper_qualified(record, metrics))
+
+    def test_high_expectancy_wallet_still_needs_minimum_history(self):
+        record = {"history_complete": True, "history_truncated": False}
+        metrics = {
+            "closed_trades": 29, "win_rate": 0.4483,
+            "profit_factor": 1.8, "mean_net_pnl_pct": 4.0,
+        }
+        self.assertFalse(lab._copy_paper_qualified(record, metrics))
     def test_classifies_accumulation_and_distribution_as_observed_patterns(self):
         state = {"wallets": {
             "accumulator": {"history_complete": False, "normalized_swaps": [
