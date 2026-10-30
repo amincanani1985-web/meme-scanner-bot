@@ -131,11 +131,14 @@ class WhaleCopyPaperTests(unittest.TestCase):
         sell = follower.parse_swap_transaction(
             swap("recent-sell", 300, "sell", 1000, 120), WALLET
         )
+        final_sell = follower.parse_swap_transaction(
+            swap("recent-sell-final", 301, "sell", 1000, 120), WALLET
+        )
 
         # Simulate the scanner fetching a fresh page first, then backfilling an
         # older page on the next cycle. Results must match a full chronological replay.
         incremental = {"history_complete": False}
-        follower.apply_wallet_trades(incremental, [recent_buy, sell], now=400)
+        follower.apply_wallet_trades(incremental, [recent_buy, sell, final_sell], now=400)
         self.assertEqual(incremental["closed_trades"], [])
         # The final short page establishes complete history; replay must now
         # include the delayed older buy in the cost basis of the later sale.
@@ -144,7 +147,7 @@ class WhaleCopyPaperTests(unittest.TestCase):
 
         chronological = {"history_complete": True}
         follower.apply_wallet_trades(
-            chronological, [old_buy, recent_buy, sell], now=400
+            chronological, [old_buy, recent_buy, sell, final_sell], now=400
         )
 
         self.assertEqual(len(incremental["closed_trades"]), 1)

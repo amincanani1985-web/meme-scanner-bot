@@ -431,8 +431,16 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
                     "cost_quote": 0.0,
                     "quote_symbol": quote_symbol,
                     "first_buy_timestamp": timestamp,
+                    "realized_cost_quote": 0.0,
+                    "realized_proceeds_quote": 0.0,
+                    "realized_exit_token_amount": 0.0,
+                    "realized_exit_signatures": [],
                 }
                 positions[mint] = position
+            position.setdefault("realized_cost_quote", 0.0)
+            position.setdefault("realized_proceeds_quote", 0.0)
+            position.setdefault("realized_exit_token_amount", 0.0)
+            position.setdefault("realized_exit_signatures", [])
             if position.get("quote_symbol") == quote_symbol:
                 position["token_amount"] = float(position.get("token_amount", 0.0)) + token_amount
                 position["cost_quote"] = float(position.get("cost_quote", 0.0)) + quote_amount
@@ -455,26 +463,52 @@ def apply_wallet_trades(wallet_record, trades, now=None, fee_reserve_pct=WALLET_
         sold_qty = min(token_amount, old_qty)
         if old_qty <= 0 or sold_qty <= 0 or old_cost <= 0:
             continue
+
+        # A partial exit is realized cash flow, but not a completed trade sample.
+        # Accumulate its cost basis and proceeds until the token position is flat;
+        # otherwise one wallet can inflate its track record by splitting one exit
+        # into many transactions.
         basis = old_cost * sold_qty / old_qty
         proceeds = quote_amount * sold_qty / token_amount
-        gross_pct = (proceeds / basis - 1.0) * 100.0
-        net_pct = gross_pct - float(fee_reserve_pct)
-        closed_trades.append({
-            "timestamp": timestamp,
-            "signature": signature,
-            "mint": mint,
-            "quote_symbol": quote_symbol,
-            "token_amount": sold_qty,
-            "cost_quote": basis,
-            "proceeds_quote": proceeds,
-            "gross_pnl_pct": gross_pct,
-            "net_pnl_pct": net_pct,
-        })
-        if signature in fresh_signatures:
-            new_closed += 1
-        position["token_amount"] = max(0.0, old_qty - sold_qty)
+        position["realized_cost_quote"] = (
+            float(position.get("realized_cost_quote", 0.0) or 0.0) + basis
+        )
+        position["realized_proceeds_quote"] = (
+            float(position.get("realized_proceeds_quote", 0.0) or 0.0) + proceeds
+        )
+        position["realized_exit_token_amount"] = (
+            float(position.get("realized_exit_token_amount", 0.0) or 0.0) + sold_qty
+        )
+        exit_signatures = position.setdefault("realized_exit_signatures", [])
+        if signature not in exit_signatures:
+            exit_signatures.append(signature)
+
+        remaining_qty = max(0.0, old_qty - sold_qty)
+        position["token_amount"] = remaining_qty
         position["cost_quote"] = max(0.0, old_cost - basis)
-        if position["token_amount"] <= 1e-12:
+        if remaining_qty <= max(1e-12, old_qty * 1e-12):
+            total_cost = float(position.get("realized_cost_quote", 0.0) or 0.0)
+            total_proceeds = float(position.get("realized_proceeds_quote", 0.0) or 0.0)
+            total_sold = float(position.get("realized_exit_token_amount", 0.0) or 0.0)
+            if total_cost > 0 and total_proceeds > 0 and total_sold > 0:
+                gross_pct = (total_proceeds / total_cost - 1.0) * 100.0
+                net_pct = gross_pct - float(fee_reserve_pct)
+                closed_trades.append({
+                    "timestamp": timestamp,
+                    "signature": signature,
+                    "exit_signatures": list(exit_signatures),
+                    "partial_exit_count": len(exit_signatures),
+                    "first_buy_timestamp": position.get("first_buy_timestamp"),
+                    "mint": mint,
+                    "quote_symbol": quote_symbol,
+                    "token_amount": total_sold,
+                    "cost_quote": total_cost,
+                    "proceeds_quote": total_proceeds,
+                    "gross_pnl_pct": gross_pct,
+                    "net_pnl_pct": net_pct,
+                })
+                if any(item in fresh_signatures for item in exit_signatures):
+                    new_closed += 1
             positions.pop(mint, None)
 
     wallet_record["positions"] = positions
