@@ -80,6 +80,38 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertEqual(record["metrics"]["closed_trades"], 1)
         self.assertEqual(record["metrics"]["wins"], 1)
 
+
+    def test_partial_sells_are_one_completed_round_trip_not_many_trades(self):
+        record = {"history_complete": True}
+        buy = follower.parse_swap_transaction(
+            swap("buy-partials", 100, "buy", 1000, 100), WALLET
+        )
+        follower.apply_wallet_trades(record, [buy], now=100)
+
+        # Eight partial sells are still one open position, not eight completed
+        # trades that can inflate a wallet's qualification sample.
+        for index in range(8):
+            partial = follower.parse_swap_transaction(
+                swap(f"partial-{index}", 200 + index, "sell", 100, 15), WALLET
+            )
+            follower.apply_wallet_trades(record, [partial], now=300 + index)
+            self.assertEqual(record["closed_trades"], [])
+            self.assertEqual(record["metrics"]["closed_trades"], 0)
+            self.assertAlmostEqual(
+                record["positions"][MEME]["token_amount"], 900 - index * 100
+            )
+
+        final_sell = follower.parse_swap_transaction(
+            swap("final-partial", 300, "sell", 200, 25), WALLET
+        )
+        result = follower.apply_wallet_trades(record, [final_sell], now=400)
+
+        self.assertEqual(result["new_closed_trades"], 1)
+        self.assertEqual(len(record["closed_trades"]), 1)
+        self.assertEqual(record["metrics"]["closed_trades"], 1)
+        self.assertAlmostEqual(record["closed_trades"][0]["net_pnl_pct"], 44.0)
+        self.assertEqual(record["positions"], {})
+
     def test_wallet_trade_processing_is_idempotent_by_signature(self):
         record = {"history_complete": True}
         buy = follower.parse_swap_transaction(swap("buy1", 100, "buy", 1000, 100), WALLET)
