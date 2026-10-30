@@ -17,7 +17,6 @@ CONSENSUS_WINDOW_SECONDS = 300.0
 FOLLOW_WINDOW_SECONDS = 900.0
 MIN_PROFILE_SWAPS = 8
 MIN_QUALIFIED_CLOSED_TRADES = 30
-MIN_QUALIFIED_WIN_RATE = 0.40
 MIN_QUALIFIED_PROFIT_FACTOR = 1.30
 MIN_QUALIFIED_MEAN_NET_PNL = 2.0
 
@@ -129,12 +128,10 @@ def _copy_paper_qualified(record, metrics):
     if not record.get("history_complete", False) or record.get("history_truncated", False):
         return False
     closed = _number(metrics.get("closed_trades"))
-    win_rate = _number(metrics.get("win_rate"))
     profit_factor = _number(metrics.get("profit_factor"))
     mean_pnl = _number(metrics.get("mean_net_pnl_pct"))
     return bool(
         closed is not None and closed >= MIN_QUALIFIED_CLOSED_TRADES
-        and win_rate is not None and win_rate >= MIN_QUALIFIED_WIN_RATE
         and profit_factor is not None and profit_factor >= MIN_QUALIFIED_PROFIT_FACTOR
         and mean_pnl is not None and mean_pnl >= MIN_QUALIFIED_MEAN_NET_PNL
     )

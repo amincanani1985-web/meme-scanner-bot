@@ -428,6 +428,12 @@ class WhaleCopyPaperTests(unittest.TestCase):
         self.assertFalse(follower.signal_is_fresh(now - 61, now=now, max_age_seconds=60))
         self.assertFalse(follower.signal_is_fresh(now + 1, now=now, max_age_seconds=60))
 
+    def test_wallet_qualification_accepts_low_win_rate_when_payoff_is_strong(self):
+        self.assertTrue(follower.wallet_qualifies({
+            "closed_trades": 30, "wins": 10, "win_rate": 10 / 30,
+            "profit_factor": 3.0, "mean_net_pnl_pct": 2.66,
+        }))
+
 
 if __name__ == "__main__":
     unittest.main()

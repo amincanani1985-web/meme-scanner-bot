@@ -54,6 +54,37 @@ class StrategyBacktestTests(unittest.TestCase):
         self.assertLess(metrics["net_avg_pnl"], 0.0)
 
 
+    def test_profitable_fifty_fifty_validation_is_eligible_on_net_expectancy(self):
+        rows = (
+            [{"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 9.0}
+             for i in range(28)]
+            + [{"timestamp": f"{i + 28:03d}", "score": 85.0,
+                "pnl_pct": value}
+               for i, value in enumerate([9.0] * 6 + [-5.0] * 6)]
+        )
+
+        report = backtest.run(rows)
+        metrics = report["thresholds"]["85.0"]["validation"]
+
+        self.assertEqual(metrics["net_win_rate"], 0.5)
+        self.assertLess(metrics["net_win_rate_wilson_lower"], 0.5)
+        self.assertIn(85.0, report["eligible_thresholds"])
+
+    def test_half_win_rate_with_negative_net_expectancy_is_not_eligible(self):
+        rows = (
+            [{"timestamp": f"{i:03d}", "score": 85.0, "pnl_pct": 9.0}
+             for i in range(28)]
+            + [{"timestamp": f"{i + 28:03d}", "score": 85.0,
+                "pnl_pct": value}
+               for i, value in enumerate([4.0] * 6 + [-6.0] * 6)]
+        )
+
+        report = backtest.run(rows)
+        metrics = report["thresholds"]["85.0"]["validation"]
+
+        self.assertEqual(metrics["net_win_rate"], 0.5)
+        self.assertLess(metrics["net_avg_pnl"], 0.0)
+        self.assertNotIn(85.0, report["eligible_thresholds"])
 
 if __name__ == "__main__":
     unittest.main()

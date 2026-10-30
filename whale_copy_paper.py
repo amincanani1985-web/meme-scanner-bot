@@ -32,7 +32,6 @@ MAX_NORMALIZED_SWAPS = 600
 MAX_SIGNAL_AGE_SECONDS = 600
 COPY_CONFIRMATION_WINDOW_SECONDS = 900
 MIN_WALLET_CLOSED_TRADES = 30
-MIN_WALLET_WIN_RATE = 0.40
 MIN_WALLET_PROFIT_FACTOR = 1.30
 MIN_WALLET_MEAN_NET_PNL_PCT = 2.0
 WALLET_FEE_RESERVE_PCT = 1.0
@@ -203,12 +202,10 @@ def wallet_qualifies(metrics):
     if not isinstance(metrics, dict):
         return False
     n = int(metrics.get("closed_trades", 0) or 0)
-    win_rate = _finite_number(metrics.get("win_rate"))
     profit_factor = _finite_number(metrics.get("profit_factor"))
     mean_pnl = _finite_number(metrics.get("mean_net_pnl_pct"))
     return bool(
         n >= MIN_WALLET_CLOSED_TRADES
-        and win_rate is not None and win_rate >= MIN_WALLET_WIN_RATE
         and profit_factor is not None and profit_factor >= MIN_WALLET_PROFIT_FACTOR
         and mean_pnl is not None and mean_pnl >= MIN_WALLET_MEAN_NET_PNL_PCT
     )

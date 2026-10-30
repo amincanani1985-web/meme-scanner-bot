@@ -417,5 +417,33 @@ class ShadowPathBacktestTests(unittest.TestCase):
         self.assertEqual(report["validation_rows"], 0)
 
 
+    def test_profitable_fifty_fifty_expectancy_can_qualify_without_win_rate_majority(self):
+        import shadow_path_backtest as backtest
+
+        training = backtest.calculate_metrics(
+            [{"status": "closed", "net_pnl_pct": value}
+             for value in ([8.0] * 10 + [-5.0] * 10)]
+        )
+        holdout = backtest.calculate_metrics(
+            [{"status": "closed", "net_pnl_pct": value}
+             for value in ([8.0] * 8 + [-5.0] * 7)]
+        )
+
+        self.assertEqual(training["win_rate"], 0.5)
+        self.assertLess(training["wilson_lower_95"], 0.5)
+        self.assertTrue(backtest._eligible_train(training))
+        self.assertTrue(backtest._eligible_holdout(holdout))
+
+    def test_negative_expectancy_is_rejected_even_with_half_wins(self):
+        import shadow_path_backtest as backtest
+
+        metrics = backtest.calculate_metrics(
+            [{"status": "closed", "net_pnl_pct": value}
+             for value in ([4.0] * 10 + [-6.0] * 10)]
+        )
+
+        self.assertEqual(metrics["win_rate"], 0.5)
+        self.assertFalse(backtest._eligible_train(metrics))
+
 if __name__ == "__main__":
     unittest.main()
