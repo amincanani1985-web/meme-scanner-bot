@@ -198,6 +198,14 @@ class WhaleBehaviorLabTests(unittest.TestCase):
         self.assertEqual(profile["buy_notional_by_quote"], {"SOL": 2.0})
         self.assertEqual(profile["sell_notional_by_quote"], {"USDC": 50.0})
 
+    def test_copy_qualification_uses_expectancy_not_a_win_rate_floor(self):
+        record = {"history_complete": True, "history_truncated": False}
+        metrics = {
+            "closed_trades": 30, "win_rate": 10 / 30,
+            "profit_factor": 3.0, "mean_net_pnl_pct": 2.66,
+        }
+        self.assertTrue(lab._copy_paper_qualified(record, metrics))
+
 
 if __name__ == "__main__":
     unittest.main()
