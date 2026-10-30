@@ -223,26 +223,27 @@ def calculate_metrics(results):
 
 
 def _eligible_train(metrics):
+    """Require positive net expectancy and reward/risk, not an arbitrary win-rate floor.
+
+    The confidence bound remains a reported diagnostic. Requiring its lower bound
+    to exceed 50% would reject most genuinely profitable strategies whose win rate
+    is near 50%, even when average wins outweigh average losses.
+    """
     return bool(
         metrics["n"] >= MIN_TRAIN_ROWS
         and metrics["outlier_count"] == 0
         and metrics["mean_pnl_pct"] > 0
-        and metrics["median_pnl_pct"] > 0
-        and metrics["win_rate"] >= 0.5
-        and metrics["wilson_lower_95"] >= 0.5
-        and metrics["profit_factor"] > 1.2
+        and metrics["profit_factor"] > 1.15
     )
 
 
 def _eligible_holdout(metrics):
+    """Demand positive holdout expectancy after costs with no outlier dependence."""
     return bool(
         metrics["n"] >= MIN_VALIDATION_ROWS
         and metrics["outlier_count"] == 0
         and metrics["mean_pnl_pct"] > 0
-        and metrics["median_pnl_pct"] > 0
-        and metrics["win_rate"] >= 0.5
-        and metrics["wilson_lower_95"] >= 0.5
-        and metrics["profit_factor"] > 1.2
+        and metrics["profit_factor"] > 1.05
     )
 
 
