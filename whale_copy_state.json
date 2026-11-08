@@ -1,25 +1,25 @@
 {
-  "last_run": "2026-11-08T02:01:11Z",
+  "last_run": "2026-11-08T07:42:31Z",
   "last_scan": {
     "api_backoff_seconds_remaining": 0,
     "fetch_error_reasons": {},
     "fresh_profitable_wallet_buys": 0,
     "fresh_wallet_sells": 0,
     "new_closed_wallet_trades": 0,
-    "swaps_seen": 0,
+    "swaps_seen": 2,
     "wallets_attempted": 8,
     "wallets_selected": 8,
     "wallets_with_fetch_errors": 0
   },
-  "scan_count": 207,
+  "scan_count": 208,
   "version": 1,
   "wallet_cursor": 240,
   "wallets": {
     "13ah1XkrFTsXeaPdvVQn8giGpS3HJVXfVwq9qtAPSqxf": {
-      "backfill_visits": 137,
+      "backfill_visits": 138,
       "closed_trades": [],
-      "history_cursor": "2gXnqPzDvT8oAmBrw59V1n5r2psDjDuLwqsojSacNMvepYVidwY5oFqLCKGmonkAQnFRqdZZGvU5FUcDLooLbahH",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "4PYT54kf3KKog7fD5ZteDi1P5iLEzxFeS6PhbmaRjYuFgn1gTT1gX5wwbpKjrEDRJDwhfjfA9wXx2iX4NYPLKkky",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -192,10 +192,10 @@
       "trade_events": []
     },
     "2H2TNJuqivWWM87oZF3pgBa7KhH3ugo6qea5rjkFey2b": {
-      "backfill_visits": 192,
+      "backfill_visits": 193,
       "closed_trades": [],
-      "history_cursor": "4ZVW7WkXEsG6VFi6LBXLWHC1keFswEkV14mWd8X7JH7U8qu6DeDhFXFxNtzSTaNM1tyfyZ3Pn85RnbUL8h7EAhuf",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "27ZuFBT4xrVEZfwsPJMMKYwzvhk8kDucCYW9N4P1o3DCtUatoQst6KaA3iPdNuJVubs6w2S5mPfFXQt5zquRupbH",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -409,10 +409,10 @@
       "trade_events": []
     },
     "38osicfyLvjbfcHnKae8c9eUCakAx92nZn3ZavLuVLNf": {
-      "backfill_visits": 105,
+      "backfill_visits": 106,
       "closed_trades": [],
-      "history_cursor": "1jundaxFVHxX5Hb7hy97zECM4e19T9fKH4U8nGjL8Gag39zjXuhzmJ8DQqPKToC2HuC1sHQCJq1TBKVtBKfCWRj",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "niszGcqF8RsaCWrJXmMRPWKMC1BDhanUCgEhc2y6HvHV72My6AMGRd7MUhCJWrtTFHJsFaJe6hnUpxgdjmRYGaP",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -1564,10 +1564,10 @@
       ]
     },
     "3bzaJd5yZG73EVDz8xosQb7gfZm2LN5auFGh6wnP1n1f": {
-      "backfill_visits": 40,
+      "backfill_visits": 41,
       "closed_trades": [],
-      "history_cursor": "5ZdLpmr1au1JotgWt6J25JBQAn5S6mLjcwguWKSWjDn4M3LEtRG5ZPUiTCo9Qp67iofprn3nUdRY946RXbEUXrhE",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "Hk1aFKDJfJX36r8W5p4XTK18w1EPECXXenJJyfSe6P55PfeLu8c5LRfSaR6WANHdumx9HN8ox2pTRVmc2hegkHt",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -1579,6 +1579,28 @@
       },
       "normalized_history_initialized": true,
       "normalized_swaps": [
+        {
+          "mint": "SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb",
+          "quote_amount": 2.075435,
+          "quote_price_per_token": 151.58011977797256,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "2D8oVKoHqu8Dr1TVhjSaga82uycE6QB2wAZAPCZ5wrp7RzvNvUN49Y8QPfherdeyWzEG8RapvvdHmJCYoAZbX9ba",
+          "timestamp": 1789652599.0,
+          "token_amount": 0.013692,
+          "wallet": "3bzaJd5yZG73EVDz8xosQb7gfZm2LN5auFGh6wnP1n1f"
+        },
+        {
+          "mint": "oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ",
+          "quote_amount": 5.302116,
+          "quote_price_per_token": 974.323588534252,
+          "quote_symbol": "USDC",
+          "side": "sell",
+          "signature": "2nesxSLt4VqY1W1bMGuRiFWT99VcMPxqti2bnVDSvAo1GcAZ4Mko96cfgGicTcbsnbAHE6dHYSuRYcvk1J4qkcZ5",
+          "timestamp": 1789674525.0,
+          "token_amount": 0.005441843,
+          "wallet": "3bzaJd5yZG73EVDz8xosQb7gfZm2LN5auFGh6wnP1n1f"
+        },
         {
           "mint": "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF",
           "quote_amount": 58.370958,
@@ -1749,7 +1771,9 @@
         "5V77pBWhoUuBUdCMaDPEZoKqHekN25uB2RAUnKmEBKY85YTVNYx6KV6fQtu6E1KzBkcJQYgaFjwnsrunUN8HUPCX",
         "5tsV5pLWLinwLaTn9mWKD7wxkRWowKZQNWDAUFsdunpby17joDKXiJfWBvSrbcX5xggMFksfNbLHH9R3KcEhKGyE",
         "3CMM1wU61rMEQ5MVYcc3HFQ5PyWkgtxm7ZXZEJyapDxm9cgiodJx4FWhNhuJqTGPkQhQPgH5ymu7jTpM9zWAtVvt",
-        "5nAe8yNYsqoW2Z2nonY1r856Sg8fhzjDKm9nXhpP4Lxbrtf8s11WE9mbAneBQdySMkVj7GMrTiWnczdx7xuuRFNA"
+        "5nAe8yNYsqoW2Z2nonY1r856Sg8fhzjDKm9nXhpP4Lxbrtf8s11WE9mbAneBQdySMkVj7GMrTiWnczdx7xuuRFNA",
+        "2nesxSLt4VqY1W1bMGuRiFWT99VcMPxqti2bnVDSvAo1GcAZ4Mko96cfgGicTcbsnbAHE6dHYSuRYcvk1J4qkcZ5",
+        "2D8oVKoHqu8Dr1TVhjSaga82uycE6QB2wAZAPCZ5wrp7RzvNvUN49Y8QPfherdeyWzEG8RapvvdHmJCYoAZbX9ba"
       ]
     },
     "3efB7PWN9BiqzBAEkJzL4ys8gvBxwypZZ7easRqEPPVr": {
@@ -3229,10 +3253,10 @@
       "seen_signatures": []
     },
     "4eR3ddyPzgrLgwbgfEA2MP1XUsQpYCvMT2zGgwY5XaQt": {
-      "backfill_visits": 40,
+      "backfill_visits": 41,
       "closed_trades": [],
-      "history_cursor": "2PtEu6nJ3dvdvRSmm6KBPqaUeCqZtaYYhZzg5FvTEeUfWUVj6hbq5Q9NP165WcawBEdw7izgAJCYSsbWpQXyjGDk",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "2fF4uSaAeZvGyWuz3Xj55tTcu7yfMAqKX6XA6ULDWFh3Bm5GK8hd39iq9PCdwYRXuZN4e539mTAuUsJdf3nLgs1Y",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -13017,10 +13041,10 @@
       "trade_events": []
     },
     "6DNxwecbtdNNstpB5tdnxZsfGe3HmsNgEUZhdue4b1PH": {
-      "backfill_visits": 21,
+      "backfill_visits": 22,
       "closed_trades": [],
-      "history_cursor": "2UMt3xa8eXAi3kp96NvyAKU6QHPgfgM4GMT3FEd5NicpiVdNuGNdzHrwMw8YLRazvVFqoENKmWjYxB5my2JeNda9",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "2QhkBJWXMfBmxfNCW6oHGtSE4QFNYdjv9nfvE4EfAKcmnrphb4iJT49P9wP7LS1aKdxsmcUua4Aw3pg2futYmoXQ",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -13081,10 +13105,10 @@
       "seen_signatures": []
     },
     "6QNJgkLozae93zf584KsYBVQMD3pAuqL7n8rxMKNc57F": {
-      "backfill_visits": 5,
+      "backfill_visits": 6,
       "closed_trades": [],
-      "history_cursor": "5mm7u6k2gEWj8QUZaNRHBU3EMusjzXK9SopRPckMwZhtwgUcJbctZEx9PBAXrbb6jJx8ue8LL8N2NQ4XtrMuQAfM",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "GVgBTWqFB4nWNBEDUbdJMwGYL6PBA93PvpujVPSFaaRjhueoDSmkTwyC2repuTSZfKvHNaE8Z3iyHQ3FakU9zc4",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
@@ -17223,10 +17247,10 @@
       "seen_signatures": []
     },
     "FZWxV7C4JKKe3wX54MM6QpcVAHtyGrtnPFmihysWfiDB": {
-      "backfill_visits": 192,
+      "backfill_visits": 193,
       "closed_trades": [],
-      "history_cursor": "5NogQs9ernuvArxz3coWm3xBFsKYw3yAuN6JuyXw1KNrA3wZCAqHjjdF4RGGxPRHoC7pJQ9CEEqacRYwiznhKs4U",
-      "last_processed_at": 1794103271.5670376,
+      "history_cursor": "4SKwyJQg123VMb8xi5aDLu3vZZW78ku5snXMGy2AHePyD9Zosrf6ULvrXrdxYYbWEiMaEcU3nH7Jz6nE6gPsikBv",
+      "last_processed_at": 1794123751.4421184,
       "legacy_baseline_closed_trades": [],
       "metrics": {
         "closed_trades": 0,
