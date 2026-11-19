@@ -16,9 +16,9 @@
       "entry_price": 0.0016361799999999999,
       "entry_time": 1795060817.2965922,
       "entry_liquidity": 98829.47,
-      "peak_price": 0.001735,
+      "peak_price": 0.00177,
       "signal_score": 50.655,
-      "trailing_armed": false,
+      "trailing_armed": true,
       "components": {
         "momentum": -8.42,
         "hourly_bonus": -20.0,
@@ -97,9 +97,69 @@
           "timestamp": 1795061060.0555487,
           "price_usd": 0.001674,
           "liquidity_usd": 100853.8
+        },
+        {
+          "timestamp": 1795061121.9577558,
+          "price_usd": 0.001721,
+          "liquidity_usd": 102279.54
+        },
+        {
+          "timestamp": 1795061152.2213883,
+          "price_usd": 0.001752,
+          "liquidity_usd": 103215.34
+        },
+        {
+          "timestamp": 1795061228.67358,
+          "price_usd": 0.001632,
+          "liquidity_usd": 99581.08
+        },
+        {
+          "timestamp": 1795061262.2993462,
+          "price_usd": 0.001687,
+          "liquidity_usd": 101251.51
+        },
+        {
+          "timestamp": 1795061292.5496285,
+          "price_usd": 0.001672,
+          "liquidity_usd": 100794.5
+        },
+        {
+          "timestamp": 1795061322.7792194,
+          "price_usd": 0.00177,
+          "liquidity_usd": 103773.15
+        },
+        {
+          "timestamp": 1795061353.0192997,
+          "price_usd": 0.001741,
+          "liquidity_usd": 102952.93
+        },
+        {
+          "timestamp": 1795061383.2689433,
+          "price_usd": 0.001632,
+          "liquidity_usd": 99694.74
+        },
+        {
+          "timestamp": 1795061413.514228,
+          "price_usd": 0.001697,
+          "liquidity_usd": 101628.74
+        },
+        {
+          "timestamp": 1795061443.7754219,
+          "price_usd": 0.001682,
+          "liquidity_usd": 101219.84
+        },
+        {
+          "timestamp": 1795061474.1163588,
+          "price_usd": 0.0016,
+          "liquidity_usd": 98656.41
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "trailing_stop",
+      "benchmark_exit_timestamp": 1795061383.2689433,
+      "benchmark_exit_price_usd": 0.001632,
+      "benchmark_exit_liquidity_usd": 99694.74,
+      "benchmark_exit_after_slippage_pnl_pct": -2.250363651920932
     },
     "QDsTBqfFEt4yrpqfU7edcc9E6u7nHrbz15eqY8jpump": {
       "symbol": "GMGM",
@@ -189,6 +249,61 @@
           "timestamp": 1795061060.055561,
           "price_usd": 1.87e-05,
           "liquidity_usd": 8589.75
+        },
+        {
+          "timestamp": 1795061121.9577658,
+          "price_usd": 1.87e-05,
+          "liquidity_usd": 8589.75
+        },
+        {
+          "timestamp": 1795061152.2213957,
+          "price_usd": 1.887e-05,
+          "liquidity_usd": 8635.0
+        },
+        {
+          "timestamp": 1795061228.7219555,
+          "price_usd": 1.869e-05,
+          "liquidity_usd": 8588.84
+        },
+        {
+          "timestamp": 1795061262.2993534,
+          "price_usd": 1.932e-05,
+          "liquidity_usd": 8753.27
+        },
+        {
+          "timestamp": 1795061292.5496354,
+          "price_usd": 1.877e-05,
+          "liquidity_usd": 8609.72
+        },
+        {
+          "timestamp": 1795061322.779227,
+          "price_usd": 1.876e-05,
+          "liquidity_usd": 8607.84
+        },
+        {
+          "timestamp": 1795061353.0193074,
+          "price_usd": 1.876e-05,
+          "liquidity_usd": 8607.53
+        },
+        {
+          "timestamp": 1795061383.2764754,
+          "price_usd": 1.876e-05,
+          "liquidity_usd": 8607.53
+        },
+        {
+          "timestamp": 1795061413.5142336,
+          "price_usd": 1.745e-05,
+          "liquidity_usd": 8260.12
+        },
+        {
+          "timestamp": 1795061443.7754278,
+          "price_usd": 1.745e-05,
+          "liquidity_usd": 8260.12
+        },
+        {
+          "timestamp": 1795061474.1163642,
+          "price_usd": 1.702e-05,
+          "liquidity_usd": 8141.51
         }
       ],
       "liquidity_drain_hits": 0,
@@ -284,6 +399,61 @@
           "timestamp": 1795061060.0555656,
           "price_usd": 2.847e-05,
           "liquidity_usd": 14270.74
+        },
+        {
+          "timestamp": 1795061121.9577692,
+          "price_usd": 2.686e-05,
+          "liquidity_usd": 13806.48
+        },
+        {
+          "timestamp": 1795061152.2213986,
+          "price_usd": 2.686e-05,
+          "liquidity_usd": 13806.48
+        },
+        {
+          "timestamp": 1795061228.7796228,
+          "price_usd": 2.628e-05,
+          "liquidity_usd": 13662.41
+        },
+        {
+          "timestamp": 1795061262.299356,
+          "price_usd": 2.938e-05,
+          "liquidity_usd": 14550.12
+        },
+        {
+          "timestamp": 1795061292.549638,
+          "price_usd": 2.872e-05,
+          "liquidity_usd": 14367.39
+        },
+        {
+          "timestamp": 1795061322.77923,
+          "price_usd": 3.046e-05,
+          "liquidity_usd": 14859.2
+        },
+        {
+          "timestamp": 1795061353.01931,
+          "price_usd": 3.075e-05,
+          "liquidity_usd": 14944.53
+        },
+        {
+          "timestamp": 1795061383.2764804,
+          "price_usd": 3.143e-05,
+          "liquidity_usd": 15130.92
+        },
+        {
+          "timestamp": 1795061413.5142362,
+          "price_usd": 2.978e-05,
+          "liquidity_usd": 14695.03
+        },
+        {
+          "timestamp": 1795061443.7754307,
+          "price_usd": 2.589e-05,
+          "liquidity_usd": 13554.75
+        },
+        {
+          "timestamp": 1795061474.1163669,
+          "price_usd": 2.641e-05,
+          "liquidity_usd": 13712.02
         }
       ],
       "liquidity_drain_hits": 0,
@@ -379,9 +549,69 @@
           "timestamp": 1795061060.0555692,
           "price_usd": 4.829e-05,
           "liquidity_usd": 14687.27
+        },
+        {
+          "timestamp": 1795061121.9577715,
+          "price_usd": 4.815e-05,
+          "liquidity_usd": 14675.37
+        },
+        {
+          "timestamp": 1795061152.2214005,
+          "price_usd": 4.815e-05,
+          "liquidity_usd": 14675.37
+        },
+        {
+          "timestamp": 1795061228.8421504,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061262.2993574,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061292.5496402,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061322.7792323,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061353.0193124,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061383.276483,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061413.5142379,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061443.7754323,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
+        },
+        {
+          "timestamp": 1795061474.116369,
+          "price_usd": 4.822e-05,
+          "liquidity_usd": 14687.18
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.7754323,
+      "benchmark_exit_price_usd": 4.822e-05,
+      "benchmark_exit_liquidity_usd": 14687.18,
+      "benchmark_exit_after_slippage_pnl_pct": -5.544245527875125
     },
     "9rbKkz2BDQBVgZmrHY6d7PTq2ge91gkpEyE4y9PPpump": {
       "symbol": "Leonida",
@@ -452,16 +682,76 @@
           "timestamp": 1795061060.0555737,
           "price_usd": 0.001666,
           "liquidity_usd": 98675.56
+        },
+        {
+          "timestamp": 1795061121.9577744,
+          "price_usd": 0.001661,
+          "liquidity_usd": 98525.94
+        },
+        {
+          "timestamp": 1795061152.221403,
+          "price_usd": 0.001641,
+          "liquidity_usd": 97934.02
+        },
+        {
+          "timestamp": 1795061228.901285,
+          "price_usd": 0.001636,
+          "liquidity_usd": 97773.55
+        },
+        {
+          "timestamp": 1795061262.29936,
+          "price_usd": 0.001612,
+          "liquidity_usd": 97053.2
+        },
+        {
+          "timestamp": 1795061292.5496426,
+          "price_usd": 0.001614,
+          "liquidity_usd": 97118.34
+        },
+        {
+          "timestamp": 1795061322.779235,
+          "price_usd": 0.001609,
+          "liquidity_usd": 96969.17
+        },
+        {
+          "timestamp": 1795061353.0193152,
+          "price_usd": 0.001626,
+          "liquidity_usd": 97536.65
+        },
+        {
+          "timestamp": 1795061383.2764866,
+          "price_usd": 0.001638,
+          "liquidity_usd": 97923.99
+        },
+        {
+          "timestamp": 1795061413.5142412,
+          "price_usd": 0.001636,
+          "liquidity_usd": 97863.12
+        },
+        {
+          "timestamp": 1795061443.7830713,
+          "price_usd": 0.001657,
+          "liquidity_usd": 98488.87
+        },
+        {
+          "timestamp": 1795061474.1163704,
+          "price_usd": 0.00169,
+          "liquidity_usd": 99482.04
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.7830713,
+      "benchmark_exit_price_usd": 0.001657,
+      "benchmark_exit_liquidity_usd": 98488.87,
+      "benchmark_exit_after_slippage_pnl_pct": -4.9398651832728895
     },
     "FJSga8VWXAUHvQCb2gBzn7xc2EQ7wdGKw764Hdespump": {
       "symbol": "DCTY",
       "entry_price": 2.2076249999999997e-05,
       "entry_time": 1795060817.9554362,
       "entry_liquidity": 11427.53,
-      "peak_price": 2.2076249999999997e-05,
+      "peak_price": 2.404e-05,
       "signal_score": 32.092,
       "trailing_armed": false,
       "components": {
@@ -523,6 +813,61 @@
           "timestamp": 1795061060.0555773,
           "price_usd": 2.079e-05,
           "liquidity_usd": 11108.72
+        },
+        {
+          "timestamp": 1795061121.9577763,
+          "price_usd": 2.139e-05,
+          "liquidity_usd": 11294.41
+        },
+        {
+          "timestamp": 1795061152.221405,
+          "price_usd": 2.139e-05,
+          "liquidity_usd": 11294.41
+        },
+        {
+          "timestamp": 1795061228.9521863,
+          "price_usd": 2.139e-05,
+          "liquidity_usd": 11317.56
+        },
+        {
+          "timestamp": 1795061262.2993624,
+          "price_usd": 2.198e-05,
+          "liquidity_usd": 11499.68
+        },
+        {
+          "timestamp": 1795061292.5496447,
+          "price_usd": 2.198e-05,
+          "liquidity_usd": 11500.5
+        },
+        {
+          "timestamp": 1795061322.7792368,
+          "price_usd": 2.404e-05,
+          "liquidity_usd": 12107.47
+        },
+        {
+          "timestamp": 1795061353.0193172,
+          "price_usd": 2.2e-05,
+          "liquidity_usd": 11508.47
+        },
+        {
+          "timestamp": 1795061383.2764893,
+          "price_usd": 2.2e-05,
+          "liquidity_usd": 11502.57
+        },
+        {
+          "timestamp": 1795061413.5142438,
+          "price_usd": 2.2e-05,
+          "liquidity_usd": 11502.57
+        },
+        {
+          "timestamp": 1795061443.7903788,
+          "price_usd": 2.139e-05,
+          "liquidity_usd": 11312.23
+        },
+        {
+          "timestamp": 1795061474.116372,
+          "price_usd": 2.108e-05,
+          "liquidity_usd": 11217.62
         }
       ],
       "benchmark_exit_reason": "hard_stop_loss",
@@ -600,6 +945,61 @@
           "timestamp": 1795061060.0555809,
           "price_usd": 7.149e-05,
           "liquidity_usd": 18140.67
+        },
+        {
+          "timestamp": 1795061121.957778,
+          "price_usd": 7.036e-05,
+          "liquidity_usd": 17987.62
+        },
+        {
+          "timestamp": 1795061152.2214065,
+          "price_usd": 7.053e-05,
+          "liquidity_usd": 18011.4
+        },
+        {
+          "timestamp": 1795061229.007481,
+          "price_usd": 6.896e-05,
+          "liquidity_usd": 17796.48
+        },
+        {
+          "timestamp": 1795061262.2993639,
+          "price_usd": 7.063e-05,
+          "liquidity_usd": 18026.3
+        },
+        {
+          "timestamp": 1795061292.5496464,
+          "price_usd": 6.965e-05,
+          "liquidity_usd": 17892.02
+        },
+        {
+          "timestamp": 1795061322.7792387,
+          "price_usd": 6.93e-05,
+          "liquidity_usd": 17844.36
+        },
+        {
+          "timestamp": 1795061353.019319,
+          "price_usd": 6.93e-05,
+          "liquidity_usd": 17844.18
+        },
+        {
+          "timestamp": 1795061383.2764912,
+          "price_usd": 6.873e-05,
+          "liquidity_usd": 17776.81
+        },
+        {
+          "timestamp": 1795061413.5142457,
+          "price_usd": 6.998e-05,
+          "liquidity_usd": 17948.98
+        },
+        {
+          "timestamp": 1795061443.790383,
+          "price_usd": 6.998e-05,
+          "liquidity_usd": 17948.98
+        },
+        {
+          "timestamp": 1795061474.1163738,
+          "price_usd": 6.998e-05,
+          "liquidity_usd": 17948.97
         }
       ],
       "liquidity_drain_hits": 0,
@@ -676,6 +1076,61 @@
           "timestamp": 1795061060.0555897,
           "price_usd": 1.355e-05,
           "liquidity_usd": 7133.54
+        },
+        {
+          "timestamp": 1795061121.9577851,
+          "price_usd": 1.257e-05,
+          "liquidity_usd": 6824.06
+        },
+        {
+          "timestamp": 1795061152.2214134,
+          "price_usd": 1.252e-05,
+          "liquidity_usd": 6806.93
+        },
+        {
+          "timestamp": 1795061229.0562034,
+          "price_usd": 1.207e-05,
+          "liquidity_usd": 6660.43
+        },
+        {
+          "timestamp": 1795061262.299371,
+          "price_usd": 1.111e-05,
+          "liquidity_usd": 6344.47
+        },
+        {
+          "timestamp": 1795061292.5496533,
+          "price_usd": 9.514e-06,
+          "liquidity_usd": 5773.04
+        },
+        {
+          "timestamp": 1795061322.7792456,
+          "price_usd": 9.592e-06,
+          "liquidity_usd": 5801.89
+        },
+        {
+          "timestamp": 1795061353.0193262,
+          "price_usd": 7.976e-06,
+          "liquidity_usd": 5204.46
+        },
+        {
+          "timestamp": 1795061383.2764995,
+          "price_usd": 7.278e-06,
+          "liquidity_usd": 4910.36
+        },
+        {
+          "timestamp": 1795061413.5142531,
+          "price_usd": 7.708e-06,
+          "liquidity_usd": 5078.39
+        },
+        {
+          "timestamp": 1795061443.7903912,
+          "price_usd": 7.742e-06,
+          "liquidity_usd": 5098.41
+        },
+        {
+          "timestamp": 1795061474.1163807,
+          "price_usd": 7.083e-06,
+          "liquidity_usd": 4816.31
         }
       ],
       "liquidity_drain_hits": 0,
@@ -754,9 +1209,69 @@
           "timestamp": 1795061060.0555964,
           "price_usd": 0.01132,
           "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061121.9577904,
+          "price_usd": 0.01132,
+          "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061152.2214189,
+          "price_usd": 0.01132,
+          "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061229.1170607,
+          "price_usd": 0.01132,
+          "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061262.2993758,
+          "price_usd": 0.01132,
+          "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061292.5496585,
+          "price_usd": 0.01132,
+          "liquidity_usd": 1100854.03
+        },
+        {
+          "timestamp": 1795061322.7792509,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
+        },
+        {
+          "timestamp": 1795061353.0193317,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
+        },
+        {
+          "timestamp": 1795061383.2765048,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
+        },
+        {
+          "timestamp": 1795061413.5142586,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
+        },
+        {
+          "timestamp": 1795061443.7903967,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
+        },
+        {
+          "timestamp": 1795061474.1163857,
+          "price_usd": 0.01135,
+          "liquidity_usd": 1103560.96
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.7903967,
+      "benchmark_exit_price_usd": 0.01135,
+      "benchmark_exit_liquidity_usd": 1103560.96,
+      "benchmark_exit_after_slippage_pnl_pct": -3.1923967344949324
     },
     "Eyo1o3QYKQwdvP6UtK9dQLTZj2BBtoJdN4tMWB2Dpump": {
       "symbol": "GOODTIME",
@@ -827,9 +1342,69 @@
           "timestamp": 1795061060.055601,
           "price_usd": 9.684e-05,
           "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061121.9577937,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061152.2214224,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061229.2703567,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061262.2993793,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061292.549662,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061322.7792544,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061353.0193357,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061383.276509,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061413.5142624,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061443.7976725,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
+        },
+        {
+          "timestamp": 1795061474.116388,
+          "price_usd": 9.684e-05,
+          "liquidity_usd": 23369.4
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.7976725,
+      "benchmark_exit_price_usd": 9.684e-05,
+      "benchmark_exit_liquidity_usd": 23369.4,
+      "benchmark_exit_after_slippage_pnl_pct": -3.2083958020989503
     },
     "D7iafdwzzpB7tisqQqT5T9aRrYPtHLqzwxhnLoWJgoat": {
       "symbol": "GOAT",
@@ -900,9 +1475,69 @@
           "timestamp": 1795061060.0556047,
           "price_usd": 6.671e-05,
           "liquidity_usd": 17767.86
+        },
+        {
+          "timestamp": 1795061121.9577963,
+          "price_usd": 6.671e-05,
+          "liquidity_usd": 17767.86
+        },
+        {
+          "timestamp": 1795061152.2214248,
+          "price_usd": 6.671e-05,
+          "liquidity_usd": 17767.86
+        },
+        {
+          "timestamp": 1795061229.331927,
+          "price_usd": 6.671e-05,
+          "liquidity_usd": 17767.86
+        },
+        {
+          "timestamp": 1795061262.2993817,
+          "price_usd": 6.671e-05,
+          "liquidity_usd": 17767.86
+        },
+        {
+          "timestamp": 1795061292.5496647,
+          "price_usd": 6.671e-05,
+          "liquidity_usd": 17767.84
+        },
+        {
+          "timestamp": 1795061322.779257,
+          "price_usd": 6.625e-05,
+          "liquidity_usd": 17722.77
+        },
+        {
+          "timestamp": 1795061353.0193381,
+          "price_usd": 6.482e-05,
+          "liquidity_usd": 17528.12
+        },
+        {
+          "timestamp": 1795061383.276514,
+          "price_usd": 6.482e-05,
+          "liquidity_usd": 17528.1
+        },
+        {
+          "timestamp": 1795061413.5142648,
+          "price_usd": 6.482e-05,
+          "liquidity_usd": 17528.1
+        },
+        {
+          "timestamp": 1795061443.8049068,
+          "price_usd": 6.482e-05,
+          "liquidity_usd": 17528.1
+        },
+        {
+          "timestamp": 1795061474.1163902,
+          "price_usd": 6.482e-05,
+          "liquidity_usd": 17528.1
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.8049068,
+      "benchmark_exit_price_usd": 6.482e-05,
+      "benchmark_exit_liquidity_usd": 17528.1,
+      "benchmark_exit_after_slippage_pnl_pct": -6.18373919021599
     },
     "FVzqGqRmr4UH1Fif6dewmwbJ1p4YUZCu8dcw4Efopump": {
       "symbol": "HOGE",
@@ -973,9 +1608,69 @@
           "timestamp": 1795061060.055608,
           "price_usd": 0.001242,
           "liquidity_usd": 136673.99
+        },
+        {
+          "timestamp": 1795061121.9577985,
+          "price_usd": 0.001241,
+          "liquidity_usd": 136645.44
+        },
+        {
+          "timestamp": 1795061152.221427,
+          "price_usd": 0.001239,
+          "liquidity_usd": 136510.89
+        },
+        {
+          "timestamp": 1795061229.4492586,
+          "price_usd": 0.001254,
+          "liquidity_usd": 137343.94
+        },
+        {
+          "timestamp": 1795061262.2993836,
+          "price_usd": 0.001256,
+          "liquidity_usd": 137451.66
+        },
+        {
+          "timestamp": 1795061292.549667,
+          "price_usd": 0.001243,
+          "liquidity_usd": 136763.34
+        },
+        {
+          "timestamp": 1795061322.7792594,
+          "price_usd": 0.001258,
+          "liquidity_usd": 137603.35
+        },
+        {
+          "timestamp": 1795061353.0193403,
+          "price_usd": 0.001239,
+          "liquidity_usd": 136506.62
+        },
+        {
+          "timestamp": 1795061383.2765162,
+          "price_usd": 0.001258,
+          "liquidity_usd": 137588.83
+        },
+        {
+          "timestamp": 1795061413.5142672,
+          "price_usd": 0.001233,
+          "liquidity_usd": 136201.67
+        },
+        {
+          "timestamp": 1795061443.812137,
+          "price_usd": 0.001241,
+          "liquidity_usd": 136637.56
+        },
+        {
+          "timestamp": 1795061474.1163914,
+          "price_usd": 0.001217,
+          "liquidity_usd": 135277.33
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.812137,
+      "benchmark_exit_price_usd": 0.001241,
+      "benchmark_exit_liquidity_usd": 136637.56,
+      "benchmark_exit_after_slippage_pnl_pct": -5.205150589262332
     },
     "AAb2JkmKSJgvz4bFZoB8432Qj2Gkt7M3o7Rg3vqjpump": {
       "symbol": "Founder",
@@ -1046,9 +1741,69 @@
           "timestamp": 1795061060.0556114,
           "price_usd": 0.0002919,
           "liquidity_usd": 46550.3
+        },
+        {
+          "timestamp": 1795061121.9578,
+          "price_usd": 0.0002919,
+          "liquidity_usd": 46550.25
+        },
+        {
+          "timestamp": 1795061152.221429,
+          "price_usd": 0.0002919,
+          "liquidity_usd": 46550.25
+        },
+        {
+          "timestamp": 1795061229.4935164,
+          "price_usd": 0.0002919,
+          "liquidity_usd": 46550.46
+        },
+        {
+          "timestamp": 1795061262.2993853,
+          "price_usd": 0.0002902,
+          "liquidity_usd": 46456.44
+        },
+        {
+          "timestamp": 1795061292.5496688,
+          "price_usd": 0.0002902,
+          "liquidity_usd": 46456.44
+        },
+        {
+          "timestamp": 1795061322.779261,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
+        },
+        {
+          "timestamp": 1795061353.0193422,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
+        },
+        {
+          "timestamp": 1795061383.276518,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
+        },
+        {
+          "timestamp": 1795061413.5142689,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
+        },
+        {
+          "timestamp": 1795061443.8193781,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
+        },
+        {
+          "timestamp": 1795061474.1163926,
+          "price_usd": 0.0002892,
+          "liquidity_usd": 46370.04
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.8193781,
+      "benchmark_exit_price_usd": 0.0002892,
+      "benchmark_exit_liquidity_usd": 46370.04,
+      "benchmark_exit_after_slippage_pnl_pct": -3.1804486106461347
     },
     "4oduvmdiWGDv33kDvKHiGTX1UFseMNoB8g9yZ1h4pump": {
       "symbol": "DATITTY",
@@ -1117,9 +1872,69 @@
           "timestamp": 1795061060.0556152,
           "price_usd": 3.628e-06,
           "liquidity_usd": 3420.63
+        },
+        {
+          "timestamp": 1795061121.9578023,
+          "price_usd": 3.628e-06,
+          "liquidity_usd": 3420.63
+        },
+        {
+          "timestamp": 1795061152.2214315,
+          "price_usd": 3.592e-06,
+          "liquidity_usd": 3395.46
+        },
+        {
+          "timestamp": 1795061229.545056,
+          "price_usd": 3.565e-06,
+          "liquidity_usd": 3375.1
+        },
+        {
+          "timestamp": 1795061262.2993877,
+          "price_usd": 3.565e-06,
+          "liquidity_usd": 3375.1
+        },
+        {
+          "timestamp": 1795061292.5496712,
+          "price_usd": 3.565e-06,
+          "liquidity_usd": 3375.1
+        },
+        {
+          "timestamp": 1795061322.7792637,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
+        },
+        {
+          "timestamp": 1795061353.0193448,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
+        },
+        {
+          "timestamp": 1795061383.2765203,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
+        },
+        {
+          "timestamp": 1795061413.5142708,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
+        },
+        {
+          "timestamp": 1795061443.8265874,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
+        },
+        {
+          "timestamp": 1795061474.116394,
+          "price_usd": 3.54e-06,
+          "liquidity_usd": 3356.85
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.8265874,
+      "benchmark_exit_price_usd": 3.54e-06,
+      "benchmark_exit_liquidity_usd": 3356.85,
+      "benchmark_exit_after_slippage_pnl_pct": 0.11514453669475871
     },
     "EadD2LMp6EbH9PrbXUFWcrZKMhoKVrZN1gpwRhH5pump": {
       "symbol": "ANT",
@@ -1190,9 +2005,69 @@
           "timestamp": 1795061060.0556183,
           "price_usd": 0.0003135,
           "liquidity_usd": 50119.28
+        },
+        {
+          "timestamp": 1795061121.957804,
+          "price_usd": 0.0002974,
+          "liquidity_usd": 48802.85
+        },
+        {
+          "timestamp": 1795061152.2214332,
+          "price_usd": 0.0002815,
+          "liquidity_usd": 47437.01
+        },
+        {
+          "timestamp": 1795061229.5972922,
+          "price_usd": 0.0002936,
+          "liquidity_usd": 48493.79
+        },
+        {
+          "timestamp": 1795061262.2993894,
+          "price_usd": 0.0002962,
+          "liquidity_usd": 48716.97
+        },
+        {
+          "timestamp": 1795061292.5496726,
+          "price_usd": 0.0002851,
+          "liquidity_usd": 47777.81
+        },
+        {
+          "timestamp": 1795061322.7792652,
+          "price_usd": 0.0002833,
+          "liquidity_usd": 47615.42
+        },
+        {
+          "timestamp": 1795061353.0193467,
+          "price_usd": 0.0002855,
+          "liquidity_usd": 47806.04
+        },
+        {
+          "timestamp": 1795061383.2765226,
+          "price_usd": 0.0002877,
+          "liquidity_usd": 48002.25
+        },
+        {
+          "timestamp": 1795061413.5142732,
+          "price_usd": 0.0002887,
+          "liquidity_usd": 48087.17
+        },
+        {
+          "timestamp": 1795061443.8338366,
+          "price_usd": 0.0002927,
+          "liquidity_usd": 48450.93
+        },
+        {
+          "timestamp": 1795061474.1163952,
+          "price_usd": 0.0002955,
+          "liquidity_usd": 48696.08
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1795061121.957804,
+      "benchmark_exit_price_usd": 0.0002974,
+      "benchmark_exit_liquidity_usd": 48802.85,
+      "benchmark_exit_after_slippage_pnl_pct": -12.053651581559912
     },
     "8HXsCMy8ma8QP2yVZXG5SZYyaTZw5AUrUDha1G4upump": {
       "symbol": "Founder",
@@ -1261,9 +2136,69 @@
           "timestamp": 1795061060.0556214,
           "price_usd": 0.0001014,
           "liquidity_usd": 32464.78
+        },
+        {
+          "timestamp": 1795061121.9652812,
+          "price_usd": 9.992e-05,
+          "liquidity_usd": 31899.1
+        },
+        {
+          "timestamp": 1795061152.2214346,
+          "price_usd": 0.0001002,
+          "liquidity_usd": 31928.72
+        },
+        {
+          "timestamp": 1795061229.646049,
+          "price_usd": 9.603e-05,
+          "liquidity_usd": 31022.85
+        },
+        {
+          "timestamp": 1795061262.2993908,
+          "price_usd": 9.302e-05,
+          "liquidity_usd": 30377.5
+        },
+        {
+          "timestamp": 1795061292.549674,
+          "price_usd": 9.326e-05,
+          "liquidity_usd": 30543.51
+        },
+        {
+          "timestamp": 1795061322.7792668,
+          "price_usd": 7.562e-05,
+          "liquidity_usd": 27194.02
+        },
+        {
+          "timestamp": 1795061353.0193481,
+          "price_usd": 8.044e-05,
+          "liquidity_usd": 28012.51
+        },
+        {
+          "timestamp": 1795061383.2765245,
+          "price_usd": 9.502e-05,
+          "liquidity_usd": 30912.71
+        },
+        {
+          "timestamp": 1795061413.5142746,
+          "price_usd": 9.36e-05,
+          "liquidity_usd": 30648.41
+        },
+        {
+          "timestamp": 1795061443.8338392,
+          "price_usd": 9.122e-05,
+          "liquidity_usd": 30221.28
+        },
+        {
+          "timestamp": 1795061474.1163962,
+          "price_usd": 9.122e-05,
+          "liquidity_usd": 30221.28
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "hard_stop_loss",
+      "benchmark_exit_timestamp": 1795061262.2993908,
+      "benchmark_exit_price_usd": 9.302e-05,
+      "benchmark_exit_liquidity_usd": 30377.5,
+      "benchmark_exit_after_slippage_pnl_pct": -12.548769432226436
     },
     "92m4S52bu3dZyqzPmPStu8Krz6JcpzHdsG4D5QBqpump": {
       "symbol": "GTA Strategy ",
@@ -1332,6 +2267,61 @@
           "timestamp": 1795061060.0556242,
           "price_usd": 2.528e-05,
           "liquidity_usd": 10687.48
+        },
+        {
+          "timestamp": 1795061121.9652858,
+          "price_usd": 2.423e-05,
+          "liquidity_usd": 10441.88
+        },
+        {
+          "timestamp": 1795061152.2214363,
+          "price_usd": 2.923e-05,
+          "liquidity_usd": 11635.78
+        },
+        {
+          "timestamp": 1795061229.695534,
+          "price_usd": 2.858e-05,
+          "liquidity_usd": 11458.41
+        },
+        {
+          "timestamp": 1795061262.3068507,
+          "price_usd": 2.686e-05,
+          "liquidity_usd": 11074.82
+        },
+        {
+          "timestamp": 1795061292.5496757,
+          "price_usd": 2.496e-05,
+          "liquidity_usd": 10635.22
+        },
+        {
+          "timestamp": 1795061322.7792683,
+          "price_usd": 2.762e-05,
+          "liquidity_usd": 11254.39
+        },
+        {
+          "timestamp": 1795061353.0193496,
+          "price_usd": 2.634e-05,
+          "liquidity_usd": 10971.61
+        },
+        {
+          "timestamp": 1795061383.276526,
+          "price_usd": 2.694e-05,
+          "liquidity_usd": 11110.7
+        },
+        {
+          "timestamp": 1795061413.514276,
+          "price_usd": 2.737e-05,
+          "liquidity_usd": 11212.02
+        },
+        {
+          "timestamp": 1795061443.8338406,
+          "price_usd": 2.732e-05,
+          "liquidity_usd": 11187.15
+        },
+        {
+          "timestamp": 1795061474.1163976,
+          "price_usd": 2.742e-05,
+          "liquidity_usd": 11209.51
         }
       ],
       "benchmark_exit_reason": "hard_stop_loss",
@@ -1409,9 +2399,69 @@
           "timestamp": 1795061060.0556273,
           "price_usd": 4.017e-05,
           "liquidity_usd": 16600.41
+        },
+        {
+          "timestamp": 1795061121.9652874,
+          "price_usd": 3.925e-05,
+          "liquidity_usd": 16385.85
+        },
+        {
+          "timestamp": 1795061152.2214375,
+          "price_usd": 3.909e-05,
+          "liquidity_usd": 16362.38
+        },
+        {
+          "timestamp": 1795061229.7426386,
+          "price_usd": 4.025e-05,
+          "liquidity_usd": 16632.49
+        },
+        {
+          "timestamp": 1795061262.3068542,
+          "price_usd": 4.025e-05,
+          "liquidity_usd": 16632.66
+        },
+        {
+          "timestamp": 1795061292.5496776,
+          "price_usd": 3.888e-05,
+          "liquidity_usd": 16312.85
+        },
+        {
+          "timestamp": 1795061322.7792697,
+          "price_usd": 3.888e-05,
+          "liquidity_usd": 16312.85
+        },
+        {
+          "timestamp": 1795061353.019351,
+          "price_usd": 3.843e-05,
+          "liquidity_usd": 16206.84
+        },
+        {
+          "timestamp": 1795061383.2765276,
+          "price_usd": 3.843e-05,
+          "liquidity_usd": 16206.84
+        },
+        {
+          "timestamp": 1795061413.5142772,
+          "price_usd": 3.843e-05,
+          "liquidity_usd": 16206.84
+        },
+        {
+          "timestamp": 1795061443.833842,
+          "price_usd": 3.843e-05,
+          "liquidity_usd": 16206.84
+        },
+        {
+          "timestamp": 1795061474.1163988,
+          "price_usd": 3.896e-05,
+          "liquidity_usd": 16330.29
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.833842,
+      "benchmark_exit_price_usd": 3.843e-05,
+      "benchmark_exit_liquidity_usd": 16206.84,
+      "benchmark_exit_after_slippage_pnl_pct": -6.654521795705892
     },
     "7qgvmEdQSp5xhAss5efBRgCgywe1PRGMgb9ZAJsBpump": {
       "symbol": "NASDUCK",
@@ -1482,9 +2532,69 @@
           "timestamp": 1795061060.0556304,
           "price_usd": 0.0001765,
           "liquidity_usd": 31344.35
+        },
+        {
+          "timestamp": 1795061121.9652889,
+          "price_usd": 0.0001797,
+          "liquidity_usd": 31648.1
+        },
+        {
+          "timestamp": 1795061152.2214386,
+          "price_usd": 0.0001797,
+          "liquidity_usd": 31645.71
+        },
+        {
+          "timestamp": 1795061229.8739293,
+          "price_usd": 0.0001728,
+          "liquidity_usd": 31019.39
+        },
+        {
+          "timestamp": 1795061262.3068576,
+          "price_usd": 0.0001727,
+          "liquidity_usd": 31011.28
+        },
+        {
+          "timestamp": 1795061292.5496793,
+          "price_usd": 0.0001746,
+          "liquidity_usd": 31189.79
+        },
+        {
+          "timestamp": 1795061322.7792711,
+          "price_usd": 0.0001755,
+          "liquidity_usd": 31275.14
+        },
+        {
+          "timestamp": 1795061353.0193527,
+          "price_usd": 0.0001747,
+          "liquidity_usd": 31218.04
+        },
+        {
+          "timestamp": 1795061383.2765293,
+          "price_usd": 0.0001739,
+          "liquidity_usd": 31139.49
+        },
+        {
+          "timestamp": 1795061413.514279,
+          "price_usd": 0.0001753,
+          "liquidity_usd": 31276.51
+        },
+        {
+          "timestamp": 1795061443.8410807,
+          "price_usd": 0.0001745,
+          "liquidity_usd": 31200.83
+        },
+        {
+          "timestamp": 1795061474.1164002,
+          "price_usd": 0.0001759,
+          "liquidity_usd": 31338.18
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.8410807,
+      "benchmark_exit_price_usd": 0.0001745,
+      "benchmark_exit_liquidity_usd": 31200.83,
+      "benchmark_exit_after_slippage_pnl_pct": -10.855683269476362
     },
     "Dfh5DzRgSvvCFDoYc2ciTkMrbDfRKybA4SoFbPmApump": {
       "symbol": "pippin",
@@ -1555,16 +2665,76 @@
           "timestamp": 1795061060.055633,
           "price_usd": 0.01751,
           "liquidity_usd": 3343571.23
+        },
+        {
+          "timestamp": 1795061121.9652908,
+          "price_usd": 0.01749,
+          "liquidity_usd": 3341633.01
+        },
+        {
+          "timestamp": 1795061152.22144,
+          "price_usd": 0.01749,
+          "liquidity_usd": 3341633.01
+        },
+        {
+          "timestamp": 1795061229.9254956,
+          "price_usd": 0.01755,
+          "liquidity_usd": 3347317.75
+        },
+        {
+          "timestamp": 1795061262.3068593,
+          "price_usd": 0.01755,
+          "liquidity_usd": 3347374.03
+        },
+        {
+          "timestamp": 1795061292.5496812,
+          "price_usd": 0.01757,
+          "liquidity_usd": 3349534.59
+        },
+        {
+          "timestamp": 1795061322.7792728,
+          "price_usd": 0.01746,
+          "liquidity_usd": 3338884.1
+        },
+        {
+          "timestamp": 1795061353.0193543,
+          "price_usd": 0.01757,
+          "liquidity_usd": 3351009.48
+        },
+        {
+          "timestamp": 1795061383.276531,
+          "price_usd": 0.01746,
+          "liquidity_usd": 3340711.44
+        },
+        {
+          "timestamp": 1795061413.5142806,
+          "price_usd": 0.01746,
+          "liquidity_usd": 3340305.47
+        },
+        {
+          "timestamp": 1795061443.848327,
+          "price_usd": 0.01759,
+          "liquidity_usd": 3353067.49
+        },
+        {
+          "timestamp": 1795061474.1164012,
+          "price_usd": 0.0176,
+          "liquidity_usd": 3354251.82
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.848327,
+      "benchmark_exit_price_usd": 0.01759,
+      "benchmark_exit_liquidity_usd": 3353067.49,
+      "benchmark_exit_after_slippage_pnl_pct": -3.5031347962382213
     },
     "CyfdugHk3PT44hEUxpnU25CXAJsVQ9EdipKWCHEBKSdS": {
       "symbol": "GRAND",
       "entry_price": 0.000464667,
       "entry_time": 1795060817.9558332,
       "entry_liquidity": 49031.22,
-      "peak_price": 0.0004652,
+      "peak_price": 0.0004653,
       "signal_score": 62.084,
       "trailing_armed": false,
       "components": {
@@ -1630,9 +2800,69 @@
           "timestamp": 1795061060.055636,
           "price_usd": 0.0004652,
           "liquidity_usd": 49492.67
+        },
+        {
+          "timestamp": 1795061121.9652925,
+          "price_usd": 0.0004652,
+          "liquidity_usd": 49492.67
+        },
+        {
+          "timestamp": 1795061152.2214415,
+          "price_usd": 0.0004652,
+          "liquidity_usd": 49492.67
+        },
+        {
+          "timestamp": 1795061229.9845953,
+          "price_usd": 0.0004652,
+          "liquidity_usd": 49492.67
+        },
+        {
+          "timestamp": 1795061262.3068612,
+          "price_usd": 0.0004653,
+          "liquidity_usd": 49566.44
+        },
+        {
+          "timestamp": 1795061292.549683,
+          "price_usd": 0.0004544,
+          "liquidity_usd": 48987.21
+        },
+        {
+          "timestamp": 1795061322.7792742,
+          "price_usd": 0.0004544,
+          "liquidity_usd": 48987.21
+        },
+        {
+          "timestamp": 1795061353.0193555,
+          "price_usd": 0.0004542,
+          "liquidity_usd": 48970.21
+        },
+        {
+          "timestamp": 1795061383.2765326,
+          "price_usd": 0.0004542,
+          "liquidity_usd": 48970.21
+        },
+        {
+          "timestamp": 1795061413.514282,
+          "price_usd": 0.0004542,
+          "liquidity_usd": 48970.21
+        },
+        {
+          "timestamp": 1795061443.855572,
+          "price_usd": 0.0004542,
+          "liquidity_usd": 48970.21
+        },
+        {
+          "timestamp": 1795061474.1164024,
+          "price_usd": 0.0004547,
+          "liquidity_usd": 49027.6
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.855572,
+      "benchmark_exit_price_usd": 0.0004542,
+      "benchmark_exit_liquidity_usd": 48970.21,
+      "benchmark_exit_after_slippage_pnl_pct": -4.207529262891497
     },
     "8zHjeXjf5zs3v9cQ116GGfbTqAP6BYkkucNF1f8Hpump": {
       "symbol": "MAGACITY",
@@ -1703,6 +2933,61 @@
           "timestamp": 1795061060.0556386,
           "price_usd": 5.156e-05,
           "liquidity_usd": 18995.02
+        },
+        {
+          "timestamp": 1795061121.965294,
+          "price_usd": 5.046e-05,
+          "liquidity_usd": 18778.2
+        },
+        {
+          "timestamp": 1795061152.2214427,
+          "price_usd": 4.93e-05,
+          "liquidity_usd": 18543.25
+        },
+        {
+          "timestamp": 1795061230.0342474,
+          "price_usd": 5.03e-05,
+          "liquidity_usd": 18776.83
+        },
+        {
+          "timestamp": 1795061262.3068626,
+          "price_usd": 5.022e-05,
+          "liquidity_usd": 18748.68
+        },
+        {
+          "timestamp": 1795061292.5496848,
+          "price_usd": 5.256e-05,
+          "liquidity_usd": 19232.85
+        },
+        {
+          "timestamp": 1795061322.7792761,
+          "price_usd": 5.121e-05,
+          "liquidity_usd": 18960.26
+        },
+        {
+          "timestamp": 1795061353.0193572,
+          "price_usd": 5.137e-05,
+          "liquidity_usd": 18993.89
+        },
+        {
+          "timestamp": 1795061383.2765343,
+          "price_usd": 5.378e-05,
+          "liquidity_usd": 19478.68
+        },
+        {
+          "timestamp": 1795061413.5142832,
+          "price_usd": 5.426e-05,
+          "liquidity_usd": 19574.07
+        },
+        {
+          "timestamp": 1795061443.8628354,
+          "price_usd": 5.471e-05,
+          "liquidity_usd": 19708.88
+        },
+        {
+          "timestamp": 1795061474.1164038,
+          "price_usd": 5.749e-05,
+          "liquidity_usd": 20250.16
         }
       ],
       "benchmark_exit_reason": "hard_stop_loss",
@@ -1716,7 +3001,7 @@
       "entry_price": 9.929745e-05,
       "entry_time": 1795060817.9558697,
       "entry_liquidity": 21574.83,
-      "peak_price": 9.929745e-05,
+      "peak_price": 0.0001018,
       "signal_score": 47.96,
       "trailing_armed": false,
       "components": {
@@ -1780,9 +3065,69 @@
           "timestamp": 1795061060.0556412,
           "price_usd": 9.695e-05,
           "liquidity_usd": 21499.28
+        },
+        {
+          "timestamp": 1795061121.965295,
+          "price_usd": 9.766e-05,
+          "liquidity_usd": 21608.13
+        },
+        {
+          "timestamp": 1795061152.2214441,
+          "price_usd": 9.766e-05,
+          "liquidity_usd": 21608.13
+        },
+        {
+          "timestamp": 1795061230.086542,
+          "price_usd": 9.766e-05,
+          "liquidity_usd": 21608.13
+        },
+        {
+          "timestamp": 1795061262.3068638,
+          "price_usd": 9.766e-05,
+          "liquidity_usd": 21608.51
+        },
+        {
+          "timestamp": 1795061292.549686,
+          "price_usd": 9.903e-05,
+          "liquidity_usd": 21769.08
+        },
+        {
+          "timestamp": 1795061322.7792776,
+          "price_usd": 9.392e-05,
+          "liquidity_usd": 21171.43
+        },
+        {
+          "timestamp": 1795061353.0193582,
+          "price_usd": 9.392e-05,
+          "liquidity_usd": 21171.43
+        },
+        {
+          "timestamp": 1795061383.2765355,
+          "price_usd": 9.242e-05,
+          "liquidity_usd": 21001.45
+        },
+        {
+          "timestamp": 1795061413.5142848,
+          "price_usd": 9.824e-05,
+          "liquidity_usd": 21697.29
+        },
+        {
+          "timestamp": 1795061443.8628378,
+          "price_usd": 9.824e-05,
+          "liquidity_usd": 21706.17
+        },
+        {
+          "timestamp": 1795061474.1164048,
+          "price_usd": 0.0001018,
+          "liquidity_usd": 22118.91
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.8628378,
+      "benchmark_exit_price_usd": 9.824e-05,
+      "benchmark_exit_liquidity_usd": 21706.17,
+      "benchmark_exit_after_slippage_pnl_pct": -3.0436330439502757
     },
     "EwUVBpdM5vw1CJHRMSLywzVjyQSJZpy6qboxEPBKpump": {
       "symbol": "PumpMas",
@@ -1853,9 +3198,69 @@
           "timestamp": 1795061060.0556436,
           "price_usd": 0.0001359,
           "liquidity_usd": 26400.46
+        },
+        {
+          "timestamp": 1795061121.965297,
+          "price_usd": 0.0001362,
+          "liquidity_usd": 26464.77
+        },
+        {
+          "timestamp": 1795061152.2214456,
+          "price_usd": 0.0001362,
+          "liquidity_usd": 26464.76
+        },
+        {
+          "timestamp": 1795061230.1780818,
+          "price_usd": 0.0001352,
+          "liquidity_usd": 26364.95
+        },
+        {
+          "timestamp": 1795061262.3068652,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26476.62
+        },
+        {
+          "timestamp": 1795061292.5496874,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26476.62
+        },
+        {
+          "timestamp": 1795061322.779279,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26476.62
+        },
+        {
+          "timestamp": 1795061353.0193596,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26497.92
+        },
+        {
+          "timestamp": 1795061383.2765372,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26497.92
+        },
+        {
+          "timestamp": 1795061413.514286,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26497.92
+        },
+        {
+          "timestamp": 1795061443.870059,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26497.92
+        },
+        {
+          "timestamp": 1795061474.1164057,
+          "price_usd": 0.0001363,
+          "liquidity_usd": 26497.92
         }
       ],
-      "liquidity_drain_hits": 0
+      "liquidity_drain_hits": 0,
+      "benchmark_exit_reason": "max_hold_timeout",
+      "benchmark_exit_timestamp": 1795061443.870059,
+      "benchmark_exit_price_usd": 0.0001363,
+      "benchmark_exit_liquidity_usd": 26497.92,
+      "benchmark_exit_after_slippage_pnl_pct": -3.730797366495958
     }
   },
   "cooldowns": {
@@ -3882,26 +5287,16 @@
   },
   "blacklist": [],
   "trade_count": 71,
-  "scan_count": 524,
+  "scan_count": 525,
   "version": "v21-live-price",
   "peak_equity": 1000.0,
-  "last_run": "2026-11-19T04:00:17Z",
+  "last_run": "2026-11-19T04:07:12Z",
   "shadow_scan_diagnostics": {
-    "timestamp": "2026-11-19T04:00:17Z",
-    "candidate_count": 79,
-    "filter_passed": 24,
-    "shadow_opened": 24,
-    "rejections": {
-      "shadow_liq_mcap_ratio:0.001": 1,
-      "pair_data_unavailable": 18,
-      "shadow_low_activity": 11,
-      "shadow_low_volume_h1:86": 2,
-      "shadow_low_volume_h1:0": 2,
-      "shadow_low_volume_h1:8": 1,
-      "missing_pair_age": 1,
-      "shadow_low_volume_h1:99": 1,
-      "shadow_low_volume_h1:92": 1
-    }
+    "timestamp": "2026-11-19T04:07:12Z",
+    "candidate_count": 80,
+    "filter_passed": 0,
+    "shadow_opened": 0,
+    "rejections": {}
   },
   "paper_scan_diagnostics": {
     "timestamp": "2026-10-26T10:38:25Z",
@@ -4016,7 +5411,7 @@
       "whale_weak_momentum_h1:-27.6%": 1
     }
   },
-  "last_position_monitor": "2026-11-19T04:04:20Z",
+  "last_position_monitor": "2026-11-19T04:11:14Z",
   "shadow_completed_mints": [
     "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
     "ABp2bT8ovFYYY8etNQmJauRDXgk3tYkt2jpmGqZSpump",
