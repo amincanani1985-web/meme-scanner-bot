@@ -207,6 +207,14 @@ class WorkflowSafetyTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
         self.assertNotIn("gh workflow run paper-profit-loop.yml", workflow)
 
+    def test_read_only_market_evidence_runs_without_optional_repo_flag(self):
+        workflow = (ROOT / ".github/workflows/trading-cycle.yml").read_text(encoding="utf-8")
+        section = workflow.split(
+            "- name: Collect multi-provider market evidence (read-only)", 1
+        )[1].split("- name: Smoke-test whale-follow replay", 1)[0]
+        self.assertIn("if: github.event_name != 'pull_request'", section)
+        self.assertNotIn("MARKET_DATA_CONNECTORS_ENABLED", section)
+
     def test_validation_loop_is_manual_bounded_and_not_profit_peeking(self):
         workflow = (ROOT / ".github/workflows/paper-profit-loop.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
